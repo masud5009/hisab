@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <title>Meal & Expense Manager (Final)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- ====== Minimal, clean CSS ====== -->
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#ffffff; --pri:#2563eb; --pri-600:#1d4ed8;
+      --ok:#16a34a; --warn:#f59e0b; --danger:#dc2626;
+      --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --foot1:#e3f2fd; --foot2:#fff4e5; --foot3:#e6eeff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:var(--bg); color:var(--text); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto}
+    .wrap{max-width:1200px; margin:32px auto; padding:0 16px}
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:16px;
+      box-shadow:0 8px 24px rgba(15,23,42,.06); padding:20px;
+    }
+    h1{
+      margin:0 0 12px; font-size:28px; font-weight:800; text-align:center; color:var(--pri);
+    }
+    .sub{margin:0 0 18px; text-align:center; color:var(--muted)}
+    .toolbar{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:14px}
+    .toolbar .group{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    label{font-weight:600}
+    select, input[type="number"], input[type="text"]{
+      padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text);
+      min-width:90px; outline:0;
+    }
+    input[type="number"]{text-align:right}
+    .btn{
+      border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; transition:.2s; display:inline-flex; align-items:center; gap:8px
+    }
+    .btn-primary{background:var(--pri); color:#fff}
+    .btn-primary:hover{background:var(--pri-600)}
+    .btn-save{background:var(--ok); color:#fff}
+    .btn-save:hover{filter:brightness(.95)}
+    .btn-pdf{background:#8b5cf6; color:#fff}
+    .btn-pdf:hover{filter:brightness(.95)}
+
+    .table-wrap{overflow:auto; border-radius:14px; border:1px solid var(--line)}
+    table{width:100%; border-collapse:separate; border-spacing:0; background:#fff}
+    thead th{
+      position:sticky; top:0; z-index:2;
+      background:linear-gradient(180deg,#1e3a8a,#2563eb); color:#fff;
+      font-weight:800; text-transform:uppercase; letter-spacing:.02em;
+      padding:10px; border-bottom:1px solid var(--line);
+    }
+    tbody td, tfoot td, tfoot th{padding:8px 10px; border-bottom:1px solid var(--line); text-align:center}
+    tbody tr:nth-child(odd) td{background:#fafbff}
+    tbody input{width:110px}
+    td .name{width:140px; text-align:left}
+    .number{font-variant-numeric: tabular-nums}
+    .cell-strong{font-weight:800}
+
+    /* Footer highlights */
+    tfoot td, tfoot th{font-weight:800}
+    #totalMealCell{background:var(--foot1)}
+    #totalBazarCell{background:var(--foot2)}
+    #grandTotalCell{background:var(--foot3)}
+    #finalMealRate{background:#dcfce7}
+
+    .hint{margin-top:8px; color:var(--muted); text-align:center}
+    .warn{display:none; margin:10px 0 0; padding:10px; border-radius:10px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-weight:600}
+    .ok{display:none; margin:10px 0 0; padding:10px; border-radius:10px; background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; font-weight:600}
+    @media (max-width:860px){
+      tbody input{width:90px}
+      td .name{width:120px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🍽️ Meal & Expense Manager</h1>
+      <p class="sub">৬ জনের মাসিক মিল–বিলের হিসাব • অটো Meal Rate • Save/Load • PDF Export</p>
+
+      <!-- Top controls -->
+      <div class="toolbar">
+        <div class="group">
+          <label for="monthSelect">মাস:</label>
+          <select id="monthSelect" onchange="loadData();">
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Totals input -->
+      <div class="toolbar" style="justify-content:space-between; gap:14px">
+        <div class="group">
+          <label>Khala Total:</label>
+          <input type="number" id="khalaTotal" value="4500" step="1" oninput="calculateAll()" /> Tk
+        </div>
+        <div class="group">
+          <label>Gas Total:</label>
+          <input type="number" id="gasTotal" value="600" step="1" oninput="calculateAll()" /> Tk
+        </div>
+        <div class="group">
+          <label>Electricity Total:</label>
+          <input type="number" id="electricityTotal" value="890" step="1" oninput="calculateAll()" /> Tk
+        </div>
+        <div class="group">
+          <label>Bari Vara Total:</label>
+          <input type="number" id="bariTotal" value="16000" step="1" oninput="checkRentTotal()" /> Tk
+        </div>
+      </div>
+
+      <!-- rent note -->
+      <div id="rentMsg" class="ok">বাড়ি ভাড়া শেয়ার: Ibrahim & Anan = 3250 করে, বাকি ৪ জন = 2375 করে (মোট 16000)।</div>
+      <div id="rentWarn" class="warn">সতর্কতা: উপরের “Bari Vara Total” ইনপুটটি তথ্যসূত্র মাত্র। শেয়ার সবসময়: Ibrahim/Anan = 3250, অন্য ৪ জন = 2375 হিসেবে ধরা হবে (মোট 16000)।</div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table id="mealTable">
+          <thead>
+            <tr>
+              <th>নাম</th>
+              <th>Meal</th>
+              <th>Bazar (Tk)</th>
+              <th>Meal Rate (Tk)</th>
+              <th>Meal Cost</th>
+              <th>Khala</th>
+              <th>Gas</th>
+              <th>Electricity</th>
+              <th>Bari Vara</th>
+              <th>Total Payable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 6 rows -->
+            <tr>
+              <td><input class="name" value="Sohel" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
+              <td class="mealRate number">0.00</td>
+              <td class="mealCost number">0.00</td>
+              <td class="khalaShare number">0.00</td>
+              <td class="gasShare number">0.00</td>
+              <td class="electricityShare number">0.00</td>
+              <td class="bariVara number">0.00</td>
+              <td class="totalPay number cell-strong">0.00</td>
+            </tr>
+            <tr>
+              <td><input class="name" value="Masud" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
+              <td class="mealRate number">0.00</td>
+              <td class="mealCost number">0.00</td>
+              <td class="khalaShare number">0.00</td>
+              <td class="gasShare number">0.00</td>
+              <td class="electricityShare number">0.00</td>
+              <td class="bariVara number">0.00</td>
+              <td class="totalPay number cell-strong">0.00</td>
+            </tr>
+            <tr>
+              <td><input class="name" value="Jahid" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
+              <td class="mealRate number">0.00</td>
+              <td class="mealCost number">0.00</td>
+              <td class="khalaShare number">0.00</td>
+              <td class="gasShare number">0.00</td>
+              <td class="electricityShare number">0.00</td>
+              <td class="bariVara number">0.00</td>
+              <td class="totalPay number cell-strong">0.00</td>
+            </tr>
+            <tr>
+              <td><input class="name" value="Hiron" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
+              <td class="mealRate number">0.00</td>
+              <td class="mealCost number">0.00</td>
+              <td class="khalaShare number">0.00</td>
+              <td class="gasShare number">0.00</td>
+              <td class="electricityShare number">0.00</td>
+              <td class="bariVara number">0.00</td>
+              <td class="totalPay number cell-strong">0.00</td>
+            </tr>
+            <tr>
+              <td><input class="name" value="Ibrahim" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
+              <td class="mealRate number">0.00</td>
+              <td class="mealCost number">0.00</td>
+              <td class="khalaShare number">0.00</td>
+              <td class="gasShare number">0.00</td>
+              <td class="electricityShare number">0.00</td>
+              <td class="bariVara number">0.00</td>
+              <td class="totalPay number cell-strong">0.00</td>
+            </tr>
+            <tr>
+              <td><input class="name" value="Anan" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
+              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
+              <td class="mealRate number">0.00</td>
+              <td class="mealCost number">0.00</td>
+              <td class="khalaShare number">0.00</td>
+              <td class="gasShare number">0.00</td>
+              <td class="electricityShare number">0.00</td>
+              <td class="bariVara number">0.00</td>
+              <td class="totalPay number cell-strong">0.00</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>মোট</th>
+              <td id="totalMeal" class="number cell-strong" style="background:var(--foot1)">0</td>
+              <td id="totalBazar" class="number cell-strong" style="background:var(--foot2)">0.00</td>
+              <td id="finalMealRate" class="number cell-strong">0.00</td>
+              <td colspan="5"></td>
+              <td id="grandTotal" class="number cell-strong" style="background:var(--foot3)">0.00</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="hint">Meal Rate = (৬ জনের Total Bazar ÷ Total Meal) → সব রো-তে auto প্রয়োগ হয়</div>
+
+      <!-- Bottom actions -->
+      <div class="toolbar" style="justify-content:center; margin-top:14px">
+        <button class="btn btn-save" onclick="saveData()">
+          💾 Save (এই মাস)
+        </button>
+        <button class="btn btn-primary" onclick="calculateAll()">
+          🔄 Recalculate
+        </button>
+        <button class="btn btn-pdf" onclick="exportPDF()">
+          📄 Export PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- ====== Core Logic ====== -->
+  <script>
+    // --- Helpers
+    const q = (sel, ctx=document) => ctx.querySelector(sel);
+    const qa = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+
+    function checkRentTotal(){
+      const val = Number(q('#bariTotal').value||0);
+      const exact = 3250*2 + 2375*4; // 16000
+      if (val !== exact) {
+        q('#rentWarn').style.display='block';
+        q('#rentMsg').style.display='none';
+      } else {
+        q('#rentWarn').style.display='none';
+        q('#rentMsg').style.display='block';
+      }
+      // ভাড়া শেয়ার সবসময় ফিক্সড থাকবে – ক্যালকুলেশনে এই ইনপুট ব্যবহার করা হয় না
+      calculateAll();
+    }
+
+    function calculateAll(){
+      const rows = qa('#mealTable tbody tr');
+
+      // Totals from inputs
+      const khalaTotal = Number(q('#khalaTotal').value||0);
+      const gasTotal   = Number(q('#gasTotal').value||0);
+      const elecTotal  = Number(q('#electricityTotal').value||0);
+
+      // Sum meal & bazar
+      let totalMeal = 0, totalBazar = 0;
+      rows.forEach(r=>{
+        totalMeal += Number(r.cells[1].querySelector('input').value||0);
+        totalBazar += Number(r.cells[2].querySelector('input').value||0);
+      });
+
+      // Meal rate (2 decimals)
+      const mealRate = totalMeal>0 ? (totalBazar/totalMeal) : 0;
+      const mealRateStr = mealRate.toFixed(2);
+
+      // Per-person equal shares for khala/gas/electricity
+      const per = rows.length || 6;
+      const khalaShare = per ? khalaTotal/per : 0;
+      const gasShare   = per ? gasTotal/per   : 0;
+      const elecShare  = per ? elecTotal/per  : 0;
+
+      let grand = 0;
+
+      // Compute per row
+      rows.forEach(r=>{
+        const name = r.cells[0].querySelector('input').value.trim().toLowerCase();
+        const meal = Number(r.cells[1].querySelector('input').value||0);
+        const bazar= Number(r.cells[2].querySelector('input').value||0);
+
+        // write meal rate cell
+        r.querySelector('.mealRate').textContent = mealRateStr;
+
+        const mealCost = meal * mealRate;
+        r.querySelector('.mealCost').textContent = mealCost.toFixed(2);
+        r.querySelector('.khalaShare').textContent = khalaShare.toFixed(2);
+        r.querySelector('.gasShare').textContent = gasShare.toFixed(2);
+        r.querySelector('.electricityShare').textContent = elecShare.toFixed(2);
+
+        // Fixed rent split rule
+        let bariVara = (name==='ibrahim'||name==='anan') ? 3250 : 2375;
+        r.querySelector('.bariVara').textContent = bariVara.toFixed(2);
+
+        const payable = mealCost + khalaShare + gasShare + elecShare + bariVara - bazar;
+        r.querySelector('.totalPay').textContent = payable.toFixed(2);
+        grand += payable;
+      });
+
+      // Footer updates
+      q('#totalMeal').textContent = totalMeal;
+      q('#totalBazar').textContent = totalBazar.toFixed(2);
+      q('#finalMealRate').textContent = mealRateStr;
+      q('#grandTotal').textContent = grand.toFixed(2);
+    }
+
+    function saveData(){
+      const month = q('#monthSelect').value;
+      const payload = {
+        khala: q('#khalaTotal').value,
+        gas: q('#gasTotal').value,
+        elec: q('#electricityTotal').value,
+        bari: q('#bariTotal').value,
+        rows: qa('#mealTable tbody tr').map(r=>({
+          name: r.cells[0].querySelector('input').value,
+          meal: r.cells[1].querySelector('input').value,
+          bazar:r.cells[2].querySelector('input').value
+        }))
+      };
+      localStorage.setItem('mealData_'+month, JSON.stringify(payload));
+      alert('Saved for '+month);
+    }
+
+    function loadData(){
+      const month = q('#monthSelect').value;
+      const raw = localStorage.getItem('mealData_'+month);
+      if (raw){
+        const data = JSON.parse(raw);
+        q('#khalaTotal').value = data.khala ?? 4500;
+        q('#gasTotal').value = data.gas ?? 600;
+        q('#electricityTotal').value = data.elec ?? 890;
+        q('#bariTotal').value = data.bari ?? 16000;
+
+        const rows = qa('#mealTable tbody tr');
+        rows.forEach((r,i)=>{
+          if (data.rows && data.rows[i]){
+            r.cells[0].querySelector('input').value = data.rows[i].name ?? '';
+            r.cells[1].querySelector('input').value = data.rows[i].meal ?? 0;
+            r.cells[2].querySelector('input').value = data.rows[i].bazar ?? 0;
+          }
+        });
+      } else {
+        // default starting values if nothing saved for this month
+        q('#khalaTotal').value = 4500;
+        q('#gasTotal').value = 600;
+        q('#electricityTotal').value = 890;
+        q('#bariTotal').value = 16000;
+      }
+      checkRentTotal(); // also recalculates
+    }
+
+    function exportPDF(){
+      calculateAll(); // ensure latest values
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({unit:'pt', format:'a4'});
+
+      const title = 'Meal & Expense - ' + q('#monthSelect').value;
+      doc.setFont('helvetica','bold'); doc.setFontSize(14);
+      doc.text(title, 40, 36);
+
+      // Build table data
+      const head = [["Name","Meal","Bazar","Meal Rate","Meal Cost","Khala","Gas","Electricity","Bari Vara","Total Payable"]];
+      const body = qa('#mealTable tbody tr').map(r=>[
+        r.cells[0].querySelector('input').value,
+        r.cells[1].querySelector('input').value,
+        r.cells[2].querySelector('input').value,
+        r.querySelector('.mealRate').textContent,
+        r.querySelector('.mealCost').textContent,
+        r.querySelector('.khalaShare').textContent,
+        r.querySelector('.gasShare').textContent,
+        r.querySelector('.electricityShare').textContent,
+        r.querySelector('.bariVara').textContent,
+        r.querySelector('.totalPay').textContent
+      ]);
+
+      // footer summary row for PDF
+      body.push([
+        "TOTAL",
+        q('#totalMeal').textContent,
+        q('#totalBazar').textContent,
+        q('#finalMealRate').textContent,
+        "", "", "", "",
+        "",
+        q('#grandTotal').textContent
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: 56,
+        styles:{fontSize:9, cellPadding:4},
+        headStyles:{fillColor:[37,99,235]},
+        didDrawPage: function(data){
+          // footer tag
+          const str = "Khala: " + q('#khalaTotal').value + " | Gas: " + q('#gasTotal').value + " | Elec: " + q('#electricityTotal').value + " | Rent rule: IBR/ANAN=3250, others=2375";
+          doc.setFontSize(9);
+          doc.text(str, 40, doc.internal.pageSize.getHeight()-18);
+        }
+      });
+      doc.save('meal-expense-'+q('#monthSelect').value+'.pdf');
+    }
+
+    // init
+    window.addEventListener('load', () => {
+      loadData();
+      calculateAll();
+    });
+  </script>
+</body>
+</html>
