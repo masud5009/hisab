@@ -1,58 +1,170 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
   <title>Meal & Expense Manager (Final)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- ====== Minimal, clean CSS ====== -->
+  <!-- ====== UI CSS ====== -->
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
     :root{
-      --bg:#f4f7fb; --card:#ffffff; --pri:#2563eb; --pri-600:#1d4ed8;
-      --ok:#16a34a; --warn:#f59e0b; --danger:#dc2626;
+      --bg:#f8fafc; --card:#ffffff; --pri:#0ea5a4; --pri-600:#0b8f8e;
+      --accent:#f97316; --ok:#16a34a; --warn:#f59e0b; --danger:#ef4444;
       --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
-      --foot1:#e3f2fd; --foot2:#fff4e5; --foot3:#e6eeff;
+      --foot1:#e0f2fe; --foot2:#fff7ed; --foot3:#ecfdf3;
+      --shadow:0 18px 40px rgba(15,23,42,.12);
     }
     *{box-sizing:border-box}
-    body{margin:0; background:var(--bg); color:var(--text); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto}
-    .wrap{max-width:1200px; margin:32px auto; padding:0 16px}
+    body{
+      margin:0;
+      color:var(--text);
+      font:15px/1.6 "Hind Siliguri","Space Grotesk",system-ui;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dbeafe 0, transparent 60%),
+        radial-gradient(1000px 500px at 110% 10%, #ffe4d5 0, transparent 55%),
+        linear-gradient(180deg, #f8fafc 0, #f1f5f9 100%);
+    }
+    .wrap{max-width:1200px; margin:28px auto 56px; padding:0 16px}
     .card{
-      background:var(--card); border:1px solid var(--line); border-radius:16px;
-      box-shadow:0 8px 24px rgba(15,23,42,.06); padding:20px;
+      background:rgba(255,255,255,.9);
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:24px;
+      backdrop-filter: blur(6px);
+      animation: rise .5s ease both;
     }
     h1{
-      margin:0 0 12px; font-size:28px; font-weight:800; text-align:center; color:var(--pri);
+      margin:0 0 10px;
+      font-size:32px;
+      font-weight:800;
+      text-align:center;
+      letter-spacing:.2px;
+      background:linear-gradient(90deg, var(--pri), var(--accent));
+      -webkit-background-clip:text;
+      color:transparent;
+      font-family:"Space Grotesk","Hind Siliguri",system-ui;
     }
-    .sub{margin:0 0 18px; text-align:center; color:var(--muted)}
-    .toolbar{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:14px}
+    .sub{margin:0 auto 18px; text-align:center; color:var(--muted); max-width:720px}
+    .toolbar{
+      display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:14px
+    }
     .toolbar .group{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    label{font-weight:600}
+    .toolbar.totals{justify-content:space-between; gap:12px}
+    .toolbar.totals .group{
+      flex:1 1 220px;
+      background:#ffffff;
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow:0 6px 16px rgba(15,23,42,.08);
+      justify-content:space-between;
+    }
+    .input-wrap{display:flex; align-items:center; gap:8px}
+    .input-wrap input{min-width:0; width:110px}
+    .suffix{
+      font-weight:700;
+      color:var(--muted);
+      background:#f1f5f9;
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      padding:6px 10px;
+      line-height:1;
+    }
+    label{font-weight:700}
     select, input[type="number"], input[type="text"]{
-      padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text);
-      min-width:90px; outline:0;
+      padding:8px 10px;
+      height:36px;
+      border:1px solid rgba(15,23,42,.12);
+      border-radius:12px;
+      background:#fff;
+      color:var(--text);
+      min-width:80px;
+      outline:0;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+      transition:.2s ease;
+    }
+    select:focus, input[type="number"]:focus, input[type="text"]:focus{
+      border-color:var(--pri);
+      box-shadow:0 0 0 3px rgba(14,165,164,.12);
     }
     input[type="number"]{text-align:right}
     .btn{
-      border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; transition:.2s; display:inline-flex; align-items:center; gap:8px
+      border:0;
+      border-radius:12px;
+      padding:10px 16px;
+      font-weight:700;
+      cursor:pointer;
+      transition:.2s;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:0 10px 20px rgba(15,23,42,.12);
     }
-    .btn-primary{background:var(--pri); color:#fff}
-    .btn-primary:hover{background:var(--pri-600)}
-    .btn-save{background:var(--ok); color:#fff}
-    .btn-save:hover{filter:brightness(.95)}
-    .btn-pdf{background:#8b5cf6; color:#fff}
-    .btn-pdf:hover{filter:brightness(.95)}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn-primary{background:linear-gradient(135deg, var(--pri), #22c55e); color:#fff}
+    .btn-primary:hover{filter:brightness(.98)}
+    .btn-save{background:linear-gradient(135deg, #16a34a, #22c55e); color:#fff}
+    .btn-save:hover{filter:brightness(.98)}
+    .btn-pdf{background:linear-gradient(135deg, var(--accent), #ea580c); color:#fff}
+    .btn-pdf:hover{filter:brightness(.98)}
+    .btn-danger{
+      background:linear-gradient(135deg, #ef4444, #dc2626);
+      color:#fff;
+      padding:6px 12px;
+      font-size:12px;
+      border-radius:999px;
+      box-shadow:none;
+    }
+    .btn-danger:hover{filter:brightness(.98)}
 
-    .table-wrap{overflow:auto; border-radius:14px; border:1px solid var(--line)}
-    table{width:100%; border-collapse:separate; border-spacing:0; background:#fff}
+    .table-wrap{
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius:16px;
+      border:1px solid rgba(15,23,42,.08);
+      background:rgba(255,255,255,.9);
+      box-shadow:0 12px 24px rgba(15,23,42,.08);
+      animation: rise .6s .06s ease both;
+    }
+    table{
+      width:100%;
+      min-width:980px;
+      border-collapse:separate;
+      border-spacing:0;
+      background:transparent
+    }
     thead th{
       position:sticky; top:0; z-index:2;
-      background:linear-gradient(180deg,#1e3a8a,#2563eb); color:#fff;
+      background:linear-gradient(180deg, #0f766e, #0ea5a4);
+      color:#fff;
       font-weight:800; text-transform:uppercase; letter-spacing:.02em;
-      padding:10px; border-bottom:1px solid var(--line);
+      padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.2);
+      font-size:12px;
+      white-space:nowrap;
     }
-    tbody td, tfoot td, tfoot th{padding:8px 10px; border-bottom:1px solid var(--line); text-align:center}
-    tbody tr:nth-child(odd) td{background:#fafbff}
-    tbody input{width:110px}
-    td .name{width:140px; text-align:left}
+    tbody td, tfoot td, tfoot th{
+      padding:8px 8px;
+      border-bottom:1px solid var(--line);
+      text-align:center;
+      vertical-align:middle;
+      white-space:nowrap;
+    }
+    tbody tr:nth-child(odd) td{background:#f8fafc}
+    tbody tr:hover td{background:#f1f5ff}
+    tbody input{width:78px; height:30px; padding:5px 8px}
+    tbody td:nth-child(2) input,
+    tbody td:nth-child(3) input{width:68px}
+    td .name{width:130px; text-align:left}
+    .rentCell{display:flex; flex-direction:row; gap:8px; align-items:center; justify-content:center}
+    .rentLockLabel{
+      display:inline-flex; gap:6px; align-items:center;
+      font-size:10px; color:var(--muted); user-select:none;
+      padding:2px 6px; border-radius:10px; background:#f1f5f9; border:1px solid #e2e8f0;
+    }
+    .rentLock{transform:translateY(1px); width:14px; height:14px}
     .number{font-variant-numeric: tabular-nums}
     .cell-strong{font-weight:800}
 
@@ -63,12 +175,37 @@
     #grandTotalCell{background:var(--foot3)}
     #finalMealRate{background:#dcfce7}
 
-    .hint{margin-top:8px; color:var(--muted); text-align:center}
-    .warn{display:none; margin:10px 0 0; padding:10px; border-radius:10px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-weight:600}
-    .ok{display:none; margin:10px 0 0; padding:10px; border-radius:10px; background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; font-weight:600}
-    @media (max-width:860px){
-      tbody input{width:90px}
-      td .name{width:120px}
+    .hint{margin-top:8px; color:var(--muted); text-align:center; font-size:13px}
+    .warn{
+      display:none; margin:10px 0 0; padding:10px 12px; border-radius:12px;
+      background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-weight:600
+    }
+    .ok{
+      display:none; margin:10px 0 0; padding:10px 12px; border-radius:12px;
+      background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; font-weight:600
+    }
+
+    @keyframes rise{
+      from{opacity:0; transform:translateY(10px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+
+    @media (max-width:900px){
+      .toolbar{justify-content:stretch}
+      .toolbar .group{flex:1 1 100%; justify-content:space-between}
+      .toolbar.totals .group{flex:1 1 100%}
+      .toolbar .group select,
+      .toolbar .group input{flex:1 1 auto; min-width:0; width:100%}
+      .actions .btn{flex:1 1 100%; justify-content:center}
+      tbody input{width:72px; height:28px}
+      td .name{width:110px}
+    }
+    @media (max-width:640px){
+      body{font-size:13px}
+      h1{font-size:26px}
+      thead th{padding:9px 8px; font-size:11px}
+      tbody td, tfoot td, tfoot th{padding:7px 8px}
+      .toolbar{gap:10px}
     }
   </style>
 </head>
@@ -76,8 +213,6 @@
   <div class="wrap">
     <div class="card">
       <h1>🍽️ Meal & Expense Manager</h1>
-      <p class="sub">৬ জনের মাসিক মিল–বিলের হিসাব • অটো Meal Rate • Save/Load • PDF Export</p>
-
       <!-- Top controls -->
       <div class="toolbar">
         <div class="group">
@@ -92,28 +227,36 @@
       </div>
 
       <!-- Totals input -->
-      <div class="toolbar" style="justify-content:space-between; gap:14px">
+      <div class="toolbar totals">
         <div class="group">
           <label>Khala Total:</label>
-          <input type="number" id="khalaTotal" value="4500" step="1" oninput="calculateAll()" /> Tk
+          <div class="input-wrap">
+            <input type="number" id="khalaTotal" value="4500" step="1" oninput="calculateAll()" />
+          </div>
         </div>
         <div class="group">
           <label>Gas Total:</label>
-          <input type="number" id="gasTotal" value="600" step="1" oninput="calculateAll()" /> Tk
+          <div class="input-wrap">
+            <input type="number" id="gasTotal" value="600" step="1" oninput="calculateAll()" />
+          </div>
         </div>
         <div class="group">
           <label>Electricity Total:</label>
-          <input type="number" id="electricityTotal" value="890" step="1" oninput="calculateAll()" /> Tk
+          <div class="input-wrap">
+            <input type="number" id="electricityTotal" value="890" step="1" oninput="calculateAll()" />
+          </div>
         </div>
         <div class="group">
           <label>Bari Vara Total:</label>
-          <input type="number" id="bariTotal" value="16000" step="1" oninput="checkRentTotal()" /> Tk
+          <div class="input-wrap">
+            <input type="number" id="bariTotal" value="16000" step="1" oninput="distributeRentEqual()" />
+          </div>
         </div>
       </div>
 
       <!-- rent note -->
-      <div id="rentMsg" class="ok">বাড়ি ভাড়া শেয়ার: Ibrahim & Anan = 3250 করে, বাকি ৪ জন = 2375 করে (মোট 16000)।</div>
-      <div id="rentWarn" class="warn">সতর্কতা: উপরের “Bari Vara Total” ইনপুটটি তথ্যসূত্র মাত্র। শেয়ার সবসময়: Ibrahim/Anan = 3250, অন্য ৪ জন = 2375 হিসেবে ধরা হবে (মোট 16000)।</div>
+      <div id="rentMsg" class="ok" style="margin-bottom: 20px;">Rent split OK: Sum of all per-person rent matches Bari Vara Total.</div>
+      <div id="rentWarn" class="warn">Warning: Bari Vara Total must equal the sum of each person's rent.</div>
 
       <!-- Table -->
       <div class="table-wrap">
@@ -130,100 +273,27 @@
               <th>Electricity</th>
               <th>Bari Vara</th>
               <th>Total Payable</th>
+              <th>Action</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- 6 rows -->
-            <tr>
-              <td><input class="name" value="Sohel" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
-              <td class="mealRate number">0.00</td>
-              <td class="mealCost number">0.00</td>
-              <td class="khalaShare number">0.00</td>
-              <td class="gasShare number">0.00</td>
-              <td class="electricityShare number">0.00</td>
-              <td class="bariVara number">0.00</td>
-              <td class="totalPay number cell-strong">0.00</td>
-            </tr>
-            <tr>
-              <td><input class="name" value="Masud" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
-              <td class="mealRate number">0.00</td>
-              <td class="mealCost number">0.00</td>
-              <td class="khalaShare number">0.00</td>
-              <td class="gasShare number">0.00</td>
-              <td class="electricityShare number">0.00</td>
-              <td class="bariVara number">0.00</td>
-              <td class="totalPay number cell-strong">0.00</td>
-            </tr>
-            <tr>
-              <td><input class="name" value="Jahid" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
-              <td class="mealRate number">0.00</td>
-              <td class="mealCost number">0.00</td>
-              <td class="khalaShare number">0.00</td>
-              <td class="gasShare number">0.00</td>
-              <td class="electricityShare number">0.00</td>
-              <td class="bariVara number">0.00</td>
-              <td class="totalPay number cell-strong">0.00</td>
-            </tr>
-            <tr>
-              <td><input class="name" value="Hiron" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
-              <td class="mealRate number">0.00</td>
-              <td class="mealCost number">0.00</td>
-              <td class="khalaShare number">0.00</td>
-              <td class="gasShare number">0.00</td>
-              <td class="electricityShare number">0.00</td>
-              <td class="bariVara number">0.00</td>
-              <td class="totalPay number cell-strong">0.00</td>
-            </tr>
-            <tr>
-              <td><input class="name" value="Ibrahim" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
-              <td class="mealRate number">0.00</td>
-              <td class="mealCost number">0.00</td>
-              <td class="khalaShare number">0.00</td>
-              <td class="gasShare number">0.00</td>
-              <td class="electricityShare number">0.00</td>
-              <td class="bariVara number">0.00</td>
-              <td class="totalPay number cell-strong">0.00</td>
-            </tr>
-            <tr>
-              <td><input class="name" value="Anan" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="1" oninput="calculateAll()" /></td>
-              <td><input type="number" value="0" step="0.01" oninput="calculateAll()" /></td>
-              <td class="mealRate number">0.00</td>
-              <td class="mealCost number">0.00</td>
-              <td class="khalaShare number">0.00</td>
-              <td class="gasShare number">0.00</td>
-              <td class="electricityShare number">0.00</td>
-              <td class="bariVara number">0.00</td>
-              <td class="totalPay number cell-strong">0.00</td>
-            </tr>
-          </tbody>
+          <tbody></tbody>
           <tfoot>
             <tr>
               <th>মোট</th>
               <td id="totalMeal" class="number cell-strong" style="background:var(--foot1)">0</td>
               <td id="totalBazar" class="number cell-strong" style="background:var(--foot2)">0.00</td>
               <td id="finalMealRate" class="number cell-strong">0.00</td>
-              <td colspan="5"></td>
+              <td colspan="6"></td>
               <td id="grandTotal" class="number cell-strong" style="background:var(--foot3)">0.00</td>
             </tr>
           </tfoot>
         </table>
       </div>
-
-      <div class="hint">Meal Rate = (৬ জনের Total Bazar ÷ Total Meal) → সব রো-তে auto প্রয়োগ হয়</div>
-
       <!-- Bottom actions -->
-      <div class="toolbar" style="justify-content:center; margin-top:14px">
+      <div class="toolbar actions" style="justify-content:center; margin-top:14px">
+        <button class="btn btn-primary" onclick="addRow()">
+          ➕ Add Person
+        </button>
         <button class="btn btn-save" onclick="saveData()">
           💾 Save (এই মাস)
         </button>
@@ -249,16 +319,114 @@
 
     function checkRentTotal(){
       const val = Number(q('#bariTotal').value||0);
-      const exact = 3250*2 + 2375*4; // 16000
-      if (val !== exact) {
+      const rentSum = qa('#mealTable tbody tr').reduce((sum,r)=>{
+        const rentInput = r.querySelector('.rentInput');
+        return sum + Number(rentInput?.value||0);
+      },0);
+      if (val !== rentSum) {
         q('#rentWarn').style.display='block';
         q('#rentMsg').style.display='none';
       } else {
         q('#rentWarn').style.display='none';
         q('#rentMsg').style.display='block';
       }
-      // ভাড়া শেয়ার সবসময় ফিক্সড থাকবে – ক্যালকুলেশনে এই ইনপুট ব্যবহার করা হয় না
       calculateAll();
+    }
+
+    function distributeRentEqual(){
+      const rows = qa('#mealTable tbody tr');
+      const total = Number(q('#bariTotal').value||0);
+      let lockedSum = 0;
+      const unlocked = [];
+
+      rows.forEach(r=>{
+        const rentInput = r.querySelector('.rentInput');
+        const rentLock = r.querySelector('.rentLock');
+        if (!rentInput) return;
+        if (rentLock && rentLock.checked){
+          lockedSum += Number(rentInput.value||0);
+        } else {
+          unlocked.push(rentInput);
+        }
+      });
+
+      const remaining = Math.max(0, total - lockedSum);
+      if (unlocked.length === 0){
+        checkRentTotal();
+        return;
+      }
+
+      const base = Math.floor(remaining / unlocked.length);
+      const remainder = remaining - base * unlocked.length;
+      unlocked.forEach((ri, i)=>{
+        ri.value = i === 0 ? base + remainder : base;
+      });
+
+      checkRentTotal();
+    }
+
+    function handleRentInput(input){
+      const total = Number(q('#bariTotal').value||0);
+      const rows = qa('#mealTable tbody tr');
+      let current = Number(input.value||0);
+      if (current < 0) current = 0;
+
+      const row = input.closest('tr');
+      const lock = row?.querySelector('.rentLock');
+      if (lock) lock.checked = true;
+
+      const otherLockedSum = rows.reduce((sum,r)=>{
+        const ri = r.querySelector('.rentInput');
+        const lk = r.querySelector('.rentLock');
+        if (!ri || ri === input) return sum;
+        if (lk && lk.checked) return sum + Number(ri.value||0);
+        return sum;
+      },0);
+
+      const maxAllowed = Math.max(0, total - otherLockedSum);
+      if (current > maxAllowed) current = maxAllowed;
+      input.value = current;
+
+      distributeRentEqual();
+    }
+
+    function createRow(data={}){
+      const tr = document.createElement('tr');
+      const safeName = (data.name||'').replace(/"/g,'&quot;');
+      tr.innerHTML = `
+        <td><input class="name" value="${safeName}" oninput="calculateAll()" /></td>
+        <td><input type="number" value="${data.meal ?? 0}" step="1" oninput="calculateAll()" /></td>
+        <td><input type="number" value="${data.bazar ?? 0}" step="0.01" oninput="calculateAll()" /></td>
+        <td class="mealRate number">0.00</td>
+        <td class="mealCost number">0.00</td>
+        <td class="khalaShare number">0.00</td>
+        <td class="gasShare number">0.00</td>
+        <td class="electricityShare number">0.00</td>
+        <td>
+          <div class="rentCell">
+            <input class="rentInput" type="number" value="${data.rent ?? 0}" step="1" oninput="handleRentInput(this)" />
+            <label class="rentLockLabel"><input class="rentLock" type="checkbox" onchange="distributeRentEqual()" />Lock</label>
+          </div>
+        </td>
+        <td class="totalPay number cell-strong">0.00</td>
+        <td><button class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
+      `;
+      return tr;
+    }
+
+    function addRow(data, opts={}){
+      q('#mealTable tbody').appendChild(createRow(data));
+      if (opts.distribute !== false) {
+        distributeRentEqual();
+      } else {
+        checkRentTotal();
+      }
+    }
+
+    function removeRow(btn){
+      const row = btn.closest('tr');
+      if (row) row.remove();
+      distributeRentEqual();
     }
 
     function calculateAll(){
@@ -281,7 +449,7 @@
       const mealRateStr = mealRate.toFixed(2);
 
       // Per-person equal shares for khala/gas/electricity
-      const per = rows.length || 6;
+      const per = rows.length || 1;
       const khalaShare = per ? khalaTotal/per : 0;
       const gasShare   = per ? gasTotal/per   : 0;
       const elecShare  = per ? elecTotal/per  : 0;
@@ -290,7 +458,6 @@
 
       // Compute per row
       rows.forEach(r=>{
-        const name = r.cells[0].querySelector('input').value.trim().toLowerCase();
         const meal = Number(r.cells[1].querySelector('input').value||0);
         const bazar= Number(r.cells[2].querySelector('input').value||0);
 
@@ -303,9 +470,8 @@
         r.querySelector('.gasShare').textContent = gasShare.toFixed(2);
         r.querySelector('.electricityShare').textContent = elecShare.toFixed(2);
 
-        // Fixed rent split rule
-        let bariVara = (name==='ibrahim'||name==='anan') ? 3250 : 2375;
-        r.querySelector('.bariVara').textContent = bariVara.toFixed(2);
+        const rentInput = r.querySelector('.rentInput');
+        const bariVara = Number(rentInput?.value||0);
 
         const payable = mealCost + khalaShare + gasShare + elecShare + bariVara - bazar;
         r.querySelector('.totalPay').textContent = payable.toFixed(2);
@@ -326,11 +492,14 @@
         gas: q('#gasTotal').value,
         elec: q('#electricityTotal').value,
         bari: q('#bariTotal').value,
-        rows: qa('#mealTable tbody tr').map(r=>({
-          name: r.cells[0].querySelector('input').value,
-          meal: r.cells[1].querySelector('input').value,
-          bazar:r.cells[2].querySelector('input').value
-        }))
+        rows: qa('#mealTable tbody tr').map(r=>(
+          {
+            name: r.cells[0].querySelector('input').value,
+            meal: r.cells[1].querySelector('input').value,
+            bazar:r.cells[2].querySelector('input').value,
+            rent: r.querySelector('.rentInput')?.value ?? 0
+          }
+        ))
       };
       localStorage.setItem('mealData_'+month, JSON.stringify(payload));
       alert('Saved for '+month);
@@ -339,27 +508,31 @@
     function loadData(){
       const month = q('#monthSelect').value;
       const raw = localStorage.getItem('mealData_'+month);
+      const tbody = q('#mealTable tbody');
+      tbody.innerHTML = '';
       if (raw){
         const data = JSON.parse(raw);
         q('#khalaTotal').value = data.khala ?? 4500;
         q('#gasTotal').value = data.gas ?? 600;
         q('#electricityTotal').value = data.elec ?? 890;
         q('#bariTotal').value = data.bari ?? 16000;
-
-        const rows = qa('#mealTable tbody tr');
-        rows.forEach((r,i)=>{
-          if (data.rows && data.rows[i]){
-            r.cells[0].querySelector('input').value = data.rows[i].name ?? '';
-            r.cells[1].querySelector('input').value = data.rows[i].meal ?? 0;
-            r.cells[2].querySelector('input').value = data.rows[i].bazar ?? 0;
-          }
-        });
+        (data.rows || []).forEach(r=>addRow(r, {distribute:false}));
       } else {
         // default starting values if nothing saved for this month
         q('#khalaTotal').value = 4500;
         q('#gasTotal').value = 600;
         q('#electricityTotal').value = 890;
         q('#bariTotal').value = 16000;
+        const defaults = [
+          {name:'Liton'},
+          {name:'Masud'},
+          {name:'Jahid'},
+          {name:'Monir'},
+          {name:'Ibrahim'},
+          {name:'Inan'}
+        ];
+        defaults.forEach(r=>addRow(r, {distribute:false}));
+        distributeRentEqual();
       }
       checkRentTotal(); // also recalculates
     }
@@ -369,7 +542,8 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({unit:'pt', format:'a4'});
 
-      const title = 'Meal & Expense - ' + q('#monthSelect').value;
+      const year = new Date().getFullYear();
+      const title = 'Meal & Expense - ' + q('#monthSelect').value + ' ' + year;
       doc.setFont('helvetica','bold'); doc.setFontSize(14);
       doc.text(title, 40, 36);
 
@@ -384,7 +558,7 @@
         r.querySelector('.khalaShare').textContent,
         r.querySelector('.gasShare').textContent,
         r.querySelector('.electricityShare').textContent,
-        r.querySelector('.bariVara').textContent,
+        r.querySelector('.rentInput')?.value ?? '0',
         r.querySelector('.totalPay').textContent
       ]);
 
@@ -404,18 +578,23 @@
         startY: 56,
         styles:{fontSize:9, cellPadding:4},
         headStyles:{fillColor:[37,99,235]},
-        didDrawPage: function(data){
-          // footer tag
-          const str = "Khala: " + q('#khalaTotal').value + " | Gas: " + q('#gasTotal').value + " | Elec: " + q('#electricityTotal').value + " | Rent rule: IBR/ANAN=3250, others=2375";
+        didDrawPage: function(){
+          const str = "Khala: " + q('#khalaTotal').value + " | Gas: " + q('#gasTotal').value + " | Elec: " + q('#electricityTotal').value + " | Rent total: " + q('#bariTotal').value;
           doc.setFontSize(9);
           doc.text(str, 40, doc.internal.pageSize.getHeight()-18);
         }
       });
-      doc.save('meal-expense-'+q('#monthSelect').value+'.pdf');
+      doc.save('meal-expense-'+q('#monthSelect').value+'-'+year+'.pdf');
     }
 
     // init
     window.addEventListener('load', () => {
+      const month = new Date().toLocaleString('en-US', {month:'long'});
+      const monthSelect = q('#monthSelect');
+      if (monthSelect){
+        const idx = Array.from(monthSelect.options).findIndex(o=>o.value===month);
+        if (idx >= 0) monthSelect.selectedIndex = idx;
+      }
       loadData();
       calculateAll();
     });
