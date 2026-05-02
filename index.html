@@ -131,7 +131,7 @@
     }
     table{
       width:100%;
-      min-width:980px;
+      min-width:1080px;
       border-collapse:separate;
       border-spacing:0;
       background:transparent
@@ -247,6 +247,12 @@
           </div>
         </div>
         <div class="group">
+          <label>WiFi Total:</label>
+          <div class="input-wrap">
+            <input type="number" id="wifiTotal" value="0" step="1" oninput="calculateAll()" />
+          </div>
+        </div>
+        <div class="group">
           <label>Bari Vara Total:</label>
           <div class="input-wrap">
             <input type="number" id="bariTotal" value="16000" step="1" oninput="distributeRentEqual()" />
@@ -271,6 +277,7 @@
               <th>Khala</th>
               <th>Gas</th>
               <th>Electricity</th>
+              <th>WiFi</th>
               <th>Bari Vara</th>
               <th>Total Payable</th>
               <th>Action</th>
@@ -285,6 +292,7 @@
               <td id="finalMealRate" class="number cell-strong">0.00</td>
               <td colspan="6"></td>
               <td id="grandTotal" class="number cell-strong" style="background:var(--foot3)">0.00</td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -402,6 +410,7 @@
         <td class="khalaShare number">0.00</td>
         <td class="gasShare number">0.00</td>
         <td class="electricityShare number">0.00</td>
+        <td class="wifiShare number">0.00</td>
         <td>
           <div class="rentCell">
             <input class="rentInput" type="number" value="${data.rent ?? 0}" step="1" oninput="handleRentInput(this)" />
@@ -436,6 +445,7 @@
       const khalaTotal = Number(q('#khalaTotal').value||0);
       const gasTotal   = Number(q('#gasTotal').value||0);
       const elecTotal  = Number(q('#electricityTotal').value||0);
+      const wifiTotal  = Number(q('#wifiTotal').value||0);
 
       // Sum meal & bazar
       let totalMeal = 0, totalBazar = 0;
@@ -453,6 +463,7 @@
       const khalaShare = per ? khalaTotal/per : 0;
       const gasShare   = per ? gasTotal/per   : 0;
       const elecShare  = per ? elecTotal/per  : 0;
+      const wifiShare  = per ? wifiTotal/per   : 0;
 
       let grand = 0;
 
@@ -469,11 +480,12 @@
         r.querySelector('.khalaShare').textContent = khalaShare.toFixed(2);
         r.querySelector('.gasShare').textContent = gasShare.toFixed(2);
         r.querySelector('.electricityShare').textContent = elecShare.toFixed(2);
+        r.querySelector('.wifiShare').textContent = wifiShare.toFixed(2);
 
         const rentInput = r.querySelector('.rentInput');
         const bariVara = Number(rentInput?.value||0);
 
-        const payable = mealCost + khalaShare + gasShare + elecShare + bariVara - bazar;
+        const payable = mealCost + khalaShare + gasShare + elecShare + wifiShare + bariVara - bazar;
         r.querySelector('.totalPay').textContent = payable.toFixed(2);
         grand += payable;
       });
@@ -491,6 +503,7 @@
         khala: q('#khalaTotal').value,
         gas: q('#gasTotal').value,
         elec: q('#electricityTotal').value,
+        wifi: q('#wifiTotal').value,
         bari: q('#bariTotal').value,
         rows: qa('#mealTable tbody tr').map(r=>(
           {
@@ -515,6 +528,7 @@
         q('#khalaTotal').value = data.khala ?? 4500;
         q('#gasTotal').value = data.gas ?? 600;
         q('#electricityTotal').value = data.elec ?? 890;
+        q('#wifiTotal').value = data.wifi ?? 0;
         q('#bariTotal').value = data.bari ?? 16000;
         (data.rows || []).forEach(r=>addRow(r, {distribute:false}));
       } else {
@@ -522,6 +536,7 @@
         q('#khalaTotal').value = 4500;
         q('#gasTotal').value = 600;
         q('#electricityTotal').value = 890;
+        q('#wifiTotal').value = 0;
         q('#bariTotal').value = 16000;
         const defaults = [
           {name:'Liton'},
@@ -548,7 +563,7 @@
       doc.text(title, 40, 36);
 
       // Build table data
-      const head = [["Name","Meal","Bazar","Meal Rate","Meal Cost","Khala","Gas","Electricity","Bari Vara","Total Payable"]];
+      const head = [["Name","Meal","Bazar","Meal Rate","Meal Cost","Khala","Gas","Electricity","WiFi","Bari Vara","Total Payable"]];
       const body = qa('#mealTable tbody tr').map(r=>[
         r.cells[0].querySelector('input').value,
         r.cells[1].querySelector('input').value,
@@ -558,6 +573,7 @@
         r.querySelector('.khalaShare').textContent,
         r.querySelector('.gasShare').textContent,
         r.querySelector('.electricityShare').textContent,
+        r.querySelector('.wifiShare').textContent,
         r.querySelector('.rentInput')?.value ?? '0',
         r.querySelector('.totalPay').textContent
       ]);
@@ -568,7 +584,7 @@
         q('#totalMeal').textContent,
         q('#totalBazar').textContent,
         q('#finalMealRate').textContent,
-        "", "", "", "",
+        "", "", "", "", "",
         "",
         q('#grandTotal').textContent
       ]);
@@ -579,7 +595,7 @@
         styles:{fontSize:9, cellPadding:4},
         headStyles:{fillColor:[37,99,235]},
         didDrawPage: function(){
-          const str = "Khala: " + q('#khalaTotal').value + " | Gas: " + q('#gasTotal').value + " | Elec: " + q('#electricityTotal').value + " | Rent total: " + q('#bariTotal').value;
+          const str = "Khala: " + q('#khalaTotal').value + " | Gas: " + q('#gasTotal').value + " | Elec: " + q('#electricityTotal').value + " | WiFi: " + q('#wifiTotal').value + " | Rent total: " + q('#bariTotal').value;
           doc.setFontSize(9);
           doc.text(str, 40, doc.internal.pageSize.getHeight()-18);
         }
