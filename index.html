@@ -51,18 +51,37 @@
       display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:14px
     }
     .toolbar .group{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    .toolbar.totals{justify-content:space-between; gap:12px}
+    .toolbar.totals{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0, 1fr));
+      gap:12px;
+      align-items:stretch;
+      justify-content:stretch
+    }
     .toolbar.totals .group{
-      flex:1 1 220px;
+      flex:unset;
+      min-width:0;
       background:#ffffff;
       border:1px solid rgba(15,23,42,.08);
       border-radius:14px;
       padding:10px 12px;
       box-shadow:0 6px 16px rgba(15,23,42,.08);
-      justify-content:space-between;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:flex-start;
+      gap:6px;
     }
-    .input-wrap{display:flex; align-items:center; gap:8px}
-    .input-wrap input{min-width:0; width:110px}
+    .toolbar.totals .group label{
+      display:block;
+      line-height:1.2;
+    }
+    .input-wrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+    }
+    .input-wrap input{min-width:0; width:100%}
     .suffix{
       font-weight:700;
       color:var(--muted);
@@ -192,6 +211,7 @@
 
     @media (max-width:900px){
       .toolbar{justify-content:stretch}
+      .toolbar.totals{grid-template-columns:1fr}
       .toolbar .group{flex:1 1 100%; justify-content:space-between}
       .toolbar.totals .group{flex:1 1 100%}
       .toolbar .group select,
@@ -269,7 +289,7 @@
         <table id="mealTable">
           <thead>
             <tr>
-              <th>নাম</th>
+              <th>Name</th>
               <th>Meal</th>
               <th>Bazar (Tk)</th>
               <th>Meal Rate (Tk)</th>
