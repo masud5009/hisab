@@ -1,0 +1,59 @@
+// ============================================================
+// firestore.rules
+// Copy-paste this into Firebase Console → Firestore → Rules
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper: check if the requester is an admin ───────
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ─── Helper: check if the requester is a specific user ──
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // ─── users collection ─────────────────────────────────
+    match /users/{userId} {
+      // Any authenticated user can read their own profile
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Only admins can create or update user profiles
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── bazar collection ──────────────────────────────────
+    match /bazar/{docId} {
+      // User can read/write their own bazar entries; admin can read/write all
+      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+    }
+
+    // ─── meals collection ──────────────────────────────────
+    match /meals/{docId} {
+      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+    }
+
+    // ─── months collection ─────────────────────────────────
+    match /months/{monthId} {
+      // All authenticated users can READ month cost data (needed for their own calculation)
+      allow read: if request.auth != null;
+      // Only admin can write month costs
+      allow write: if isAdmin();
+    }
+
+    // ─── rentSplits collection ─────────────────────────────
+    match /rentSplits/{docId} {
+      // User can read their own rent split; admin can read/write all
+      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+  }
+}

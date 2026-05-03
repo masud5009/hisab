@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Dashboard — হিসাব</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"/>
+  <style>
+    :root {
+      --clr-bg: #f6f8fb;
+      --clr-card: #ffffff;
+      --clr-border: #d8dee8;
+      --clr-user: #2563eb;
+      --clr-user-glow: rgba(37,99,235,0.1);
+      --clr-green: #16a34a;
+      --clr-yellow: #b7791f;
+      --clr-text: #172033;
+      --clr-muted: #667085;
+      --sidebar-w: 220px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      font-family: 'Space Grotesk', sans-serif;
+      margin: 0;
+    }
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: #ffffff;
+      border-right: 1px solid var(--clr-border);
+      display: flex; flex-direction: column;
+      padding: 1.5rem 0;
+      z-index: 100;
+    }
+    .sidebar-brand { padding: 0 1.25rem 1.25rem; border-bottom: 1px solid var(--clr-border); margin-bottom: 1.25rem; }
+    .brand-name { font-size: 1.3rem; font-weight: 700; color: var(--clr-user); }
+    .brand-sub { font-size: 0.7rem; color: var(--clr-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .nav-item a {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 1.25rem;
+      color: var(--clr-muted);
+      text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-item a:hover, .nav-item a.active {
+      color: var(--clr-text);
+      background: var(--clr-user-glow);
+      border-left-color: var(--clr-user);
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--clr-border);
+    }
+    .user-info { font-size: 0.8rem; color: var(--clr-muted); margin-bottom: 0.75rem; }
+    .user-info strong { color: var(--clr-text); display: block; }
+    .btn-logout {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--clr-border);
+      color: var(--clr-muted);
+      border-radius: 8px;
+      padding: 0.45rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .btn-logout:hover { border-color: #e74c3c; color: #e74c3c; }
+
+    /* Main */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .topbar h2 { font-size: 1.25rem; font-weight: 700; margin: 0; }
+    .month-selector {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      color: var(--clr-text);
+      border-radius: 10px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.875rem;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .month-selector:focus { outline: none; border-color: var(--clr-user); }
+
+    /* Summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .summ-card {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 10px 24px rgba(15,23,42,0.05);
+    }
+    .summ-label { font-size: 0.72rem; color: var(--clr-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem; }
+    .summ-value { font-size: 1.35rem; font-weight: 700; color: var(--clr-text); }
+    .summ-card.highlight { border-color: var(--clr-user); background: var(--clr-user-glow); }
+    .summ-card.highlight .summ-value { color: var(--clr-user); }
+    .summ-card.payable { border-color: var(--clr-yellow); background: rgba(183,121,31,0.1); }
+    .summ-card.payable .summ-value { color: var(--clr-yellow); }
+
+    /* Cards */
+    .card {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      border-radius: 14px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.06);
+    }
+    .card-header-custom {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--clr-border);
+      display: flex; align-items: center; gap: 0.5rem;
+      font-weight: 600; font-size: 0.875rem;
+    }
+    .card-header-custom i { color: var(--clr-user); }
+    .card-body-custom { padding: 1.25rem; }
+
+    /* Form */
+    .form-label { font-size: 0.8rem; color: var(--clr-muted); font-weight: 500; }
+    .form-control {
+      background: #ffffff;
+      border: 1px solid var(--clr-border);
+      color: var(--clr-text);
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.875rem;
+    }
+    .form-control:focus {
+      background: #ffffff; color: var(--clr-text);
+      border-color: var(--clr-user);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .form-control::placeholder { color: var(--clr-muted); }
+
+    /* Meal input row */
+    .meal-inputs { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .meal-input-group { flex: 1; min-width: 80px; }
+    .meal-input-group label { font-size: 0.75rem; color: var(--clr-muted); }
+    .meal-preview {
+      background: rgba(183,121,31,0.1);
+      border: 1px solid rgba(183,121,31,0.25);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--clr-yellow);
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    /* Table */
+    .table { color: var(--clr-text); font-size: 0.85rem; }
+    .table thead th {
+      background: #f1f5f9;
+      color: var(--clr-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-color: var(--clr-border);
+    }
+    .table td, .table th { border-color: var(--clr-border); vertical-align: middle; }
+
+    .btn-add {
+      background: var(--clr-user);
+      color: #ffffff;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.15s;
+    }
+    .btn-add:hover { background: #1d4ed8; }
+
+    .alert { border-radius: 8px; font-size: 0.85rem; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .main-content { margin-left: 0; padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">হিসাব</div>
+      <div class="brand-sub">Member Panel</div>
+    </div>
+    <nav>
+      <div class="nav-item">
+        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> Summary</a>
+      </div>
+      <div class="nav-item">
+        <a href="#section-bazar"><i class="bi bi-basket"></i> Add Bazar</a>
+      </div>
+      <div class="nav-item">
+        <a href="#section-meals"><i class="bi bi-egg-fried"></i> Add Meals</a>
+      </div>
+      <div class="nav-item">
+        <a href="#section-history"><i class="bi bi-clock-history"></i> History</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <strong id="userName">Member</strong>
+        <span id="userUsername" style="font-size:0.75rem">@username</span>
+      </div>
+      <button class="btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-left me-1"></i> Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <h2><i class="bi bi-person-circle me-2" style="color:var(--clr-user)"></i>My Dashboard</h2>
+      <select class="month-selector" id="monthSelector"></select>
+    </div>
+
+    <!-- ── Summary ── -->
+    <div id="section-summary">
+      <div class="summary-grid">
+        <div class="summ-card highlight">
+          <div class="summ-label">Total Meals</div>
+          <div class="summ-value" id="summTotalMeals">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">My Bazar</div>
+          <div class="summ-value" id="summTotalBazar">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">Meal Rate</div>
+          <div class="summ-value" id="summMealRate">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">Meal Cost</div>
+          <div class="summ-value" id="summMealCost">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">Khala</div>
+          <div class="summ-value" id="summKhala">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">Gas</div>
+          <div class="summ-value" id="summGas">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">Electricity</div>
+          <div class="summ-value" id="summElectricity">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">WiFi</div>
+          <div class="summ-value" id="summWifi">—</div>
+        </div>
+        <div class="summ-card">
+          <div class="summ-label">Bari Vara</div>
+          <div class="summ-value" id="summBariVara">—</div>
+        </div>
+        <div class="summ-card payable">
+          <div class="summ-label">💰 Total Payable</div>
+          <div class="summ-value" id="summTotalPayable">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Add Bazar ── -->
+    <div class="card" id="section-bazar">
+      <div class="card-header-custom">
+        <i class="bi bi-basket"></i> Add Bazar Entry
+      </div>
+      <div class="card-body-custom">
+        <div id="bazarAlert" class="alert d-none"></div>
+        <form id="bazarForm" novalidate>
+          <div class="row g-3">
+            <div class="col-md-3 col-6">
+              <label class="form-label">Date *</label>
+              <input type="date" id="bazarDate" class="form-control" required/>
+            </div>
+            <div class="col-md-5 col-12">
+              <label class="form-label">Description *</label>
+              <input type="text" id="bazarDesc" class="form-control" placeholder="e.g. Fish, vegetables..." required/>
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label">Amount (৳) *</label>
+              <input type="number" id="bazarAmount" class="form-control" min="0.01" step="0.01" placeholder="0.00" required/>
+            </div>
+            <div class="col-md-2 col-6 d-flex align-items-end">
+              <button type="submit" class="btn-add w-100">
+                <i class="bi bi-plus-circle me-1"></i> Add
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── Add Meals ── -->
+    <div class="card" id="section-meals">
+      <div class="card-header-custom">
+        <i class="bi bi-egg-fried"></i> Add Meal Entry
+      </div>
+      <div class="card-body-custom">
+        <div id="mealAlert" class="alert d-none"></div>
+        <form id="mealForm" novalidate>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2 col-6">
+              <label class="form-label">Date *</label>
+              <input type="date" id="mealDate" class="form-control" required/>
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label">Morning 🌅</label>
+              <input type="number" id="mealMorning" class="form-control" min="0" max="1" step="0.5" value="0" placeholder="0"/>
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label">Lunch ☀️</label>
+              <input type="number" id="mealLunch" class="form-control" min="0" max="1" step="0.5" value="0" placeholder="0"/>
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label">Dinner 🌙</label>
+              <input type="number" id="mealDinner" class="form-control" min="0" max="1" step="0.5" value="0" placeholder="0"/>
+            </div>
+            <div class="col-md-2 col-6">
+              <div class="meal-preview">
+                <i class="bi bi-calculator"></i>
+                Total: <strong id="mealTotalPreview">0</strong>
+              </div>
+            </div>
+            <div class="col-md-2 col-6">
+              <button type="submit" class="btn-add w-100">
+                <i class="bi bi-plus-circle me-1"></i> Add
+              </button>
+            </div>
+          </div>
+          <small class="text-muted d-block mt-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Use 1 for full meal, 0.5 for half meal. One entry per day.
+          </small>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── History ── -->
+    <div class="row g-3" id="section-history">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header-custom">
+            <i class="bi bi-basket"></i> Bazar History
+          </div>
+          <div class="card-body-custom p-0">
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr><th>Date</th><th>Description</th><th>Amount</th></tr>
+                </thead>
+                <tbody id="bazarHistoryBody">
+                  <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header-custom">
+            <i class="bi bi-egg-fried"></i> Meal History
+          </div>
+          <div class="card-body-custom p-0">
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr><th>Date</th><th>Morning</th><th>Lunch</th><th>Dinner</th><th>Total</th></tr>
+                </thead>
+                <tbody id="mealHistoryBody">
+                  <tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module" src="./user.js"></script>
+</body>
+</html>
