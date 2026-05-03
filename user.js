@@ -14,7 +14,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   serverTimestamp,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -242,20 +241,21 @@ async function loadBazarHistory() {
   const snap = await getDocs(query(
     collection(db, "bazar"),
     where("userId", "==", currentUser.uid),
-    where("month", "==", selectedMonth),
-    orderBy("date", "desc")
+    where("month", "==", selectedMonth)
   ));
   const tbody = document.getElementById("bazarHistoryBody");
   tbody.innerHTML = "";
   let total = 0;
-  snap.forEach((d) => {
-    const b = d.data();
+  const rows = snap.docs
+    .map((d) => d.data())
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  rows.forEach((b) => {
     total += b.amount;
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${b.date}</td><td>${b.description}</td><td>৳${b.amount}</td>`;
     tbody.appendChild(tr);
   });
-  if (snap.empty) {
+  if (rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">No bazar entries</td></tr>`;
   }
 }
@@ -267,18 +267,19 @@ async function loadMealHistory() {
   const snap = await getDocs(query(
     collection(db, "meals"),
     where("userId", "==", currentUser.uid),
-    where("month", "==", selectedMonth),
-    orderBy("date", "desc")
+    where("month", "==", selectedMonth)
   ));
   const tbody = document.getElementById("mealHistoryBody");
   tbody.innerHTML = "";
-  snap.forEach((d) => {
-    const m = d.data();
+  const rows = snap.docs
+    .map((d) => d.data())
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  rows.forEach((m) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${m.date}</td><td>${m.morning}</td><td>${m.lunch}</td><td>${m.dinner}</td><td><strong>${m.totalMeal}</strong></td>`;
     tbody.appendChild(tr);
   });
-  if (snap.empty) {
+  if (rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No meal entries</td></tr>`;
   }
 }
