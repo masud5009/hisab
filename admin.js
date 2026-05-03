@@ -33,6 +33,7 @@ import {
 let currentAdmin = null;
 let selectedMonth = getCurrentMonth();
 let calcData = null; // last built table
+let memberRows = [];
 
 // ─────────────────────────────────────────────
 // Init
@@ -49,10 +50,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Event bindings
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addUserForm").addEventListener("submit", handleAddUser);
+  document.getElementById("editMemberForm").addEventListener("submit", handleEditMember);
+  document.getElementById("passwordMemberForm").addEventListener("submit", handleChangeMemberPassword);
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
   document.getElementById("exportPdfBtn").addEventListener("click", exportToPdf);
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
+  document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => hideModal(btn.dataset.closeModal));
+  });
+  document.querySelectorAll(".app-modal").forEach((modal) => {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) hideModal(modal.id);
+    });
+  });
 });
 
 // ─────────────────────────────────────────────
@@ -128,17 +139,142 @@ async function loadUsersPanel() {
   const snap = await getDocs(query(collection(db, "users"), where("role", "==", "user")));
   const tbody = document.getElementById("usersTableBody");
   tbody.innerHTML = "";
-  snap.forEach((d) => {
-    const u = d.data();
+  memberRows = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+
+  if (memberRows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No members found.</td></tr>`;
+    return;
+  }
+
+  memberRows.forEach((u) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${u.name}</td>
-      <td><code>${u.username}</code></td>
-      <td>${u.phone || "—"}</td>
+      <td>${escapeHtml(u.name || "")}</td>
+      <td><code>${escapeHtml(u.username || "")}</code></td>
+      <td>${escapeHtml(u.phone || "—")}</td>
       <td><span class="badge bg-success">Active</span></td>
+      <td class="text-end">
+        <div class="d-inline-flex gap-2">
+          <button type="button" class="btn-icon edit-member-btn" data-uid="${u.uid}" title="Edit member">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button type="button" class="btn-icon password-member-btn" data-uid="${u.uid}" title="Change password">
+            <i class="bi bi-key"></i>
+          </button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
+
+  tbody.querySelectorAll(".edit-member-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openEditMemberModal(btn.dataset.uid));
+  });
+  tbody.querySelectorAll(".password-member-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openPasswordMemberModal(btn.dataset.uid));
+  });
+}
+
+function openEditMemberModal(uid) {
+  const member = memberRows.find((u) => u.uid === uid);
+  if (!member) return;
+
+  const form = document.getElementById("editMemberForm");
+  form.uid.value = member.uid;
+  form.name.value = member.name || "";
+  form.username.value = member.username || "";
+  form.phone.value = member.phone || "";
+  hideAlert("editMemberAlert");
+  showModal("editMemberModal");
+}
+
+async function handleEditMember(e) {
+  e.preventDefault();
+  const form = e.target;
+  const uid = form.uid.value;
+  const name = form.name.value.trim();
+  const phone = form.phone.value.trim();
+
+  if (!name) {
+    showAlert("editMemberAlert", "Full name is required.", "danger", false);
+    return;
+  }
+
+  try {
+    await setDoc(doc(db, "users", uid), {
+      name,
+      phone,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    hideModal("editMemberModal");
+    showAlert("usersPanelAlert", "Member updated successfully.", "success");
+    loadUsersPanel();
+    loadCalculation();
+  } catch (err) {
+    showAlert("editMemberAlert", err.message, "danger", false);
+  }
+}
+
+function openPasswordMemberModal(uid) {
+  const member = memberRows.find((u) => u.uid === uid);
+  if (!member) return;
+
+  const form = document.getElementById("passwordMemberForm");
+  form.reset();
+  form.uid.value = member.uid;
+  form.memberName.value = `${member.name || "Member"} (@${member.username || ""})`;
+  hideAlert("passwordMemberAlert");
+  showModal("passwordMemberModal");
+}
+
+async function handleChangeMemberPassword(e) {
+  e.preventDefault();
+  const form = e.target;
+  const uid = form.uid.value;
+  const newPassword = form.newPassword.value;
+  const confirmPassword = form.confirmPassword.value;
+
+  if (newPassword.length < 6) {
+    showAlert("passwordMemberAlert", "Password must be at least 6 characters.", "danger", false);
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showAlert("passwordMemberAlert", "New password and confirm password do not match.", "danger", false);
+    return;
+  }
+
+  try {
+    await updateMemberPassword(uid, newPassword);
+    hideModal("passwordMemberModal");
+    showAlert("usersPanelAlert", "Password changed successfully.", "success");
+  } catch (err) {
+    showAlert("passwordMemberAlert", err.message, "danger", false);
+  }
+}
+
+async function updateMemberPassword(uid, newPassword) {
+  const endpoint = window.HISAB_PASSWORD_UPDATE_ENDPOINT ||
+    `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/updateMemberPassword`;
+
+  const idToken = await auth.currentUser.getIdToken();
+  let res;
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ uid, password: newPassword })
+    });
+  } catch (err) {
+    throw new Error("Password update backend reachable na. functions/updateMemberPassword deploy korte hobe.");
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || data.message || "Password change failed.");
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -375,10 +511,36 @@ async function handleLogout() {
 // ─────────────────────────────────────────────
 // Alert helper
 // ─────────────────────────────────────────────
-function showAlert(id, msg, type) {
+function showModal(id) {
+  const modal = document.getElementById(id);
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function hideModal(id) {
+  const modal = document.getElementById(id);
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  el.classList.add("d-none");
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function showAlert(id, msg, type, autoHide = true) {
   const el = document.getElementById(id);
   el.className = `alert alert-${type}`;
   el.textContent = msg;
   el.classList.remove("d-none");
-  setTimeout(() => el.classList.add("d-none"), 4000);
+  if (autoHide) setTimeout(() => el.classList.add("d-none"), 4000);
 }

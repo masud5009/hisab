@@ -201,6 +201,64 @@
       transition: all 0.15s;
     }
     .btn-outline-custom:hover { border-color: var(--clr-text); color: var(--clr-text); }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--clr-border);
+      background: #ffffff;
+      color: var(--clr-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-icon:hover {
+      border-color: var(--clr-primary);
+      color: var(--clr-text);
+      background: var(--clr-primary-glow);
+    }
+    .btn-icon.danger:hover {
+      border-color: #dc3545;
+      color: #dc3545;
+      background: rgba(220,53,69,0.08);
+    }
+
+    .app-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15,23,42,0.45);
+    }
+    .app-modal.show { display: flex; }
+    .app-modal-panel {
+      width: min(520px, 100%);
+      background: #ffffff;
+      border: 1px solid var(--clr-border);
+      border-radius: 12px;
+      box-shadow: 0 24px 70px rgba(15,23,42,0.22);
+      overflow: hidden;
+    }
+    .app-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--clr-border);
+      font-weight: 700;
+    }
+    .app-modal-body { padding: 1.25rem; }
+    .app-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding-top: 1rem;
+    }
 
     .alert { border-radius: 8px; font-size: 0.85rem; }
     .badge { font-size: 0.75rem; }
@@ -316,6 +374,7 @@
         <i class="bi bi-people"></i> All Members
       </div>
       <div class="card-body-custom p-0">
+        <div id="usersPanelAlert" class="alert d-none m-3 mb-0"></div>
         <div class="table-responsive">
           <table class="table mb-0">
             <thead>
@@ -324,10 +383,11 @@
                 <th>Username</th>
                 <th>Phone</th>
                 <th>Status</th>
+                <th class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
-              <tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr>
+              <tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -370,6 +430,69 @@
     </div>
 
   </main>
+
+  <div class="app-modal" id="editMemberModal" aria-hidden="true">
+    <div class="app-modal-panel">
+      <div class="app-modal-header">
+        <span><i class="bi bi-pencil-square me-1" style="color:var(--clr-primary)"></i>Edit Member</span>
+        <button type="button" class="btn-icon" data-close-modal="editMemberModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="editMemberForm">
+        <div class="app-modal-body">
+          <div id="editMemberAlert" class="alert d-none"></div>
+          <input type="hidden" name="uid"/>
+          <div class="mb-3">
+            <label class="form-label">Full Name *</label>
+            <input type="text" name="name" class="form-control" required/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" readonly/>
+            <small class="text-muted">Username login identity er sathe connected, tai eta ekhane change kora hocche na.</small>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Phone</label>
+            <input type="tel" name="phone" class="form-control" placeholder="01XXXXXXXXX"/>
+          </div>
+          <div class="app-modal-footer">
+            <button type="button" class="btn-outline-custom" data-close-modal="editMemberModal">Cancel</button>
+            <button type="submit" class="btn-primary-custom"><i class="bi bi-floppy me-1"></i>Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-modal" id="passwordMemberModal" aria-hidden="true">
+    <div class="app-modal-panel">
+      <div class="app-modal-header">
+        <span><i class="bi bi-key me-1" style="color:var(--clr-primary)"></i>Change Password</span>
+        <button type="button" class="btn-icon" data-close-modal="passwordMemberModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="passwordMemberForm">
+        <div class="app-modal-body">
+          <div id="passwordMemberAlert" class="alert d-none"></div>
+          <input type="hidden" name="uid"/>
+          <div class="mb-3">
+            <label class="form-label">Member</label>
+            <input type="text" name="memberName" class="form-control" readonly/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">New Password *</label>
+            <input type="password" name="newPassword" class="form-control" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password"/>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Confirm New Password *</label>
+            <input type="password" name="confirmPassword" class="form-control" placeholder="Type again" required minlength="6" autocomplete="new-password"/>
+          </div>
+          <div class="app-modal-footer">
+            <button type="button" class="btn-outline-custom" data-close-modal="passwordMemberModal">Cancel</button>
+            <button type="submit" class="btn-primary-custom"><i class="bi bi-key me-1"></i>Change Password</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script type="module" src="./admin.js"></script>
 </body>
