@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("addUserForm").addEventListener("submit", handleAddUser);
   document.getElementById("editMemberForm").addEventListener("submit", handleEditMember);
-  document.getElementById("passwordMemberForm").addEventListener("submit", handleChangeMemberPassword);
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
   document.getElementById("exportPdfBtn").addEventListener("click", exportToPdf);
@@ -158,9 +157,6 @@ async function loadUsersPanel() {
           <button type="button" class="btn-icon edit-member-btn" data-uid="${u.uid}" title="Edit member">
             <i class="bi bi-pencil-square"></i>
           </button>
-          <button type="button" class="btn-icon password-member-btn" data-uid="${u.uid}" title="Change password">
-            <i class="bi bi-key"></i>
-          </button>
         </div>
       </td>
     `;
@@ -169,9 +165,6 @@ async function loadUsersPanel() {
 
   tbody.querySelectorAll(".edit-member-btn").forEach((btn) => {
     btn.addEventListener("click", () => openEditMemberModal(btn.dataset.uid));
-  });
-  tbody.querySelectorAll(".password-member-btn").forEach((btn) => {
-    btn.addEventListener("click", () => openPasswordMemberModal(btn.dataset.uid));
   });
 }
 
@@ -213,67 +206,6 @@ async function handleEditMember(e) {
     loadCalculation();
   } catch (err) {
     showAlert("editMemberAlert", err.message, "danger", false);
-  }
-}
-
-function openPasswordMemberModal(uid) {
-  const member = memberRows.find((u) => u.uid === uid);
-  if (!member) return;
-
-  const form = document.getElementById("passwordMemberForm");
-  form.reset();
-  form.uid.value = member.uid;
-  form.memberName.value = `${member.name || "Member"} (@${member.username || ""})`;
-  hideAlert("passwordMemberAlert");
-  showModal("passwordMemberModal");
-}
-
-async function handleChangeMemberPassword(e) {
-  e.preventDefault();
-  const form = e.target;
-  const uid = form.uid.value;
-  const newPassword = form.newPassword.value;
-  const confirmPassword = form.confirmPassword.value;
-
-  if (newPassword.length < 6) {
-    showAlert("passwordMemberAlert", "Password must be at least 6 characters.", "danger", false);
-    return;
-  }
-  if (newPassword !== confirmPassword) {
-    showAlert("passwordMemberAlert", "New password and confirm password do not match.", "danger", false);
-    return;
-  }
-
-  try {
-    await updateMemberPassword(uid, newPassword);
-    hideModal("passwordMemberModal");
-    showAlert("usersPanelAlert", "Password changed successfully.", "success");
-  } catch (err) {
-    showAlert("passwordMemberAlert", err.message, "danger", false);
-  }
-}
-
-async function updateMemberPassword(uid, newPassword) {
-  const endpoint = window.HISAB_PASSWORD_UPDATE_ENDPOINT ||
-    `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/updateMemberPassword`;
-
-  const idToken = await auth.currentUser.getIdToken();
-  let res;
-  try {
-    res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ uid, password: newPassword })
-    });
-  } catch (err) {
-    throw new Error("Password update backend reachable na. functions/updateMemberPassword deploy korte hobe.");
-  }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.error || data.message || "Password change failed.");
   }
 }
 
