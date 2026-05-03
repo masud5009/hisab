@@ -4,9 +4,16 @@
 // calculation table, lock/remove, PDF export
 // ============================================================
 
-import { auth, db } from "./firebase-config.js";
+import { auth, db, firebaseConfig } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
 import { buildCalculationTable } from "./calculation.js";
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
   collection,
   doc,
@@ -14,16 +21,11 @@ import {
   setDoc,
   getDoc,
   getDocs,
-  deleteDoc,
   query,
   where,
-  onSnapshot,
   serverTimestamp,
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ─────────────────────────────────────────────
 // State
@@ -96,7 +98,12 @@ async function handleAddUser(e) {
   showAlert("addUserAlert", "Creating user...", "info");
   try {
     // Create Firebase Auth user
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+const secondaryAuth = getAuth(secondaryApp);
+
+const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+
+await secondaryAuth.signOut();
     // Save profile in Firestore
     await setDoc(doc(db, "users", cred.user.uid), {
       name,
