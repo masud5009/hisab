@@ -381,13 +381,14 @@
               <tr>
                 <th>Name</th>
                 <th>Username</th>
+                <th>Email</th>
                 <th>Phone</th>
                 <th>Status</th>
                 <th class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
-              <tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -408,16 +409,20 @@
               <input type="text" name="name" class="form-control" placeholder="e.g. Masud Rana" required/>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Username * <small class="text-muted">(used to login)</small></label>
+              <label class="form-label">Username *</label>
               <input type="text" name="username" class="form-control" placeholder="e.g. masud" required/>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Password *</label>
-              <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password"/>
+              <label class="form-label">Email *</label>
+              <input type="email" name="email" class="form-control" placeholder="e.g. masud@gmail.com" required autocomplete="email"/>
             </div>
             <div class="col-md-6">
               <label class="form-label">Phone</label>
               <input type="tel" name="phone" class="form-control" placeholder="01XXXXXXXXX"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Password *</label>
+              <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password"/>
             </div>
             <div class="col-12">
               <button type="submit" class="btn-primary-custom">
@@ -448,7 +453,12 @@
           <div class="mb-3">
             <label class="form-label">Username</label>
             <input type="text" name="username" class="form-control" readonly/>
-            <small class="text-muted">Username login identity er sathe connected, tai eta ekhane change kora hocche na.</small>
+            <small class="text-muted">Username calculation/display er jonno rakha hocche.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" readonly/>
+            <small class="text-muted">Email Firebase Auth account er sathe connected, tai edit korte backend lagbe.</small>
           </div>
           <div class="mb-0">
             <label class="form-label">Phone</label>

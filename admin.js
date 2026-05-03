@@ -17,6 +17,7 @@ import {
 import {
   collection,
   doc,
+  deleteDoc,
   addDoc,
   setDoc,
   getDoc,
@@ -101,9 +102,9 @@ async function handleAddUser(e) {
   const form = e.target;
   const name = form.name.value.trim();
   const username = form.username.value.trim().toLowerCase();
+  const email = form.email.value.trim().toLowerCase();
   const password = form.password.value;
   const phone = form.phone.value.trim();
-  const email = `${username}@hisab.local`;
 
   showAlert("addUserAlert", "Creating user...", "info");
   try {
@@ -118,6 +119,7 @@ await secondaryAuth.signOut();
     await setDoc(doc(db, "users", cred.user.uid), {
       name,
       username,
+      email,
       phone,
       role: "user",
       createdAt: serverTimestamp()
@@ -141,7 +143,7 @@ async function loadUsersPanel() {
   memberRows = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
 
   if (memberRows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No members found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No members found.</td></tr>`;
     return;
   }
 
@@ -150,12 +152,16 @@ async function loadUsersPanel() {
     tr.innerHTML = `
       <td>${escapeHtml(u.name || "")}</td>
       <td><code>${escapeHtml(u.username || "")}</code></td>
+      <td>${escapeHtml(u.email || "—")}</td>
       <td>${escapeHtml(u.phone || "—")}</td>
       <td><span class="badge bg-success">Active</span></td>
       <td class="text-end">
         <div class="d-inline-flex gap-2">
           <button type="button" class="btn-icon edit-member-btn" data-uid="${u.uid}" title="Edit member">
             <i class="bi bi-pencil-square"></i>
+          </button>
+          <button type="button" class="btn-icon danger delete-member-btn" data-uid="${u.uid}" data-name="${escapeHtml(u.name || "this member")}" title="Delete member">
+            <i class="bi bi-trash"></i>
           </button>
         </div>
       </td>
@@ -165,6 +171,9 @@ async function loadUsersPanel() {
 
   tbody.querySelectorAll(".edit-member-btn").forEach((btn) => {
     btn.addEventListener("click", () => openEditMemberModal(btn.dataset.uid));
+  });
+  tbody.querySelectorAll(".delete-member-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleDeleteMember(btn.dataset.uid, btn.dataset.name));
   });
 }
 
@@ -176,6 +185,7 @@ function openEditMemberModal(uid) {
   form.uid.value = member.uid;
   form.name.value = member.name || "";
   form.username.value = member.username || "";
+  form.email.value = member.email || "";
   form.phone.value = member.phone || "";
   hideAlert("editMemberAlert");
   showModal("editMemberModal");
@@ -206,6 +216,19 @@ async function handleEditMember(e) {
     loadCalculation();
   } catch (err) {
     showAlert("editMemberAlert", err.message, "danger", false);
+  }
+}
+
+async function handleDeleteMember(uid, name) {
+  if (!confirm(`Delete ${name}? This will remove the member profile from the app.`)) return;
+
+  try {
+    await deleteDoc(doc(db, "users", uid));
+    showAlert("usersPanelAlert", "Member deleted successfully.", "success");
+    loadUsersPanel();
+    loadCalculation();
+  } catch (err) {
+    showAlert("usersPanelAlert", err.message, "danger");
   }
 }
 

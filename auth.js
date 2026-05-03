@@ -6,6 +6,7 @@
 import { auth, db } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -22,6 +23,10 @@ export function usernameToEmail(username) {
   const value = username.trim().toLowerCase();
   // Accept both plain usernames (e.g. "masud") and email-like input.
   return value.includes("@") ? value : `${value}@hisab.local`;
+}
+
+export async function sendResetEmail(email) {
+  await sendPasswordResetEmail(auth, email.trim().toLowerCase());
 }
 
 // ─────────────────────────────────────────────

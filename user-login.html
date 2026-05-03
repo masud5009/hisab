@@ -118,15 +118,15 @@
     <a href="index.html" class="back-link"><i class="bi bi-arrow-left"></i> Back</a>
     <div class="login-icon">👤</div>
     <h1>Member Login</h1>
-    <p class="subtitle">Use your username and password provided by admin</p>
+    <p class="subtitle">Use your email and password provided by admin</p>
 
     <div id="loginAlert" class="alert d-none"></div>
 
     <form id="userLoginForm" novalidate>
       <div class="mb-3">
-        <label for="username">Username</label>
-        <input type="text" id="username" class="form-control" placeholder="e.g. masud" required autocomplete="username"/>
-        <p class="hint">Enter your username (not email)</p>
+        <label for="email">Email</label>
+        <input type="email" id="email" class="form-control" placeholder="e.g. masud@gmail.com" required autocomplete="email"/>
+        <p class="hint">Old members can still enter username if their account uses the old login.</p>
       </div>
       <div class="mb-3">
         <label for="password">Password</label>
@@ -135,19 +135,23 @@
       <button type="submit" class="btn-login" id="loginBtn">
         <i class="bi bi-person"></i> Sign In
       </button>
+      <button type="button" class="btn-login mt-2" id="resetBtn" style="background:#ffffff;color:var(--clr-user);border:1px solid var(--clr-border);">
+        <i class="bi bi-envelope"></i> Send Password Reset Email
+      </button>
     </form>
   </div>
 
   <script type="module">
-    import { userLogin } from "./auth.js";
+    import { sendResetEmail, userLogin } from "./auth.js";
 
     const form = document.getElementById("userLoginForm");
     const alertEl = document.getElementById("loginAlert");
     const loginBtn = document.getElementById("loginBtn");
+    const resetBtn = document.getElementById("resetBtn");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
       loginBtn.disabled = true;
@@ -155,7 +159,7 @@
       alertEl.classList.add("d-none");
 
       try {
-        await userLogin(username, password);
+        await userLogin(email, password);
         window.location.href = "user-dashboard.html";
       } catch (err) {
         alertEl.className = "alert alert-danger";
@@ -163,6 +167,32 @@
         alertEl.classList.remove("d-none");
         loginBtn.disabled = false;
         loginBtn.innerHTML = `<i class="bi bi-person"></i> Sign In`;
+      }
+    });
+
+    resetBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email || !email.includes("@")) {
+        alertEl.className = "alert alert-danger";
+        alertEl.textContent = "Enter your real email first.";
+        alertEl.classList.remove("d-none");
+        return;
+      }
+
+      resetBtn.disabled = true;
+      alertEl.classList.add("d-none");
+
+      try {
+        await sendResetEmail(email);
+        alertEl.className = "alert alert-success";
+        alertEl.textContent = "Password reset email sent.";
+        alertEl.classList.remove("d-none");
+      } catch (err) {
+        alertEl.className = "alert alert-danger";
+        alertEl.textContent = "Password reset email could not be sent.";
+        alertEl.classList.remove("d-none");
+      } finally {
+        resetBtn.disabled = false;
       }
     });
   </script>
