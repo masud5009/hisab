@@ -77,8 +77,9 @@
       border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.5rem;
-      margin-bottom: 1rem;
+      margin: 0 auto 1rem;
     }
+    .login-heading { text-align: center; margin-bottom: 1.75rem; }
     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
     .subtitle { color: var(--clr-muted); font-size: 0.875rem; margin-bottom: 1.75rem; }
     label { font-size: 0.85rem; font-weight: 500; color: var(--clr-muted); margin-bottom: 0.35rem; display: block; }
@@ -123,20 +124,21 @@
   <div class="login-wrap">
     <div class="top-accent"></div>
     <a href="index.html" class="back-link"><i class="bi bi-arrow-left"></i> Back</a>
-    <div class="login-icon">🛡️</div>
-    <h1>Admin Login</h1>
-    <p class="subtitle">Sign in with your admin credentials</p>
+    <div class="login-heading">
+      <div class="login-icon">🛡️</div>
+      <h1>Admin Login</h1>
+    </div>
 
     <div id="loginAlert" class="alert d-none"></div>
 
     <form id="adminLoginForm" novalidate>
       <div class="mb-3">
         <label for="adminEmail">Username or Email</label>
-        <input type="text" id="adminEmail" class="form-control" placeholder="e.g. 255 or 255@hisab.local" required autocomplete="username"/>
+        <input type="text" id="adminEmail" class="form-control" required autocomplete="username"/>
       </div>
       <div class="mb-3">
         <label for="adminPassword">Password</label>
-        <input type="password" id="adminPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password"/>
+        <input type="password" id="adminPassword" class="form-control" required autocomplete="current-password"/>
       </div>
       <button type="submit" class="btn-login" id="loginBtn">
         <i class="bi bi-shield-lock"></i> Sign In as Admin
@@ -165,7 +167,7 @@
         window.location.href = "admin-dashboard.html";
       } catch (err) {
         alertEl.className = "alert alert-danger";
-        alertEl.textContent = err.message || "Login failed. Check credentials.";
+        alertEl.textContent = "Username or password is incorrect.";
         alertEl.classList.remove("d-none");
         loginBtn.disabled = false;
         loginBtn.innerHTML = `<i class="bi bi-shield-lock"></i> Sign In as Admin`;
