@@ -5,17 +5,15 @@
 
 import { auth, db } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
-import { calcMealRate, calcUserTotalMeals, calcUserTotalBazar } from "./calculation.js";
+import { calcUserTotalBazar, calcUserTotalMeals } from "./calculation.js";
 import {
   collection,
   doc,
   addDoc,
-  getDoc,
   getDocs,
   query,
   where,
   serverTimestamp,
-  onSnapshot,
   deleteDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -54,11 +52,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadSummary();
   loadBazarHistory();
   loadMealHistory();
+  updateMealHistorySearchRange();
 
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("bazarForm").addEventListener("submit", handleAddBazar);
   document.getElementById("mealForm").addEventListener("submit", handleAddMeal);
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
+  document.getElementById("mealHistoryDateSearch").addEventListener("input", loadMealHistory);
+  document.getElementById("mealHistoryClearSearch").addEventListener("click", clearMealHistorySearch);
 
   // Live total meal counter
   document.getElementById("mealMorning").addEventListener("input", updateMealTotal);
@@ -113,8 +114,24 @@ function initMonthSelector() {
 
 function onMonthChange() {
   selectedMonth = document.getElementById("monthSelector").value;
+  updateMealHistorySearchRange();
   loadSummary();
   loadBazarHistory();
+  loadMealHistory();
+}
+
+function updateMealHistorySearchRange() {
+  const input = document.getElementById("mealHistoryDateSearch");
+  if (!input) return;
+  const [year, month] = selectedMonth.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  input.min = `${selectedMonth}-01`;
+  input.max = `${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
+  if (input.value && !input.value.startsWith(selectedMonth)) input.value = "";
+}
+
+function clearMealHistorySearch() {
+  document.getElementById("mealHistoryDateSearch").value = "";
   loadMealHistory();
 }
 
@@ -218,7 +235,6 @@ function updateMealTotal() {
 // Summary
 // ─────────────────────────────────────────────
 async function loadSummary() {
-  // User's data
   const mealsSnap = await getDocs(query(
     collection(db, "meals"),
     where("userId", "==", currentUser.uid),
@@ -232,54 +248,11 @@ async function loadSummary() {
 
   const userMeals = mealsSnap.docs.map((d) => d.data());
   const userBazar = bazarSnap.docs.map((d) => d.data());
-
   const totalMeals = calcUserTotalMeals(userMeals);
   const totalBazar = calcUserTotalBazar(userBazar);
 
-  // All meals + bazar for meal rate
-  const allMealsSnap = await getDocs(query(collection(db, "meals"), where("month", "==", selectedMonth)));
-  const allBazarSnap = await getDocs(query(collection(db, "bazar"), where("month", "==", selectedMonth)));
-  const allMeals = allMealsSnap.docs.map((d) => d.data());
-  const allBazar = allBazarSnap.docs.map((d) => d.data());
-
-  const mealRate = calcMealRate(allMeals, allBazar);
-  const mealCost = round2(totalMeals * mealRate);
-
-  // Month costs
-  const monthSnap = await getDoc(doc(db, "months", selectedMonth));
-  const monthCosts = monthSnap.exists() ? monthSnap.data() : {};
-
-  // Active users count for per-person split
-  const usersSnap = await getDocs(query(collection(db, "users"), where("role", "==", "user")));
-  const userCount = usersSnap.size;
-
-  const khalaPerPerson = round2((monthCosts.khalaTotal || 0) / (userCount || 1));
-  const gasPerPerson = round2((monthCosts.gasTotal || 0) / (userCount || 1));
-  const electricityPerPerson = round2((monthCosts.electricityTotal || 0) / (userCount || 1));
-  const wifiPerPerson = round2((monthCosts.wifiTotal || 0) / (userCount || 1));
-
-  // Bari vara: check locked split
-  const rentSnap = await getDocs(query(
-    collection(db, "rentSplits"),
-    where("userId", "==", currentUser.uid),
-    where("month", "==", selectedMonth)
-  ));
-  const rentSplit = rentSnap.docs[0]?.data();
-  const bariVara = rentSplit ? rentSplit.amount : round2((monthCosts.bariVaraTotal || 0) / (userCount || 1));
-
-  const totalPayable = round2(mealCost + khalaPerPerson + gasPerPerson + electricityPerPerson + wifiPerPerson + bariVara);
-
-  // Update UI
-  document.getElementById("summTotalMeals").textContent = totalMeals;
   document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
-  document.getElementById("summMealRate").textContent = `৳${round2(mealRate)}`;
-  document.getElementById("summMealCost").textContent = `৳${mealCost}`;
-  document.getElementById("summKhala").textContent = `৳${khalaPerPerson}`;
-  document.getElementById("summGas").textContent = `৳${gasPerPerson}`;
-  document.getElementById("summElectricity").textContent = `৳${electricityPerPerson}`;
-  document.getElementById("summWifi").textContent = `৳${wifiPerPerson}`;
-  document.getElementById("summBariVara").textContent = `৳${bariVara}`;
-  document.getElementById("summTotalPayable").textContent = `৳${totalPayable}`;
+  document.getElementById("summTotalMeals").textContent = round2(totalMeals);
 }
 
 // ─────────────────────────────────────────────
@@ -301,10 +274,10 @@ async function loadBazarHistory() {
     total += b.amount;
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${b.date}</td>
-      <td>${b.description}</td>
-      <td>৳${b.amount}</td>
-      <td>
+      <td data-label="Date">${b.date}</td>
+      <td data-label="Description">${b.description}</td>
+      <td data-label="Amount">৳${b.amount}</td>
+      <td data-label="Actions">
         <button class="btn btn-sm btn-outline-primary me-1 bazar-edit" data-id="${b.id}">Edit</button>
         <button class="btn btn-sm btn-outline-danger bazar-delete" data-id="${b.id}">Delete</button>
       </td>
@@ -378,6 +351,7 @@ async function submitEditBazar(e) {
 // Meal History
 // ─────────────────────────────────────────────
 async function loadMealHistory() {
+  const searchDate = document.getElementById("mealHistoryDateSearch")?.value || "";
   const snap = await getDocs(query(
     collection(db, "meals"),
     where("userId", "==", currentUser.uid),
@@ -387,16 +361,17 @@ async function loadMealHistory() {
   tbody.innerHTML = "";
   const rows = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((m) => !searchDate || m.date === searchDate)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
   rows.forEach((m) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${m.date}</td>
-      <td>${m.morning}</td>
-      <td>${m.lunch}</td>
-      <td>${m.dinner}</td>
-      <td><strong>${m.totalMeal}</strong></td>
-      <td>
+      <td data-label="Date">${m.date}</td>
+      <td data-label="Morning">${m.morning}</td>
+      <td data-label="Lunch">${m.lunch}</td>
+      <td data-label="Dinner">${m.dinner}</td>
+      <td data-label="Total"><strong>${m.totalMeal}</strong></td>
+      <td data-label="Actions">
         <button class="btn btn-sm btn-outline-primary me-1 meal-edit" data-id="${m.id}">Edit</button>
         <button class="btn btn-sm btn-outline-danger meal-delete" data-id="${m.id}">Delete</button>
       </td>
@@ -408,7 +383,8 @@ async function loadMealHistory() {
     if (editBtn) editBtn.addEventListener('click', () => openEditMealModal(m.id, m));
   });
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No meal entries</td></tr>`;
+    const message = searchDate ? `No meal entry found for ${searchDate}` : "No meal entries";
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">${message}</td></tr>`;
   }
 }
 
