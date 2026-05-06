@@ -25,6 +25,11 @@ let currentUser = null;
 let selectedMonth = getCurrentMonth();
 let editBazarModal = null;
 let editMealModal = null;
+const HISTORY_PAGE_SIZE = 5;
+let bazarHistoryRows = [];
+let mealHistoryRows = [];
+let bazarHistoryPage = 1;
+let mealHistoryPage = 1;
 
 // Helper: toggle button spinner and disabled state
 function setButtonLoading(btnId, spinnerId, isLoading) {
@@ -43,6 +48,11 @@ function setButtonLoading(btnId, spinnerId, isLoading) {
 // ─────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────
+function bindIfExists(id, eventName, handler) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener(eventName, handler);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("user", "user-login.html");
   document.getElementById("userName").textContent = currentUser.name;
@@ -60,6 +70,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
   document.getElementById("mealHistoryDateSearch").addEventListener("input", loadMealHistory);
   document.getElementById("mealHistoryClearSearch").addEventListener("click", clearMealHistorySearch);
+  bindIfExists("bazarHistoryPrev", "click", () => changeBazarHistoryPage(-1));
+  bindIfExists("bazarHistoryNext", "click", () => changeBazarHistoryPage(1));
+  bindIfExists("mealHistoryPrev", "click", () => changeMealHistoryPage(-1));
+  bindIfExists("mealHistoryNext", "click", () => changeMealHistoryPage(1));
 
   // Live total meal counter
   document.getElementById("mealMorning").addEventListener("input", updateMealTotal);
@@ -114,6 +128,8 @@ function initMonthSelector() {
 
 function onMonthChange() {
   selectedMonth = document.getElementById("monthSelector").value;
+  bazarHistoryPage = 1;
+  mealHistoryPage = 1;
   updateMealHistorySearchRange();
   loadSummary();
   loadBazarHistory();
@@ -132,6 +148,7 @@ function updateMealHistorySearchRange() {
 
 function clearMealHistorySearch() {
   document.getElementById("mealHistoryDateSearch").value = "";
+  mealHistoryPage = 1;
   loadMealHistory();
 }
 
@@ -163,6 +180,7 @@ async function handleAddBazar(e) {
     showAlert("bazarAlert", "Bazar added!", "success");
     form.reset();
     loadSummary();
+    bazarHistoryPage = 1;
     loadBazarHistory();
   } catch (err) {
     showAlert("bazarAlert", err.message, "danger");
@@ -216,6 +234,7 @@ async function handleAddMeal(e) {
     form.reset();
     document.getElementById("mealTotalPreview").textContent = "0";
     loadSummary();
+    mealHistoryPage = 1;
     loadMealHistory();
   } catch (err) {
     showAlert("mealAlert", err.message, "danger");
@@ -266,12 +285,19 @@ async function loadBazarHistory() {
   ));
   const tbody = document.getElementById("bazarHistoryBody");
   tbody.innerHTML = "";
-  let total = 0;
-  const rows = snap.docs
+  bazarHistoryRows = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  renderBazarHistoryPage();
+}
+
+function renderBazarHistoryPage() {
+  const tbody = document.getElementById("bazarHistoryBody");
+  tbody.innerHTML = "";
+  normalizeHistoryPage("bazar");
+  const rows = getHistoryPageRows(bazarHistoryRows, bazarHistoryPage);
+
   rows.forEach((b) => {
-    total += b.amount;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td data-label="Date">${b.date}</td>
@@ -288,9 +314,10 @@ async function loadBazarHistory() {
     if (delBtn) delBtn.addEventListener('click', () => handleDeleteBazar(b.id));
     if (editBtn) editBtn.addEventListener('click', () => openEditModal(b.id, b));
   });
-  if (rows.length === 0) {
+  if (bazarHistoryRows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No bazar entries</td></tr>`;
   }
+  renderHistoryPagination("bazar");
 }
 
 // Delete bazar entry
@@ -338,6 +365,7 @@ async function submitEditBazar(e) {
     showAlert('bazarAlert', 'Bazar entry updated.', 'success');
     editBazarModal.hide();
     loadSummary();
+    bazarHistoryPage = 1;
     loadBazarHistory();
   } catch (err) {
     showAlert('bazarAlert', err.message, 'danger');
@@ -351,6 +379,7 @@ async function submitEditBazar(e) {
 // Meal History
 // ─────────────────────────────────────────────
 async function loadMealHistory() {
+  mealHistoryPage = 1;
   const searchDate = document.getElementById("mealHistoryDateSearch")?.value || "";
   const snap = await getDocs(query(
     collection(db, "meals"),
@@ -359,10 +388,19 @@ async function loadMealHistory() {
   ));
   const tbody = document.getElementById("mealHistoryBody");
   tbody.innerHTML = "";
-  const rows = snap.docs
+  mealHistoryRows = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((m) => !searchDate || m.date === searchDate)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  renderMealHistoryPage(searchDate);
+}
+
+function renderMealHistoryPage(searchDate = document.getElementById("mealHistoryDateSearch")?.value || "") {
+  const tbody = document.getElementById("mealHistoryBody");
+  tbody.innerHTML = "";
+  normalizeHistoryPage("meal");
+  const rows = getHistoryPageRows(mealHistoryRows, mealHistoryPage);
+
   rows.forEach((m) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -382,10 +420,62 @@ async function loadMealHistory() {
     if (delBtn) delBtn.addEventListener('click', () => handleDeleteMeal(m.id));
     if (editBtn) editBtn.addEventListener('click', () => openEditMealModal(m.id, m));
   });
-  if (rows.length === 0) {
+  if (mealHistoryRows.length === 0) {
     const message = searchDate ? `No meal entry found for ${searchDate}` : "No meal entries";
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">${message}</td></tr>`;
   }
+  renderHistoryPagination("meal");
+}
+
+function changeBazarHistoryPage(delta) {
+  bazarHistoryPage += delta;
+  renderBazarHistoryPage();
+}
+
+function changeMealHistoryPage(delta) {
+  mealHistoryPage += delta;
+  renderMealHistoryPage();
+}
+
+function getHistoryPageRows(rows, page) {
+  const start = (page - 1) * HISTORY_PAGE_SIZE;
+  return rows.slice(start, start + HISTORY_PAGE_SIZE);
+}
+
+function getHistoryPageCount(type) {
+  const total = type === "bazar" ? bazarHistoryRows.length : mealHistoryRows.length;
+  return Math.max(1, Math.ceil(total / HISTORY_PAGE_SIZE));
+}
+
+function normalizeHistoryPage(type) {
+  const pageCount = getHistoryPageCount(type);
+  if (type === "bazar") {
+    if (bazarHistoryPage < 1) bazarHistoryPage = 1;
+    if (bazarHistoryPage > pageCount) bazarHistoryPage = pageCount;
+  } else {
+    if (mealHistoryPage < 1) mealHistoryPage = 1;
+    if (mealHistoryPage > pageCount) mealHistoryPage = pageCount;
+  }
+}
+
+function renderHistoryPagination(type) {
+  const isBazar = type === "bazar";
+  const rows = isBazar ? bazarHistoryRows : mealHistoryRows;
+  const page = isBazar ? bazarHistoryPage : mealHistoryPage;
+  const pageCount = getHistoryPageCount(type);
+  const total = rows.length;
+  const start = total === 0 ? 0 : (page - 1) * HISTORY_PAGE_SIZE + 1;
+  const end = Math.min(total, page * HISTORY_PAGE_SIZE);
+  const prefix = isBazar ? "bazarHistory" : "mealHistory";
+  const info = document.getElementById(`${prefix}PageInfo`);
+  const label = document.getElementById(`${prefix}PageLabel`);
+  const prev = document.getElementById(`${prefix}Prev`);
+  const next = document.getElementById(`${prefix}Next`);
+
+  if (info) info.textContent = total === 0 ? "Showing 0 entries" : `Showing ${start}-${end} of ${total}`;
+  if (label) label.textContent = `Page ${page} of ${pageCount}`;
+  if (prev) prev.disabled = page <= 1;
+  if (next) next.disabled = page >= pageCount;
 }
 
 // Delete meal entry
@@ -439,6 +529,7 @@ async function submitEditMeal(e) {
     showAlert('mealAlert', 'Meal entry updated.', 'success');
     editMealModal.hide();
     loadSummary();
+    mealHistoryPage = 1;
     loadMealHistory();
   } catch (err) {
     showAlert('mealAlert', err.message, 'danger');

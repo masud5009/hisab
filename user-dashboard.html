@@ -203,6 +203,25 @@
       font-size: 0.78rem;
       padding: 0.3rem 0.6rem;
     }
+    .history-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--clr-border);
+      color: var(--clr-muted);
+      font-size: 0.8rem;
+    }
+    .history-page-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .history-page-controls .btn {
+      border-radius: 8px;
+      padding: 0.25rem 0.55rem;
+    }
 
     /* Form */
     .form-label { font-size: 0.8rem; color: var(--clr-muted); font-weight: 500; }
@@ -292,6 +311,13 @@
       .history-filter .form-control {
         width: auto;
         flex: 1;
+      }
+      .history-pagination {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .history-page-controls {
+        justify-content: space-between;
       }
       #section-history .card-body-custom { padding: 0.75rem !important; }
       #section-history .table-responsive { overflow: visible; }
@@ -513,6 +539,14 @@
                 </tbody>
               </table>
             </div>
+            <div class="history-pagination">
+              <span id="bazarHistoryPageInfo">Showing 0 entries</span>
+              <div class="history-page-controls">
+                <button type="button" id="bazarHistoryPrev" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-left"></i></button>
+                <span id="bazarHistoryPageLabel">Page 1 of 1</span>
+                <button type="button" id="bazarHistoryNext" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -537,6 +571,14 @@
                   <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
                 </tbody>
               </table>
+            </div>
+            <div class="history-pagination">
+              <span id="mealHistoryPageInfo">Showing 0 entries</span>
+              <div class="history-page-controls">
+                <button type="button" id="mealHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
+                <span id="mealHistoryPageLabel">Page 1 of 1</span>
+                <button type="button" id="mealHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
+              </div>
             </div>
           </div>
         </div>
