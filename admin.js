@@ -243,10 +243,16 @@ async function loadMonthCosts() {
     document.getElementById("gasInput").value = d.gasTotal || 0;
     document.getElementById("electricityInput").value = d.electricityTotal || 0;
     document.getElementById("wifiInput").value = d.wifiTotal || 0;
+    setInputValue("morningPercentInput", d.morningMealPercent ?? 100);
+    setInputValue("lunchPercentInput", d.lunchMealPercent ?? 100);
+    setInputValue("dinnerPercentInput", d.dinnerMealPercent ?? 100);
   } else {
     // Reset inputs
     ["khalaInput","gasInput","electricityInput","wifiInput"].forEach(id => {
       document.getElementById(id).value = 0;
+    });
+    ["morningPercentInput","lunchPercentInput","dinnerPercentInput"].forEach(id => {
+      setInputValue(id, 100);
     });
   }
 }
@@ -258,6 +264,9 @@ async function handleSaveMonthCosts(e) {
     gasTotal: parseFloat(document.getElementById("gasInput").value) || 0,
     electricityTotal: parseFloat(document.getElementById("electricityInput").value) || 0,
     wifiTotal: parseFloat(document.getElementById("wifiInput").value) || 0,
+    morningMealPercent: getInputNumber("morningPercentInput", 100),
+    lunchMealPercent: getInputNumber("lunchPercentInput", 100),
+    dinnerMealPercent: getInputNumber("dinnerPercentInput", 100),
     updatedAt: serverTimestamp()
   };
   try {
@@ -316,9 +325,17 @@ function renderCalcTable({ rows, summary }, container) {
   const summaryHtml = `
     <div class="d-flex flex-wrap gap-2 mb-3">
       <span class="badge bg-primary fs-6">Total Meals: ${summary.totalMeals}</span>
+      <span class="badge bg-light text-dark border fs-6">Morning: ${summary.totalMorningMeals}</span>
+      <span class="badge bg-light text-dark border fs-6">Lunch: ${summary.totalLunchMeals}</span>
+      <span class="badge bg-light text-dark border fs-6">Dinner: ${summary.totalDinnerMeals}</span>
+      <span class="badge bg-dark fs-6">Billable Meals: ${summary.totalMealUnits}</span>
       <span class="badge bg-success fs-6">Total Bazar: ৳${summary.totalBazar}</span>
       <span class="badge bg-secondary fs-6">Room Rent: ৳${summary.totalBariVara}</span>
-      <span class="badge bg-warning text-dark fs-6">Meal Rate: ৳${summary.mealRate}</span>
+      <span class="badge bg-warning text-dark fs-6">Base Rate: ৳${summary.mealRate}</span>
+      <span class="badge bg-light text-dark border fs-6">Lunch Rate: ৳${calcTypeRate(summary.mealRate, summary.mealPercentages.lunch)}</span>
+      <span class="badge bg-light text-dark border fs-6">Dinner Rate: ৳${calcTypeRate(summary.mealRate, summary.mealPercentages.dinner)}</span>
+      <span class="badge bg-light text-dark border fs-6">Morning Rate: ৳${calcTypeRate(summary.mealRate, summary.mealPercentages.morning)}</span>
+      <span class="badge bg-light text-dark border fs-6">Rate %: M ${summary.mealPercentages.morning}% / L ${summary.mealPercentages.lunch}% / D ${summary.mealPercentages.dinner}%</span>
       <span class="badge bg-info text-dark fs-6">Members: ${summary.userCount}</span>
     </div>`;
 
@@ -326,9 +343,13 @@ function renderCalcTable({ rows, summary }, container) {
     <thead>
       <tr>
         <th>Name</th>
-        <th>Meals</th>
+        <th>Morning</th>
+        <th>Lunch</th>
+        <th>Dinner</th>
+        <th>Total Meals</th>
+        <th>Billable Meals</th>
         <th>Bazar (৳)</th>
-        <th>Meal Rate</th>
+        <th>Base Rate</th>
         <th>Meal Cost</th>
         <th>Khala</th>
         <th>Gas</th>
@@ -344,7 +365,11 @@ function renderCalcTable({ rows, summary }, container) {
   const tbody = rows.map((row) => `
     <tr id="row-${row.uid}" class="${row.locked ? "table-warning" : ""}">
       <td><strong>${row.name}</strong><br><small class="text-muted">@${row.username}</small></td>
+      <td>${row.morningMeals}</td>
+      <td>${row.lunchMeals}</td>
+      <td>${row.dinnerMeals}</td>
       <td>${row.totalMeals}</td>
+      <td>${row.mealUnits}</td>
       <td>${row.totalBazar}</td>
       <td>${row.mealRate}</td>
       <td>${row.mealCost}</td>
@@ -499,6 +524,25 @@ function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+function calcTypeRate(baseRate, percent) {
+  return round2((baseRate || 0) * (percent || 0) / 100);
+}
+
+function parseNonNegativeNumber(value, fallback) {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function getInputNumber(id, fallback) {
+  const input = document.getElementById(id);
+  return input ? parseNonNegativeNumber(input.value, fallback) : fallback;
+}
+
+function setInputValue(id, value) {
+  const input = document.getElementById(id);
+  if (input) input.value = value;
+}
+
 // ─────────────────────────────────────────────
 // Remove from Calculation (visual only via flag)
 // ─────────────────────────────────────────────
@@ -522,16 +566,18 @@ function exportToPdf() {
   doc.setFontSize(16);
   doc.text(`Meal & Expense Report — ${selectedMonth}`, 14, 15);
   doc.setFontSize(10);
-  doc.text(`Meal Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals} | Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 23);
+  doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Billable Meals: ${calcData.summary.totalMealUnits} | Raw Meals: ${calcData.summary.totalMeals}`, 14, 23);
+  doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcTypeRate(calcData.summary.mealRate, calcData.summary.mealPercentages.morning)}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcTypeRate(calcData.summary.mealRate, calcData.summary.mealPercentages.lunch)}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcTypeRate(calcData.summary.mealRate, calcData.summary.mealPercentages.dinner)})`, 14, 29);
+  doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 35);
 
-  const head = [["Name", "Meals", "Bazar", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Total Payable"]];
+  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Billable Meals", "Bazar", "Base Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Total Payable"]];
   const body = calcData.rows.map((r) => [
-    r.name, r.totalMeals, `৳${r.totalBazar}`, `৳${r.mealCost}`,
+    r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, r.mealUnits, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.mealCost}`,
     `৳${r.khalaPerPerson}`, `৳${r.gasPerPerson}`, `৳${r.electricityPerPerson}`,
     `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, `৳${r.totalPayable}`
   ]);
 
-  doc.autoTable({ head, body, startY: 28, theme: "grid" });
+  doc.autoTable({ head, body, startY: 40, theme: "grid" });
   doc.save(`hisab-${selectedMonth}.pdf`);
 }
 

@@ -166,8 +166,17 @@ Usernames are converted to fake emails internally:
 ### Calculation Logic
 
 ```
-mealRate      = totalBazar (all users) / totalMeals (all users)
-mealCost      = userMeals × mealRate
+billableMeals = morningMeals × morningMealPercent/100
+              + lunchMeals × lunchMealPercent/100
+              + dinnerMeals × dinnerMealPercent/100
+baseRate      = totalBazar (all users) / billableMeals (all users)
+lunchRate     = baseRate × lunchMealPercent/100
+dinnerRate    = baseRate × dinnerMealPercent/100
+morningRate   = baseRate × morningMealPercent/100
+mealCost      = userBillableMeals × baseRate
+morningMeals  = sum of meals.morning
+lunchMeals    = sum of meals.lunch
+dinnerMeals   = sum of meals.dinner
 khalaPerPerson = khalaTotal / activeUsers
 gasPerPerson   = gasTotal / activeUsers
 electricityPerPerson = electricityTotal / activeUsers

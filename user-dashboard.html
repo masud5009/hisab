@@ -24,6 +24,12 @@
       --clr-user-glow: rgba(37,99,235,0.1);
       --clr-green: #16a34a;
       --clr-yellow: #b7791f;
+      --clr-bazar: #047857;
+      --clr-bazar-soft: #ecfdf5;
+      --clr-bazar-border: #a7f3d0;
+      --clr-meal: #b45309;
+      --clr-meal-soft: #fffbeb;
+      --clr-meal-border: #fde68a;
       --clr-text: #172033;
       --clr-muted: #667085;
       --sidebar-w: 220px;
@@ -126,6 +132,16 @@
     .summ-card.highlight .summ-value { color: var(--clr-user); }
     .summ-card.payable { border-color: var(--clr-yellow); background: rgba(183,121,31,0.1); }
     .summ-card.payable .summ-value { color: var(--clr-yellow); }
+    .summ-card.bazar {
+      border-color: var(--clr-bazar-border);
+      background: var(--clr-bazar-soft);
+    }
+    .summ-card.bazar .summ-value { color: var(--clr-bazar); }
+    .summ-card.meal {
+      border-color: var(--clr-meal-border);
+      background: var(--clr-meal-soft);
+    }
+    .summ-card.meal .summ-value { color: var(--clr-meal); }
 
     /* Cards */
     .card {
@@ -145,6 +161,30 @@
     .card-header-title { display: flex; align-items: center; gap: 0.5rem; }
     .card-header-custom i { color: var(--clr-user); }
     .card-body-custom { padding: 1.25rem; }
+    .card.bazar-card {
+      border-color: var(--clr-bazar-border);
+      box-shadow: 0 12px 30px rgba(4,120,87,0.08);
+    }
+    .card.bazar-card .card-header-custom {
+      background: var(--clr-bazar-soft);
+      border-bottom-color: var(--clr-bazar-border);
+      color: #064e3b;
+    }
+    .card.bazar-card .card-header-custom i { color: var(--clr-bazar); }
+    .card.meal-card {
+      border-color: var(--clr-meal-border);
+      box-shadow: 0 12px 30px rgba(180,83,9,0.08);
+    }
+    .card.meal-card .card-header-custom {
+      background: var(--clr-meal-soft);
+      border-bottom-color: var(--clr-meal-border);
+      color: #78350f;
+    }
+    .card.meal-card .card-header-custom i { color: var(--clr-meal); }
+    .card.bazar-card .btn-add { background: var(--clr-bazar); }
+    .card.bazar-card .btn-add:hover { background: #065f46; }
+    .card.meal-card .btn-add { background: var(--clr-meal); }
+    .card.meal-card .btn-add:hover { background: #92400e; }
     .history-filter {
       display: flex;
       align-items: center;
@@ -209,6 +249,22 @@
       border-color: var(--clr-border);
     }
     .table td, .table th { border-color: var(--clr-border); vertical-align: middle; }
+    .bazar-table thead th {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: var(--clr-bazar-border);
+    }
+    .bazar-table td, .bazar-table th { border-color: var(--clr-bazar-border); }
+    .bazar-table tbody tr:nth-child(even) { background: #f0fdf4; }
+    .bazar-table tbody tr:hover { background: #dcfce7; }
+    .meal-table thead th {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: var(--clr-meal-border);
+    }
+    .meal-table td, .meal-table th { border-color: var(--clr-meal-border); }
+    .meal-table tbody tr:nth-child(even) { background: #fffbeb; }
+    .meal-table tbody tr:hover { background: #fef3c7; }
 
     .btn-add {
       background: var(--clr-user);
@@ -255,6 +311,14 @@
         margin-bottom: 0.75rem;
         overflow: hidden;
         background: #ffffff;
+      }
+      #section-history .bazar-table tr {
+        background: var(--clr-bazar-soft);
+        border-color: var(--clr-bazar-border);
+      }
+      #section-history .meal-table tr {
+        background: var(--clr-meal-soft);
+        border-color: var(--clr-meal-border);
       }
       #section-history tbody tr:last-child { margin-bottom: 0; }
       #section-history td {
@@ -342,11 +406,11 @@
     <!-- ── Summary ── -->
     <div id="section-summary">
       <div class="summary-grid">
-        <div class="summ-card highlight">
+        <div class="summ-card bazar">
           <div class="summ-label">My Bazar</div>
           <div class="summ-value" id="summTotalBazar">—</div>
         </div>
-        <div class="summ-card">
+        <div class="summ-card meal">
           <div class="summ-label">Total Meal</div>
           <div class="summ-value" id="summTotalMeals">—</div>
         </div>
@@ -354,7 +418,7 @@
     </div>
 
     <!-- ── Add Bazar ── -->
-    <div class="card" id="section-bazar">
+    <div class="card bazar-card" id="section-bazar">
       <div class="card-header-custom">
         <i class="bi bi-basket"></i> Add Bazar Entry
       </div>
@@ -386,7 +450,7 @@
     </div>
 
     <!-- ── Add Meals ── -->
-    <div class="card" id="section-meals">
+    <div class="card meal-card" id="section-meals">
       <div class="card-header-custom">
         <i class="bi bi-egg-fried"></i> Add Meal Entry
       </div>
@@ -434,13 +498,13 @@
     <!-- ── History ── -->
     <div class="row g-3" id="section-history">
       <div class="col-md-6">
-        <div class="card">
+        <div class="card bazar-card">
           <div class="card-header-custom">
             <i class="bi bi-basket"></i> Bazar History
           </div>
           <div class="card-body-custom p-0">
             <div class="table-responsive">
-              <table class="table mb-0">
+              <table class="table bazar-table mb-0">
                 <thead>
                   <tr><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr>
                 </thead>
@@ -453,7 +517,7 @@
         </div>
       </div>
       <div class="col-md-6">
-        <div class="card">
+        <div class="card meal-card">
           <div class="card-header-custom">
             <span class="card-header-title">
               <i class="bi bi-egg-fried"></i> Meal History
@@ -465,7 +529,7 @@
           </div>
           <div class="card-body-custom p-0">
             <div class="table-responsive">
-              <table class="table mb-0">
+              <table class="table meal-table mb-0">
                 <thead>
                   <tr><th>Date</th><th>Morning</th><th>Lunch</th><th>Dinner</th><th>Total</th><th>Actions</th></tr>
                 </thead>
