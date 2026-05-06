@@ -165,15 +165,14 @@ Usernames are converted to fake emails internally:
 
 ### Calculation Logic
 
+Default meal percentages: morning `0%`, lunch base `100%`, dinner `60%`. Percentages are stored per month and remain editable.
+
 ```
-billableMeals = morningMeals × morningMealPercent/100
-              + lunchMeals × lunchMealPercent/100
-              + dinnerMeals × dinnerMealPercent/100
-baseRate      = totalBazar (all users) / billableMeals (all users)
-lunchRate     = baseRate × lunchMealPercent/100
+baseRate      = totalBazar (all users) / totalMeals (all users)
 dinnerRate    = baseRate × dinnerMealPercent/100
 morningRate   = baseRate × morningMealPercent/100
-mealCost      = userBillableMeals × baseRate
+lunchRate     = baseRate × (lunchMealPercent + max(0, 100 - dinnerMealPercent))/100
+mealCost      = morningMeals × morningRate + lunchMeals × lunchRate + dinnerMeals × dinnerRate
 morningMeals  = sum of meals.morning
 lunchMeals    = sum of meals.lunch
 dinnerMeals   = sum of meals.dinner

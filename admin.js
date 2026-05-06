@@ -6,7 +6,7 @@
 
 import { auth, db, firebaseConfig } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
-import { buildCalculationTable } from "./calculation.js";
+import { DEFAULT_MEAL_PERCENTAGES, buildCalculationTable, getMealPercentages } from "./calculation.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -494,21 +494,22 @@ async function loadMonthCosts() {
   const snap = await getDoc(doc(db, "months", selectedMonth));
   if (snap.exists()) {
     const d = snap.data();
+    const mealPercentages = getMealPercentages(d);
     setInputValue("khalaInput", d.khalaTotal || 0);
     setInputValue("gasInput", d.gasTotal || 0);
     setInputValue("electricityInput", d.electricityTotal || 0);
     setInputValue("wifiInput", d.wifiTotal || 0);
-    setInputValue("morningPercentInput", d.morningMealPercent ?? 100);
-    setInputValue("lunchPercentInput", d.lunchMealPercent ?? 100);
-    setInputValue("dinnerPercentInput", d.dinnerMealPercent ?? 100);
+    setInputValue("morningPercentInput", mealPercentages.morning);
+    setInputValue("lunchPercentInput", mealPercentages.lunch);
+    setInputValue("dinnerPercentInput", mealPercentages.dinner);
   } else {
     // Reset inputs
     ["khalaInput","gasInput","electricityInput","wifiInput"].forEach(id => {
       setInputValue(id, 0);
     });
-    ["morningPercentInput","lunchPercentInput","dinnerPercentInput"].forEach(id => {
-      setInputValue(id, 100);
-    });
+    setInputValue("morningPercentInput", DEFAULT_MEAL_PERCENTAGES.morning);
+    setInputValue("lunchPercentInput", DEFAULT_MEAL_PERCENTAGES.lunch);
+    setInputValue("dinnerPercentInput", DEFAULT_MEAL_PERCENTAGES.dinner);
   }
 }
 
@@ -519,9 +520,9 @@ async function handleSaveMonthCosts(e) {
     gasTotal: getInputNumber("gasInput", 0),
     electricityTotal: getInputNumber("electricityInput", 0),
     wifiTotal: getInputNumber("wifiInput", 0),
-    morningMealPercent: getInputNumber("morningPercentInput", 100),
-    lunchMealPercent: getInputNumber("lunchPercentInput", 100),
-    dinnerMealPercent: getInputNumber("dinnerPercentInput", 100),
+    morningMealPercent: getInputNumber("morningPercentInput", DEFAULT_MEAL_PERCENTAGES.morning),
+    lunchMealPercent: getInputNumber("lunchPercentInput", DEFAULT_MEAL_PERCENTAGES.lunch),
+    dinnerMealPercent: getInputNumber("dinnerPercentInput", DEFAULT_MEAL_PERCENTAGES.dinner),
     updatedAt: serverTimestamp()
   };
   try {
@@ -583,13 +584,12 @@ function renderCalcTable({ rows, summary }, container) {
       <span class="badge bg-light text-dark border fs-6">Morning: ${summary.totalMorningMeals}</span>
       <span class="badge bg-light text-dark border fs-6">Lunch: ${summary.totalLunchMeals}</span>
       <span class="badge bg-light text-dark border fs-6">Dinner: ${summary.totalDinnerMeals}</span>
-      <span class="badge bg-dark fs-6">Billable Meals: ${summary.totalMealUnits}</span>
       <span class="badge bg-success fs-6">Total Bazar: ৳${summary.totalBazar}</span>
       <span class="badge bg-secondary fs-6">Room Rent: ৳${summary.totalBariVara}</span>
       <span class="badge bg-warning text-dark fs-6">Base Rate: ৳${summary.mealRate}</span>
-      <span class="badge bg-light text-dark border fs-6">Lunch Rate: ৳${calcTypeRate(summary.mealRate, summary.mealPercentages.lunch)}</span>
-      <span class="badge bg-light text-dark border fs-6">Dinner Rate: ৳${calcTypeRate(summary.mealRate, summary.mealPercentages.dinner)}</span>
-      <span class="badge bg-light text-dark border fs-6">Morning Rate: ৳${calcTypeRate(summary.mealRate, summary.mealPercentages.morning)}</span>
+      <span class="badge bg-light text-dark border fs-6">Dinner Rate: ৳${summary.mealRates.dinner}</span>
+      <span class="badge bg-light text-dark border fs-6">Lunch Rate: ৳${summary.mealRates.lunch}</span>
+      <span class="badge bg-light text-dark border fs-6">Morning Rate: ৳${summary.mealRates.morning}</span>
       <span class="badge bg-light text-dark border fs-6">Rate %: M ${summary.mealPercentages.morning}% / L ${summary.mealPercentages.lunch}% / D ${summary.mealPercentages.dinner}%</span>
       <span class="badge bg-info text-dark fs-6">Members: ${summary.userCount}</span>
     </div>`;
@@ -602,9 +602,10 @@ function renderCalcTable({ rows, summary }, container) {
         <th>Lunch</th>
         <th>Dinner</th>
         <th>Total Meals</th>
-        <th>Billable Meals</th>
         <th>Bazar (৳)</th>
         <th>Base Rate</th>
+        <th>Dinner Rate</th>
+        <th>Lunch Rate</th>
         <th>Meal Cost</th>
         <th>Khala</th>
         <th>Gas</th>
@@ -624,9 +625,10 @@ function renderCalcTable({ rows, summary }, container) {
       <td>${row.lunchMeals}</td>
       <td>${row.dinnerMeals}</td>
       <td>${row.totalMeals}</td>
-      <td>${row.mealUnits}</td>
       <td>${row.totalBazar}</td>
       <td>${row.mealRate}</td>
+      <td>${row.dinnerRate}</td>
+      <td>${row.lunchRate}</td>
       <td>${row.mealCost}</td>
       <td>${row.khalaPerPerson}</td>
       <td>${row.gasPerPerson}</td>
@@ -779,10 +781,6 @@ function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-function calcTypeRate(baseRate, percent) {
-  return round2((baseRate || 0) * (percent || 0) / 100);
-}
-
 function parseNonNegativeNumber(value, fallback) {
   const parsed = parseFloat(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
@@ -826,13 +824,13 @@ function exportToPdf() {
   doc.setFontSize(16);
   doc.text(`Meal & Expense Report — ${selectedMonth}`, 14, 15);
   doc.setFontSize(10);
-  doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Billable Meals: ${calcData.summary.totalMealUnits} | Raw Meals: ${calcData.summary.totalMeals}`, 14, 23);
-  doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcTypeRate(calcData.summary.mealRate, calcData.summary.mealPercentages.morning)}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcTypeRate(calcData.summary.mealRate, calcData.summary.mealPercentages.lunch)}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcTypeRate(calcData.summary.mealRate, calcData.summary.mealPercentages.dinner)})`, 14, 29);
+  doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals}`, 14, 23);
+  doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcData.summary.mealRates.morning}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcData.summary.mealRates.lunch}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcData.summary.mealRates.dinner})`, 14, 29);
   doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 35);
 
-  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Billable Meals", "Bazar", "Base Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Total Payable"]];
+  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Bazar", "Base Rate", "Dinner Rate", "Lunch Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Total Payable"]];
   const body = calcData.rows.map((r) => [
-    r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, r.mealUnits, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.mealCost}`,
+    r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.dinnerRate}`, `৳${r.lunchRate}`, `৳${r.mealCost}`,
     `৳${r.khalaPerPerson}`, `৳${r.gasPerPerson}`, `৳${r.electricityPerPerson}`,
     `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, `৳${r.totalPayable}`
   ]);
