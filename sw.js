@@ -1,4 +1,4 @@
-const CACHE_NAME = "hisab-pwa-v1";
+const CACHE_NAME = "hisab-pwa-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -39,6 +39,12 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+  const pathname = url.pathname.toLowerCase();
+  const shouldRefreshFromNetwork =
+    pathname.endsWith(".html") ||
+    pathname.endsWith(".js") ||
+    pathname.endsWith(".css") ||
+    pathname.endsWith(".webmanifest");
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -54,6 +60,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.origin === self.location.origin) {
+    if (shouldRefreshFromNetwork) {
+      event.respondWith(networkFirst(request));
+      return;
+    }
+
     event.respondWith(
       caches.match(request).then((cached) => {
         return cached || fetch(request).then((response) => {
@@ -79,3 +90,13 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+function networkFirst(request) {
+  return fetch(request)
+    .then((response) => {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+      return response;
+    })
+    .catch(() => caches.match(request));
+}
