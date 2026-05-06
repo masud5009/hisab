@@ -527,8 +527,8 @@ async function handleSaveMonthCosts(e) {
   };
   try {
     await setDoc(doc(db, "months", selectedMonth), data, { merge: true });
-    showAlert("monthCostAlert", "Monthly costs saved!", "success");
-    loadCalculation();
+    await loadCalculation();
+    showAlert("monthCostAlert", "Monthly costs and rates saved!", "success");
   } catch (err) {
     showAlert("monthCostAlert", err.message, "danger");
   }
@@ -566,8 +566,29 @@ async function loadCalculation() {
     const result = buildCalculationTable(users, allMeals, allBazar, monthCosts, rentSplits);
     calcData = result;
     renderCalcTable(result, tableWrap);
+    await cacheCalculationSummary(result.summary);
   } catch (err) {
     tableWrap.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+  }
+}
+
+async function cacheCalculationSummary(summary) {
+  try {
+    await setDoc(doc(db, "months", selectedMonth), {
+      mealRate: summary.mealRate,
+      dinnerRate: summary.mealRates.dinner,
+      lunchRate: summary.mealRates.lunch,
+      calculationSummary: {
+        totalMeals: summary.totalMeals,
+        totalBazar: summary.totalBazar,
+        mealRate: summary.mealRate,
+        mealRates: summary.mealRates,
+        mealPercentages: summary.mealPercentages,
+        updatedAt: serverTimestamp()
+      }
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Failed to cache calculation summary:", err);
   }
 }
 

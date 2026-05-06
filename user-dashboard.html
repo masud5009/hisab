@@ -142,6 +142,11 @@
       background: var(--clr-meal-soft);
     }
     .summ-card.meal .summ-value { color: var(--clr-meal); }
+    .summ-card.rate {
+      border-color: var(--clr-border);
+      background: #f8fafc;
+    }
+    .summ-card.rate .summ-value { color: var(--clr-user); }
 
     /* Cards */
     .card {
@@ -439,6 +444,18 @@
         <div class="summ-card meal">
           <div class="summ-label">Total Meal</div>
           <div class="summ-value" id="summTotalMeals">—</div>
+        </div>
+        <div class="summ-card rate">
+          <div class="summ-label">Base Rate</div>
+          <div class="summ-value" id="summBaseRate">—</div>
+        </div>
+        <div class="summ-card rate">
+          <div class="summ-label">Dinner Rate</div>
+          <div class="summ-value" id="summDinnerRate">—</div>
+        </div>
+        <div class="summ-card rate">
+          <div class="summ-label">Lunch Rate</div>
+          <div class="summ-value" id="summLunchRate">—</div>
         </div>
       </div>
     </div>

@@ -5,11 +5,15 @@
 
 import { auth, db } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
-import { calcUserTotalBazar, calcUserTotalMeals } from "./calculation.js";
+import {
+  calcUserTotalBazar,
+  calcUserTotalMeals
+} from "./calculation.js";
 import {
   collection,
   doc,
   addDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -254,24 +258,47 @@ function updateMealTotal() {
 // Summary
 // ─────────────────────────────────────────────
 async function loadSummary() {
-  const mealsSnap = await getDocs(query(
-    collection(db, "meals"),
-    where("userId", "==", currentUser.uid),
-    where("month", "==", selectedMonth)
-  ));
-  const bazarSnap = await getDocs(query(
-    collection(db, "bazar"),
-    where("userId", "==", currentUser.uid),
-    where("month", "==", selectedMonth)
-  ));
+  try {
+    const [mealsSnap, bazarSnap] = await Promise.all([
+      getDocs(query(
+        collection(db, "meals"),
+        where("userId", "==", currentUser.uid),
+        where("month", "==", selectedMonth)
+      )),
+      getDocs(query(
+        collection(db, "bazar"),
+        where("userId", "==", currentUser.uid),
+        where("month", "==", selectedMonth)
+      ))
+    ]);
 
-  const userMeals = mealsSnap.docs.map((d) => d.data());
-  const userBazar = bazarSnap.docs.map((d) => d.data());
-  const totalMeals = calcUserTotalMeals(userMeals);
-  const totalBazar = calcUserTotalBazar(userBazar);
+    const userMeals = mealsSnap.docs.map((d) => d.data());
+    const userBazar = bazarSnap.docs.map((d) => d.data());
+    const totalMeals = calcUserTotalMeals(userMeals);
+    const totalBazar = calcUserTotalBazar(userBazar);
 
-  document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
-  document.getElementById("summTotalMeals").textContent = round2(totalMeals);
+    document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
+    document.getElementById("summTotalMeals").textContent = round2(totalMeals);
+  } catch (err) {
+    console.warn("Failed to load user summary:", err);
+  }
+
+  try {
+    const monthSnap = await getDoc(doc(db, "months", selectedMonth));
+    const monthData = monthSnap.exists() ? monthSnap.data() : {};
+    const rates = monthData.calculationSummary?.mealRates;
+    const baseRate = monthData.calculationSummary?.mealRate ?? monthData.mealRate;
+    const dinnerRate = rates?.dinner ?? monthData.dinnerRate;
+    const lunchRate = rates?.lunch ?? monthData.lunchRate;
+    document.getElementById("summBaseRate").textContent = formatCurrencyOrDash(baseRate);
+    document.getElementById("summDinnerRate").textContent = formatCurrencyOrDash(dinnerRate);
+    document.getElementById("summLunchRate").textContent = formatCurrencyOrDash(lunchRate);
+  } catch (err) {
+    console.warn("Failed to load monthly rates:", err);
+    document.getElementById("summBaseRate").textContent = "—";
+    document.getElementById("summDinnerRate").textContent = "—";
+    document.getElementById("summLunchRate").textContent = "—";
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -551,6 +578,11 @@ async function handleLogout() {
 // ─────────────────────────────────────────────
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function formatCurrencyOrDash(value) {
+  const amount = parseFloat(value);
+  return Number.isFinite(amount) ? `৳${round2(amount)}` : "—";
 }
 
 function showAlert(id, msg, type) {
