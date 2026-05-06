@@ -88,7 +88,7 @@ export function calcUserPayable({
  * @param {Array}  users       - User profile docs (active in this month)
  * @param {Array}  allMeals    - All meal docs for the month
  * @param {Array}  allBazar    - All bazar docs for the month
- * @param {object} monthCosts  - { khalaTotal, gasTotal, electricityTotal, wifiTotal, bariVaraTotal }
+ * @param {object} monthCosts  - { khalaTotal, gasTotal, electricityTotal, wifiTotal }
  * @param {Array}  rentSplits  - rentSplits docs for the month (locked bari vara per user)
  * @returns {Array} rows with full calculation per user
  */
@@ -112,9 +112,9 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
     const userTotalMeals = calcUserTotalMeals(userMeals);
     const userTotalBazar = calcUserTotalBazar(userBazar);
 
-    // Bari vara: check if user has a locked rent split, else use equal share
+    // Bari vara is entered person-wise by admin. Unsaved rows start at 0.
     const rentSplit = rentSplits.find((r) => r.userId === user.uid);
-    const bariVara = rentSplit ? rentSplit.amount : calcPerPerson(monthCosts.bariVaraTotal || 0, userCount);
+    const bariVara = rentSplit ? rentSplit.amount : 0;
 
     const calc = calcUserPayable({
       userMeals: userTotalMeals,
@@ -138,12 +138,14 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
       ...calc
     };
   });
+  const totalBariVara = rows.reduce((sum, row) => sum + (row.bariVara || 0), 0);
 
   return {
     rows,
     summary: {
       totalMeals,
       totalBazar: round2(totalBazar),
+      totalBariVara: round2(totalBariVara),
       mealRate: round2(mealRate),
       userCount
     }

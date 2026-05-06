@@ -172,7 +172,7 @@ khalaPerPerson = khalaTotal / activeUsers
 gasPerPerson   = gasTotal / activeUsers
 electricityPerPerson = electricityTotal / activeUsers
 wifiPerPerson  = wifiTotal / activeUsers
-bariVara       = locked amount (per user) or bariVaraTotal / activeUsers
+bariVara       = saved person-wise rent entered by admin
 
 totalPayable = mealCost + khalaPerPerson + gasPerPerson
              + electricityPerPerson + wifiPerPerson + bariVara

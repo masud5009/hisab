@@ -18,7 +18,6 @@ import {
   collection,
   doc,
   deleteDoc,
-  addDoc,
   setDoc,
   getDoc,
   getDocs,
@@ -53,6 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("addUserForm").addEventListener("submit", handleAddUser);
   document.getElementById("editMemberForm").addEventListener("submit", handleEditMember);
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
+  document.getElementById("saveRoomRentsBtn").addEventListener("click", handleSaveRoomRents);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
   document.getElementById("exportPdfBtn").addEventListener("click", exportToPdf);
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
@@ -243,10 +243,9 @@ async function loadMonthCosts() {
     document.getElementById("gasInput").value = d.gasTotal || 0;
     document.getElementById("electricityInput").value = d.electricityTotal || 0;
     document.getElementById("wifiInput").value = d.wifiTotal || 0;
-    document.getElementById("bariVaraInput").value = d.bariVaraTotal || 0;
   } else {
     // Reset inputs
-    ["khalaInput","gasInput","electricityInput","wifiInput","bariVaraInput"].forEach(id => {
+    ["khalaInput","gasInput","electricityInput","wifiInput"].forEach(id => {
       document.getElementById(id).value = 0;
     });
   }
@@ -259,7 +258,6 @@ async function handleSaveMonthCosts(e) {
     gasTotal: parseFloat(document.getElementById("gasInput").value) || 0,
     electricityTotal: parseFloat(document.getElementById("electricityInput").value) || 0,
     wifiTotal: parseFloat(document.getElementById("wifiInput").value) || 0,
-    bariVaraTotal: parseFloat(document.getElementById("bariVaraInput").value) || 0,
     updatedAt: serverTimestamp()
   };
   try {
@@ -319,6 +317,7 @@ function renderCalcTable({ rows, summary }, container) {
     <div class="d-flex flex-wrap gap-2 mb-3">
       <span class="badge bg-primary fs-6">Total Meals: ${summary.totalMeals}</span>
       <span class="badge bg-success fs-6">Total Bazar: ৳${summary.totalBazar}</span>
+      <span class="badge bg-secondary fs-6">Room Rent: ৳${summary.totalBariVara}</span>
       <span class="badge bg-warning text-dark fs-6">Meal Rate: ৳${summary.mealRate}</span>
       <span class="badge bg-info text-dark fs-6">Members: ${summary.userCount}</span>
     </div>`;
@@ -357,10 +356,10 @@ function renderCalcTable({ rows, summary }, container) {
         ${row.locked
           ? `<strong>${row.bariVara}</strong>`
           : `<input type="number" class="form-control form-control-sm bari-vara-input" 
-              data-uid="${row.uid}" value="${row.bariVara}" style="width:90px">`
+              data-uid="${row.uid}" value="${row.bariVara}" min="0" step="0.01" style="width:90px">`
         }
       </td>
-      <td><strong class="text-success">৳${row.totalPayable}</strong></td>
+      <td><strong class="text-success">৳<span class="total-payable-value" data-base-payable="${basePayable(row)}">${row.totalPayable}</span></strong></td>
       <td>
         <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
           data-uid="${row.uid}" data-locked="${row.locked}">
@@ -389,6 +388,9 @@ function renderCalcTable({ rows, summary }, container) {
   container.querySelectorAll(".remove-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleRemoveFromCalc(btn.dataset.uid, btn.dataset.name));
   });
+  container.querySelectorAll(".bari-vara-input").forEach((input) => {
+    input.addEventListener("input", () => updateRentPreview(input));
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -396,27 +398,105 @@ function renderCalcTable({ rows, summary }, container) {
 // ─────────────────────────────────────────────
 async function handleLock(uid, isLocked) {
   if (isLocked) {
-    // Unlock
-    const snap = await getDocs(query(
-      collection(db, "rentSplits"),
-      where("userId", "==", uid),
-      where("month", "==", selectedMonth)
-    ));
-    const batch = writeBatch(db);
-    snap.forEach((d) => batch.delete(d.ref));
-    await batch.commit();
+    await deleteRentSplitsForUser(uid);
   } else {
     // Lock with current bari vara input value
     const input = document.querySelector(`.bari-vara-input[data-uid="${uid}"]`);
     const amount = parseFloat(input?.value) || 0;
-    await addDoc(collection(db, "rentSplits"), {
+    await deleteRentSplitsForUser(uid);
+    await setDoc(doc(db, "rentSplits", rentSplitDocId(uid)), {
       userId: uid,
       month: selectedMonth,
       amount,
-      locked: true
+      locked: true,
+      updatedAt: serverTimestamp()
     });
   }
   loadCalculation();
+}
+
+async function handleSaveRoomRents() {
+  if (!calcData || calcData.rows.length === 0) {
+    showAlert("calcAlert", "No calculation rows to save.", "warning");
+    return;
+  }
+  const saveBtn = document.getElementById("saveRoomRentsBtn");
+
+  const rents = calcData.rows.map((row) => {
+    const input = document.querySelector(`.bari-vara-input[data-uid="${row.uid}"]`);
+    const amount = input ? parseFloat(input.value) : row.bariVara;
+    return { row, amount };
+  });
+
+  const invalidRent = rents.find(({ amount }) => !Number.isFinite(amount) || amount < 0);
+  if (invalidRent) {
+    showAlert("calcAlert", "Room rent amounts must be zero or more.", "warning");
+    return;
+  }
+
+  try {
+    if (saveBtn) saveBtn.disabled = true;
+    showAlert("calcAlert", "Saving room rents...", "info", false);
+    const existing = await getDocs(query(collection(db, "rentSplits"), where("month", "==", selectedMonth)));
+    const targetIds = new Set(rents.map(({ row }) => rentSplitDocId(row.uid)));
+    const batch = writeBatch(db);
+    existing.forEach((d) => {
+      if (!targetIds.has(d.id)) batch.delete(d.ref);
+    });
+    rents.forEach(({ row, amount }) => {
+      batch.set(doc(db, "rentSplits", rentSplitDocId(row.uid)), {
+        userId: row.uid,
+        month: selectedMonth,
+        amount: round2(amount),
+        locked: true,
+        updatedAt: serverTimestamp()
+      });
+    });
+    await batch.commit();
+    showAlert("calcAlert", "Room rents saved person-wise.", "success", false);
+    await loadCalculation();
+  } catch (err) {
+    showAlert("calcAlert", err.message, "danger", false);
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+
+async function deleteRentSplitsForUser(uid) {
+  const snap = await getDocs(query(
+    collection(db, "rentSplits"),
+    where("userId", "==", uid),
+    where("month", "==", selectedMonth)
+  ));
+  const batch = writeBatch(db);
+  snap.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+}
+
+function rentSplitDocId(uid) {
+  return `${selectedMonth}_${uid}`;
+}
+
+function updateRentPreview(input) {
+  const amount = parseFloat(input.value) || 0;
+  const row = input.closest("tr");
+  const totalEl = row?.querySelector(".total-payable-value");
+  const basePayableAmount = parseFloat(totalEl?.dataset.basePayable) || 0;
+  if (totalEl) totalEl.textContent = round2(basePayableAmount + amount);
+}
+
+function basePayable(row) {
+  return round2(
+    row.mealCost +
+    row.khalaPerPerson +
+    row.gasPerPerson +
+    row.electricityPerPerson +
+    row.wifiPerPerson
+  );
+}
+
+function round2(n) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
 // ─────────────────────────────────────────────
@@ -442,7 +522,7 @@ function exportToPdf() {
   doc.setFontSize(16);
   doc.text(`Meal & Expense Report — ${selectedMonth}`, 14, 15);
   doc.setFontSize(10);
-  doc.text(`Meal Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals} | Total Bazar: ৳${calcData.summary.totalBazar}`, 14, 23);
+  doc.text(`Meal Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals} | Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 23);
 
   const head = [["Name", "Meals", "Bazar", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Total Payable"]];
   const body = calcData.rows.map((r) => [
