@@ -1010,27 +1010,41 @@ async function cacheCalculationSummary(summary) {
 }
 
 function renderCalcTable({ rows, summary }, container) {
+  const widgetContainer = document.getElementById("calcSummaryWidgets");
+
   if (rows.length === 0) {
     container.innerHTML = `<div class="alert alert-info">No users or data found for this month.</div>`;
+    if (widgetContainer) widgetContainer.innerHTML = "";
     return;
   }
 
-  // Summary badges
-  const summaryHtml = `
-    <div class="d-flex flex-wrap gap-2 mb-3">
-      <span class="badge bg-primary fs-6">Total Meals: ${summary.totalMeals}</span>
-      <span class="badge bg-light text-dark border fs-6">Morning: ${summary.totalMorningMeals}</span>
-      <span class="badge bg-light text-dark border fs-6">Lunch: ${summary.totalLunchMeals}</span>
-      <span class="badge bg-light text-dark border fs-6">Dinner: ${summary.totalDinnerMeals}</span>
-      <span class="badge bg-success fs-6">Total Bazar: ৳${summary.totalBazar}</span>
-      <span class="badge bg-secondary fs-6">Room Rent: ৳${summary.totalBariVara}</span>
-      <span class="badge bg-warning text-dark fs-6">Base Rate: ৳${summary.mealRate}</span>
-      <span class="badge bg-light text-dark border fs-6">Dinner Rate: ৳${summary.mealRates.dinner}</span>
-      <span class="badge bg-light text-dark border fs-6">Lunch Rate: ৳${summary.mealRates.lunch}</span>
-      <span class="badge bg-light text-dark border fs-6">Morning Rate: ৳${summary.mealRates.morning}</span>
-      <span class="badge bg-light text-dark border fs-6">Rate %: M ${summary.mealPercentages.morning}% / L ${summary.mealPercentages.lunch}% / D ${summary.mealPercentages.dinner}%</span>
-      <span class="badge bg-info text-dark fs-6">Members: ${summary.userCount}</span>
-    </div>`;
+  // Summary widget cards (rendered outside the card)
+  if (widgetContainer) {
+    const widgets = [
+      { label: "Total Meals", value: summary.totalMeals, icon: "bi-clipboard-data", variant: "primary" },
+      { label: "Morning", value: summary.totalMorningMeals, icon: "bi-sunrise", variant: "orange" },
+      { label: "Lunch", value: summary.totalLunchMeals, icon: "bi-sun", variant: "warning" },
+      { label: "Dinner", value: summary.totalDinnerMeals, icon: "bi-moon-stars", variant: "purple" },
+      { label: "Total Bazar", value: `৳${summary.totalBazar}`, icon: "bi-cart-check", variant: "success" },
+      { label: "Room Rent", value: `৳${summary.totalBariVara}`, icon: "bi-house", variant: "secondary" },
+      { label: "Base Rate", value: `৳${summary.mealRate}`, icon: "bi-tag", variant: "warning" },
+      { label: "Dinner Rate", value: `৳${summary.mealRates.dinner}`, icon: "bi-moon", variant: "purple" },
+      { label: "Lunch Rate", value: `৳${summary.mealRates.lunch}`, icon: "bi-brightness-high", variant: "info" },
+      { label: "Morning Rate", value: `৳${summary.mealRates.morning}`, icon: "bi-sunrise", variant: "orange" },
+      { label: "Rate %", value: `M ${summary.mealPercentages.morning}% / L ${summary.mealPercentages.lunch}% / D ${summary.mealPercentages.dinner}%`, icon: "bi-percent", variant: "secondary" },
+      { label: "Members", value: summary.userCount, icon: "bi-people", variant: "info" },
+    ];
+
+    widgetContainer.innerHTML = widgets.map(w => `
+      <div class="summary-widget widget--${w.variant}">
+        <div class="widget-icon"><i class="bi ${w.icon}"></i></div>
+        <div class="widget-info">
+          <span class="widget-label">${w.label}</span>
+          <span class="widget-value">${w.value}</span>
+        </div>
+      </div>
+    `).join("");
+  }
 
   const thead = `
     <thead>
@@ -1040,7 +1054,7 @@ function renderCalcTable({ rows, summary }, container) {
         <th>Lunch</th>
         <th>Dinner</th>
         <th>Total Meals</th>
-        <th>Bazar (৳)</th>
+        <th>Bazar</th>
         <th>Base Rate</th>
         <th>Dinner Rate</th>
         <th>Lunch Rate</th>
@@ -1052,7 +1066,6 @@ function renderCalcTable({ rows, summary }, container) {
         <th>Bari Vara</th>
         <th>Total Payable</th>
         <th>Lock</th>
-        <th>Remove</th>
       </tr>
     </thead>`;
 
@@ -1086,14 +1099,9 @@ function renderCalcTable({ rows, summary }, container) {
           ${row.locked ? "🔒 Locked" : "🔓 Lock"}
         </button>
       </td>
-      <td>
-        <button class="btn btn-sm btn-outline-danger remove-btn" data-uid="${row.uid}" data-name="${row.name}">
-          Remove
-        </button>
-      </td>
     </tr>`).join("");
 
-  container.innerHTML = summaryHtml + `
+  container.innerHTML = `
     <div class="table-responsive">
       <table class="table table-bordered table-hover align-middle" id="calcTable">
         ${thead}

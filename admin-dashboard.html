@@ -273,6 +273,91 @@
     .badge { font-size: 0.75rem; }
     .dashboard-tab-panel[hidden] { display: none !important; }
 
+    /* ── Summary Widget Cards ── */
+    .summary-widgets {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-widget {
+      background: var(--clr-card);
+      border: 1px solid var(--clr-border);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.04);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-widget:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+    }
+    .summary-widget::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      border-radius: 4px 0 0 4px;
+    }
+    .summary-widget .widget-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .summary-widget .widget-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .summary-widget .widget-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .summary-widget .widget-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--clr-text);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Widget color variants */
+    .widget--primary::before { background: #2563eb; }
+    .widget--primary .widget-icon { background: rgba(37,99,235,0.1); color: #2563eb; }
+
+    .widget--success::before { background: #16a34a; }
+    .widget--success .widget-icon { background: rgba(22,163,74,0.1); color: #16a34a; }
+
+    .widget--warning::before { background: #d99a00; }
+    .widget--warning .widget-icon { background: rgba(217,154,0,0.1); color: #d99a00; }
+
+    .widget--secondary::before { background: #6b7280; }
+    .widget--secondary .widget-icon { background: rgba(107,114,128,0.1); color: #6b7280; }
+
+    .widget--info::before { background: #0ea5e9; }
+    .widget--info .widget-icon { background: rgba(14,165,233,0.1); color: #0ea5e9; }
+
+    .widget--orange::before { background: #ea580c; }
+    .widget--orange .widget-icon { background: rgba(234,88,12,0.1); color: #ea580c; }
+
+    .widget--purple::before { background: #7c3aed; }
+    .widget--purple .widget-icon { background: rgba(124,58,237,0.1); color: #7c3aed; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar { width: 100%; height: auto; position: relative; }
@@ -333,6 +418,9 @@
       <h2><i class="bi bi-grid-1x2 me-2" style="color:var(--clr-primary)"></i>Dashboard</h2>
       <select class="month-selector" id="monthSelector"></select>
     </div>
+
+    <!-- ── Summary Widgets ── -->
+    <div id="calcSummaryWidgets" class="summary-widgets"></div>
 
     <!-- ── Calculation Table ── -->
     <div class="card mb-4" id="section-calc">
