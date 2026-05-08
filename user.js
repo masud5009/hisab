@@ -205,6 +205,19 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     link.setAttribute("aria-selected", String(isActive));
   });
 
+  // Update topbar heading based on active tab
+  const headingMap = {
+    "section-summary": { label: "My Dashboard", icon: "bi-pie-chart" },
+    "section-bazar": { label: "Add Bazar", icon: "bi-basket" },
+    "section-meals": { label: "Add Meals", icon: "bi-egg-fried" },
+    "section-history": { label: "History", icon: "bi-clock-history" },
+  };
+  const heading = document.getElementById("topbarHeading");
+  if (heading && headingMap[activeId]) {
+    const { label, icon } = headingMap[activeId];
+    heading.innerHTML = `<i class="bi ${icon} me-2" style="color:var(--clr-user)"></i>${label}`;
+  }
+
   if (updateHash && window.location.hash !== `#${activeId}`) {
     window.history.pushState(null, "", `#${activeId}`);
   }
