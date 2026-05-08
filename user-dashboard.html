@@ -180,6 +180,9 @@
       border-color: var(--clr-meal-border);
       box-shadow: 0 12px 30px rgba(180,83,9,0.08);
     }
+    .cursor-pointer {
+    cursor: pointer;
+}
     .card.meal-card .card-header-custom {
       background: var(--clr-meal-soft);
       border-bottom-color: var(--clr-meal-border);
@@ -305,6 +308,7 @@
     .btn-add:hover { background: #1d4ed8; }
 
     .alert { border-radius: 8px; font-size: 0.85rem; }
+    .dashboard-tab-panel[hidden] { display: none !important; }
 
     @media (max-width: 768px) {
       .sidebar { width: 100%; height: auto; position: relative; }
@@ -347,12 +351,14 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-name">হিসাব</div>
+      <div class="brand-name cursor-pointer" onclick="window.location.href='user-dashboard.html'">
+    হিসাব
+</div>
       <div class="brand-sub">Member Panel</div>
     </div>
     <nav>
       <div class="nav-item">
-        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> Summary</a>
+        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> Dashboard</a>
       </div>
       <div class="nav-item">
         <a href="#section-bazar"><i class="bi bi-basket"></i> Add Bazar</a>

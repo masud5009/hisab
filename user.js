@@ -33,6 +33,12 @@ let bazarHistoryRows = [];
 let mealHistoryRows = [];
 let bazarHistoryPage = 1;
 let mealHistoryPage = 1;
+const USER_SECTION_IDS = [
+  "section-summary",
+  "section-bazar",
+  "section-meals",
+  "section-history"
+];
 
 // Helper: toggle button spinner and disabled state
 function setButtonLoading(btnId, spinnerId, isLoading) {
@@ -62,6 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("userUsername").textContent = "@" + currentUser.username;
 
   initMonthSelector();
+  initDashboardTabs(USER_SECTION_IDS);
   loadSummary();
   loadBazarHistory();
   loadMealHistory();
@@ -153,6 +160,60 @@ function clearMealHistorySearch() {
   document.getElementById("mealHistoryDateSearch").value = "";
   mealHistoryPage = 1;
   loadMealHistory();
+}
+
+function initDashboardTabs(sectionIds) {
+  const tabLinks = getDashboardTabLinks(sectionIds);
+  const tabSet = new Set(sectionIds);
+
+  document.querySelector("aside nav")?.setAttribute("role", "tablist");
+  sectionIds.forEach((id) => {
+    const panel = document.getElementById(id);
+    if (!panel) return;
+    panel.classList.add("dashboard-tab-panel");
+    panel.setAttribute("role", "tabpanel");
+  });
+
+  tabLinks.forEach((link) => {
+    link.setAttribute("role", "tab");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute("href").slice(1);
+      showDashboardTab(sectionIds, targetId, true);
+    });
+  });
+
+  const initialId = tabSet.has(window.location.hash.slice(1)) ? window.location.hash.slice(1) : sectionIds[0];
+  showDashboardTab(sectionIds, initialId, false);
+  window.addEventListener("popstate", () => {
+    const targetId = tabSet.has(window.location.hash.slice(1)) ? window.location.hash.slice(1) : sectionIds[0];
+    showDashboardTab(sectionIds, targetId, false);
+  });
+}
+
+function showDashboardTab(sectionIds, activeId, updateHash) {
+  if (!sectionIds.includes(activeId)) activeId = sectionIds[0];
+
+  sectionIds.forEach((id) => {
+    const panel = document.getElementById(id);
+    if (panel) panel.hidden = id !== activeId;
+  });
+
+  getDashboardTabLinks(sectionIds).forEach((link) => {
+    const isActive = link.getAttribute("href") === `#${activeId}`;
+    link.classList.toggle("active", isActive);
+    link.setAttribute("aria-selected", String(isActive));
+  });
+
+  if (updateHash && window.location.hash !== `#${activeId}`) {
+    window.history.pushState(null, "", `#${activeId}`);
+  }
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function getDashboardTabLinks(sectionIds) {
+  return Array.from(document.querySelectorAll('aside nav a[href^="#section-"]'))
+    .filter((link) => sectionIds.includes(link.getAttribute("href").slice(1)));
 }
 
 // ─────────────────────────────────────────────

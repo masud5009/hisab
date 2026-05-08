@@ -258,6 +258,9 @@
       border-bottom: 1px solid var(--clr-border);
       font-weight: 700;
     }
+    .cursor-pointer {
+    cursor: pointer;
+}
     .app-modal-body { padding: 1.25rem; }
     .app-modal-footer {
       display: flex;
@@ -268,6 +271,7 @@
 
     .alert { border-radius: 8px; font-size: 0.85rem; }
     .badge { font-size: 0.75rem; }
+    .dashboard-tab-panel[hidden] { display: none !important; }
 
     /* Responsive */
     @media (max-width: 768px) {
@@ -289,15 +293,15 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-name">হিসাব</div>
+      <div class="brand-name cursor-pointer" onclick="window.location.href='admin-dashboard.html'">হিসাব</div>
       <div class="brand-sub">Admin Panel</div>
     </div>
     <nav>
       <div class="nav-item">
-        <a href="#section-calc" class="active"><i class="bi bi-table"></i> Calculation</a>
+        <a href="#section-calc" class="active"><i class="bi bi-table"></i> Dashboard</a>
       </div>
       <div class="nav-item">
-        <a href="#section-costs"><i class="bi bi-cash-stack"></i> Monthly Costs</a>
+        <a href="#section-costs"><i class="bi bi-cash-stack"></i> Calculation Settings</a>
       </div>
       <div class="nav-item">
         <a href="#section-bazar-history"><i class="bi bi-basket"></i> Bazar History</a>
@@ -354,47 +358,47 @@
     <!-- ── Monthly Costs ── -->
     <div class="card mb-4" id="section-costs">
       <div class="card-header-custom">
-        <i class="bi bi-cash-stack"></i> Monthly Shared Costs
+        <i class="bi bi-cash-stack"></i> Calculation Settings
       </div>
       <div class="card-body-custom">
         <div id="monthCostAlert" class="alert d-none"></div>
         <form id="monthCostForm">
           <div class="row g-3">
-            <div class="col-md-4 col-6">
+            <div class="col-md-3 col-6">
               <label class="form-label">খালা বিল (৳)</label>
               <input type="number" id="khalaInput" class="form-control" min="0" step="0.01" value="0"/>
             </div>
-            <div class="col-md-4 col-6">
+            <div class="col-md-3 col-6">
               <label class="form-label">গ্যাস বিল (৳)</label>
               <input type="number" id="gasInput" class="form-control" min="0" step="0.01" value="0"/>
             </div>
-            <div class="col-md-4 col-6">
+            <div class="col-md-3 col-6">
               <label class="form-label">বিদ্যুৎ বিল (৳)</label>
               <input type="number" id="electricityInput" class="form-control" min="0" step="0.01" value="0"/>
             </div>
-            <div class="col-md-4 col-6">
+            <div class="col-md-3 col-6">
               <label class="form-label">WiFi (৳)</label>
               <input type="number" id="wifiInput" class="form-control" min="0" step="0.01" value="0"/>
             </div>
             <div class="col-12">
               <div class="row g-3">
-                <div class="col-md-4 col-6">
-                  <label class="form-label">Morning Meal (%)</label>
+                <div class="col-md-3 col-6">
+                  <label class="form-label">সকালের মিল (%)</label>
                   <input type="number" id="morningPercentInput" class="form-control" min="0" step="0.01" value="0"/>
                 </div>
-                <div class="col-md-4 col-6">
-                  <label class="form-label">Lunch Base (%)</label>
+                <div class="col-md-3 col-6">
+                  <label class="form-label">দুপুরের মিল (%)</label>
                   <input type="number" id="lunchPercentInput" class="form-control" min="0" step="0.01" value="100"/>
                 </div>
-                <div class="col-md-4 col-6">
-                  <label class="form-label">Dinner Meal (%)</label>
+                <div class="col-md-3 col-6">
+                  <label class="form-label">রাতের মিল (%)</label>
                   <input type="number" id="dinnerPercentInput" class="form-control" min="0" step="0.01" value="60"/>
                 </div>
               </div>
-              <small class="text-muted d-block mt-2">Base rate = total bazar / total meals. Lunch rate = lunch base percentage + dinner remaining percentage.</small>
+              <small class="text-info d-block mt-2">বেইজ রেট = মোট বাজার ÷ মোট মিল <br> দুপুরের মিল রেট = বেইজ শতাংশ + রাতের অবশিষ্ট শতাংশ।</small>
             </div>
-            <div class="col-md-4 col-12 d-flex align-items-end">
-              <button type="submit" class="btn-primary-custom w-100">
+            <div class="col-md-3 d-flex align-items-end justify-content-end ms-auto">
+              <button type="submit" class="btn btn-success w-50">
                 <i class="bi bi-floppy me-1"></i> Save Costs
               </button>
             </div>

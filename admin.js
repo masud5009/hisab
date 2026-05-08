@@ -45,6 +45,14 @@ let adminMealRows = [];
 let mealCurrentPage = 1;
 let mealPageSize = 10;
 let mealMemberMap = new Map();
+const ADMIN_SECTION_IDS = [
+  "section-calc",
+  "section-costs",
+  "section-bazar-history",
+  "section-meal-history",
+  "section-users",
+  "section-add-user"
+];
 
 // ─────────────────────────────────────────────
 // Init
@@ -54,6 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("adminName").textContent = currentAdmin.name;
 
   initMonthSelector();
+  initDashboardTabs(ADMIN_SECTION_IDS);
   updateHistoryDateSearchRanges();
   loadUsersPanel();
   loadMonthCosts();
@@ -148,6 +157,60 @@ function setHistoryDateSearchRange(id) {
 function getHistoryDateSearchValue(id) {
   const value = document.getElementById(id)?.value || "";
   return value.startsWith(selectedMonth) ? value : "";
+}
+
+function initDashboardTabs(sectionIds) {
+  const tabLinks = getDashboardTabLinks(sectionIds);
+  const tabSet = new Set(sectionIds);
+
+  document.querySelector("aside nav")?.setAttribute("role", "tablist");
+  sectionIds.forEach((id) => {
+    const panel = document.getElementById(id);
+    if (!panel) return;
+    panel.classList.add("dashboard-tab-panel");
+    panel.setAttribute("role", "tabpanel");
+  });
+
+  tabLinks.forEach((link) => {
+    link.setAttribute("role", "tab");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute("href").slice(1);
+      showDashboardTab(sectionIds, targetId, true);
+    });
+  });
+
+  const initialId = tabSet.has(window.location.hash.slice(1)) ? window.location.hash.slice(1) : sectionIds[0];
+  showDashboardTab(sectionIds, initialId, false);
+  window.addEventListener("popstate", () => {
+    const targetId = tabSet.has(window.location.hash.slice(1)) ? window.location.hash.slice(1) : sectionIds[0];
+    showDashboardTab(sectionIds, targetId, false);
+  });
+}
+
+function showDashboardTab(sectionIds, activeId, updateHash) {
+  if (!sectionIds.includes(activeId)) activeId = sectionIds[0];
+
+  sectionIds.forEach((id) => {
+    const panel = document.getElementById(id);
+    if (panel) panel.hidden = id !== activeId;
+  });
+
+  getDashboardTabLinks(sectionIds).forEach((link) => {
+    const isActive = link.getAttribute("href") === `#${activeId}`;
+    link.classList.toggle("active", isActive);
+    link.setAttribute("aria-selected", String(isActive));
+  });
+
+  if (updateHash && window.location.hash !== `#${activeId}`) {
+    window.history.pushState(null, "", `#${activeId}`);
+  }
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function getDashboardTabLinks(sectionIds) {
+  return Array.from(document.querySelectorAll('aside nav a[href^="#section-"]'))
+    .filter((link) => sectionIds.includes(link.getAttribute("href").slice(1)));
 }
 
 // ─────────────────────────────────────────────
