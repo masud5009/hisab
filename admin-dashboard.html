@@ -273,6 +273,13 @@
     @media (max-width: 768px) {
       .sidebar { width: 100%; height: auto; position: relative; }
       .main-content { margin-left: 0; padding: 1rem; }
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #section-bazar-history table { min-width: 760px; }
+      #section-users table,
+      #calcTableWrap table { min-width: 720px; }
     }
   </style>
 </head>

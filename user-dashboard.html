@@ -324,73 +324,21 @@
       .history-page-controls {
         justify-content: space-between;
       }
-      #section-history .card-body-custom { padding: 0.75rem !important; }
-      #section-history .table-responsive { overflow: visible; }
-      #section-history table,
-      #section-history thead,
-      #section-history tbody,
-      #section-history tr,
-      #section-history th,
-      #section-history td {
-        display: block;
-        width: 100%;
+      #section-history .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
-      #section-history thead { display: none; }
-      #section-history tr {
-        border: 1px solid var(--clr-border);
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-        overflow: hidden;
-        background: #ffffff;
+      #section-history .bazar-table { min-width: 520px; }
+      #section-history .meal-table { min-width: 640px; }
+      #section-history .table th,
+      #section-history .table td {
+        padding: 0.55rem 0.65rem;
+        white-space: nowrap;
       }
-      #section-history .bazar-table tr {
-        background: var(--clr-bazar-soft);
-        border-color: var(--clr-bazar-border);
+      #section-history .bazar-table td:nth-child(2) {
+        min-width: 170px;
+        white-space: normal;
       }
-      #section-history .meal-table tr {
-        background: var(--clr-meal-soft);
-        border-color: var(--clr-meal-border);
-      }
-      #section-history tbody tr:last-child { margin-bottom: 0; }
-      #section-history td {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.65rem 0.75rem;
-        border-bottom: 1px solid var(--clr-border);
-        text-align: right;
-        word-break: break-word;
-      }
-      #section-history td::before {
-        content: attr(data-label);
-        flex: 0 0 88px;
-        color: var(--clr-muted);
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-align: left;
-        text-transform: uppercase;
-      }
-      #section-history td:last-child {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.5rem;
-        border-bottom: 0;
-      }
-      #section-history td:last-child::before {
-        grid-column: 1 / -1;
-        flex-basis: auto;
-      }
-      #section-history td:last-child .btn {
-        width: 100%;
-        margin: 0 !important;
-      }
-      #section-history td[colspan] {
-        display: block;
-        text-align: center;
-      }
-      #section-history td[colspan]::before { content: none; }
     }
   </style>
 </head>

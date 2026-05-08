@@ -18,7 +18,6 @@ import {
   query,
   where,
   serverTimestamp,
-  deleteDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -220,7 +219,7 @@ async function handleAddMeal(e) {
     ));
 
     if (!existing.empty) {
-      showAlert("mealAlert", "Meal entry for this date already exists. Delete it first.", "warning");
+      showAlert("mealAlert", "Meal entry for this date already exists. Edit it from Meal History.", "warning");
       return;
     }
 
@@ -331,33 +330,17 @@ function renderBazarHistoryPage() {
       <td data-label="Description">${b.description}</td>
       <td data-label="Amount">৳${b.amount}</td>
       <td data-label="Actions">
-        <button class="btn btn-sm btn-outline-primary me-1 bazar-edit" data-id="${b.id}">Edit</button>
-        <button class="btn btn-sm btn-outline-danger bazar-delete" data-id="${b.id}">Delete</button>
+        <button class="btn btn-sm btn-outline-primary bazar-edit" data-id="${b.id}">Edit</button>
       </td>
     `;
     tbody.appendChild(tr);
-    const delBtn = tr.querySelector('.bazar-delete');
     const editBtn = tr.querySelector('.bazar-edit');
-    if (delBtn) delBtn.addEventListener('click', () => handleDeleteBazar(b.id));
     if (editBtn) editBtn.addEventListener('click', () => openEditModal(b.id, b));
   });
   if (bazarHistoryRows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No bazar entries</td></tr>`;
   }
   renderHistoryPagination("bazar");
-}
-
-// Delete bazar entry
-async function handleDeleteBazar(bazarId) {
-  if (!confirm('Are you sure you want to delete this bazar entry?')) return;
-  try {
-    await deleteDoc(doc(db, 'bazar', bazarId));
-    showAlert('bazarAlert', 'Bazar entry deleted.', 'success');
-    loadSummary();
-    loadBazarHistory();
-  } catch (err) {
-    showAlert('bazarAlert', err.message, 'danger');
-  }
 }
 
 // Open edit modal and prefill values
@@ -437,14 +420,11 @@ function renderMealHistoryPage(searchDate = document.getElementById("mealHistory
       <td data-label="Dinner">${m.dinner}</td>
       <td data-label="Total"><strong>${m.totalMeal}</strong></td>
       <td data-label="Actions">
-        <button class="btn btn-sm btn-outline-primary me-1 meal-edit" data-id="${m.id}">Edit</button>
-        <button class="btn btn-sm btn-outline-danger meal-delete" data-id="${m.id}">Delete</button>
+        <button class="btn btn-sm btn-outline-primary meal-edit" data-id="${m.id}">Edit</button>
       </td>
     `;
     tbody.appendChild(tr);
-    const delBtn = tr.querySelector('.meal-delete');
     const editBtn = tr.querySelector('.meal-edit');
-    if (delBtn) delBtn.addEventListener('click', () => handleDeleteMeal(m.id));
     if (editBtn) editBtn.addEventListener('click', () => openEditMealModal(m.id, m));
   });
   if (mealHistoryRows.length === 0) {
@@ -503,19 +483,6 @@ function renderHistoryPagination(type) {
   if (label) label.textContent = `Page ${page} of ${pageCount}`;
   if (prev) prev.disabled = page <= 1;
   if (next) next.disabled = page >= pageCount;
-}
-
-// Delete meal entry
-async function handleDeleteMeal(mealId) {
-  if (!confirm('Are you sure you want to delete this meal entry?')) return;
-  try {
-    await deleteDoc(doc(db, 'meals', mealId));
-    showAlert('mealAlert', 'Meal entry deleted.', 'success');
-    loadSummary();
-    loadMealHistory();
-  } catch (err) {
-    showAlert('mealAlert', err.message, 'danger');
-  }
 }
 
 // Open meal edit modal
