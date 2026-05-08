@@ -35,10 +35,16 @@ let currentAdmin = null;
 let selectedMonth = getCurrentMonth();
 let calcData = null; // last built table
 let memberRows = [];
+let adminBazarAllRows = [];
 let adminBazarRows = [];
 let bazarCurrentPage = 1;
 let bazarPageSize = 25;
 let bazarMemberMap = new Map();
+let adminMealAllRows = [];
+let adminMealRows = [];
+let mealCurrentPage = 1;
+let mealPageSize = 25;
+let mealMemberMap = new Map();
 
 // ─────────────────────────────────────────────
 // Init
@@ -48,10 +54,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("adminName").textContent = currentAdmin.name;
 
   initMonthSelector();
+  updateHistoryDateSearchRanges();
   loadUsersPanel();
   loadMonthCosts();
   loadCalculation();
   loadAdminBazarHistory();
+  loadAdminMealHistory();
 
   // Event bindings
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
@@ -64,10 +72,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("editBazarForm", "submit", handleEditBazar);
   bindIfExists("refreshBazarHistoryBtn", "click", loadAdminBazarHistory);
   bindIfExists("bulkDeleteBazarBtn", "click", handleBulkDeleteBazar);
+  bindIfExists("bazarHistoryDateSearch", "input", handleBazarDateSearch);
+  bindIfExists("bazarHistoryClearSearch", "click", clearBazarDateSearch);
   bindIfExists("selectAllBazarRows", "change", handleSelectAllBazarRows);
   bindIfExists("bazarPageSize", "change", handleBazarPageSizeChange);
   bindIfExists("bazarPrevPageBtn", "click", () => changeBazarPage(-1));
   bindIfExists("bazarNextPageBtn", "click", () => changeBazarPage(1));
+  bindIfExists("editMealForm", "submit", handleEditMeal);
+  bindIfExists("refreshMealHistoryBtn", "click", loadAdminMealHistory);
+  bindIfExists("bulkDeleteMealBtn", "click", handleBulkDeleteMeal);
+  bindIfExists("mealHistoryDateSearch", "input", handleMealDateSearch);
+  bindIfExists("mealHistoryClearSearch", "click", clearMealDateSearch);
+  bindIfExists("selectAllMealRows", "change", handleSelectAllMealRows);
+  bindIfExists("mealPageSize", "change", handleMealPageSizeChange);
+  bindIfExists("mealPrevPageBtn", "click", () => changeMealPage(-1));
+  bindIfExists("mealNextPageBtn", "click", () => changeMealPage(1));
+  bindMealTotalPreview();
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => hideModal(btn.dataset.closeModal));
@@ -103,9 +123,31 @@ function initMonthSelector() {
 
 function onMonthChange() {
   selectedMonth = document.getElementById("monthSelector").value;
+  updateHistoryDateSearchRanges();
   loadMonthCosts();
   loadCalculation();
   loadAdminBazarHistory();
+  loadAdminMealHistory();
+}
+
+function updateHistoryDateSearchRanges() {
+  setHistoryDateSearchRange("bazarHistoryDateSearch");
+  setHistoryDateSearchRange("mealHistoryDateSearch");
+}
+
+function setHistoryDateSearchRange(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  const [year, month] = selectedMonth.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  input.min = `${selectedMonth}-01`;
+  input.max = `${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
+  if (input.value && !input.value.startsWith(selectedMonth)) input.value = "";
+}
+
+function getHistoryDateSearchValue(id) {
+  const value = document.getElementById(id)?.value || "";
+  return value.startsWith(selectedMonth) ? value : "";
 }
 
 // ─────────────────────────────────────────────
@@ -142,6 +184,7 @@ await secondaryAuth.signOut();
     form.reset();
     loadUsersPanel();
     loadAdminBazarHistory();
+    loadAdminMealHistory();
     loadCalculation();
   } catch (err) {
     showAlert("addUserAlert", err.message, "danger");
@@ -229,6 +272,7 @@ async function handleEditMember(e) {
     showAlert("usersPanelAlert", "Member updated successfully.", "success");
     loadUsersPanel();
     loadAdminBazarHistory();
+    loadAdminMealHistory();
     loadCalculation();
   } catch (err) {
     showAlert("editMemberAlert", err.message, "danger", false);
@@ -243,6 +287,7 @@ async function handleDeleteMember(uid, name) {
     showAlert("usersPanelAlert", "Member deleted successfully.", "success");
     loadUsersPanel();
     loadAdminBazarHistory();
+    loadAdminMealHistory();
     loadCalculation();
   } catch (err) {
     showAlert("usersPanelAlert", err.message, "danger");
@@ -264,11 +309,12 @@ async function loadAdminBazarHistory() {
   try {
     bazarMemberMap = await getMemberMap();
     const snap = await getDocs(query(collection(db, "bazar"), where("month", "==", selectedMonth)));
-    adminBazarRows = snap.docs
+    adminBazarAllRows = snap.docs
       .map((d) => ({ id: d.id, ...d.data() }))
       .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 
     bazarCurrentPage = 1;
+    applyBazarHistoryDateFilter();
     renderAdminBazarHistory();
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
@@ -285,7 +331,9 @@ function renderAdminBazarHistory() {
   const tbody = document.getElementById("adminBazarHistoryBody");
 
   if (adminBazarRows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No bazar entries found for this month.</td></tr>`;
+    const searchDate = getHistoryDateSearchValue("bazarHistoryDateSearch");
+    const message = searchDate ? `No bazar entries found for ${searchDate}.` : "No bazar entries found for this month.";
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">${message}</td></tr>`;
     renderBazarPagination();
     updateBulkDeleteState();
     return;
@@ -330,6 +378,25 @@ function renderAdminBazarHistory() {
   });
   renderBazarPagination();
   updateBulkDeleteState();
+}
+
+function handleBazarDateSearch() {
+  bazarCurrentPage = 1;
+  applyBazarHistoryDateFilter();
+  renderAdminBazarHistory();
+}
+
+function clearBazarDateSearch() {
+  const input = document.getElementById("bazarHistoryDateSearch");
+  if (input) input.value = "";
+  handleBazarDateSearch();
+}
+
+function applyBazarHistoryDateFilter() {
+  const searchDate = getHistoryDateSearchValue("bazarHistoryDateSearch");
+  adminBazarRows = searchDate
+    ? adminBazarAllRows.filter((row) => row.date === searchDate)
+    : [...adminBazarAllRows];
 }
 
 async function openEditBazarModal(id) {
@@ -486,6 +553,293 @@ async function deleteDocsInBatches(collectionName, ids) {
     });
     await batch.commit();
   }
+}
+
+// Admin Meal History
+// ─────────────────────────────────────────────
+async function loadAdminMealHistory() {
+  const tbody = document.getElementById("adminMealHistoryBody");
+  if (!tbody) return;
+  const selectAll = document.getElementById("selectAllMealRows");
+  const bulkBtn = document.getElementById("bulkDeleteMealBtn");
+  tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Loading meal history...</td></tr>`;
+  if (selectAll) selectAll.checked = false;
+  if (bulkBtn) bulkBtn.disabled = true;
+
+  try {
+    mealMemberMap = await getMemberMap();
+    const snap = await getDocs(query(collection(db, "meals"), where("month", "==", selectedMonth)));
+    adminMealAllRows = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
+    mealCurrentPage = 1;
+    applyMealHistoryDateFilter();
+    renderAdminMealHistory();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderAdminMealHistory() {
+  const tbody = document.getElementById("adminMealHistoryBody");
+
+  if (adminMealRows.length === 0) {
+    const searchDate = getHistoryDateSearchValue("mealHistoryDateSearch");
+    const message = searchDate ? `No meal entries found for ${searchDate}.` : "No meal entries found for this month.";
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">${message}</td></tr>`;
+    renderMealPagination();
+    updateBulkDeleteMealState();
+    return;
+  }
+
+  normalizeMealPage();
+  const pageRows = getVisibleMealRows();
+
+  tbody.innerHTML = pageRows.map((meal) => {
+    const member = mealMemberMap.get(meal.userId);
+    const memberName = member?.name || "Unknown member";
+    const username = member?.username ? `@${member.username}` : meal.userId || "";
+    const morning = Number(meal.morning) || 0;
+    const lunch = Number(meal.lunch) || 0;
+    const dinner = Number(meal.dinner) || 0;
+    const storedTotal = Number(meal.totalMeal);
+    const total = Number.isFinite(storedTotal) ? storedTotal : morning + lunch + dinner;
+
+    return `
+      <tr>
+        <td><input type="checkbox" class="meal-row-check" value="${meal.id}" aria-label="Select meal row"/></td>
+        <td>${escapeHtml(meal.date || "")}</td>
+        <td><strong>${escapeHtml(memberName)}</strong><br><small class="text-muted">${escapeHtml(username)}</small></td>
+        <td>${round2(morning)}</td>
+        <td>${round2(lunch)}</td>
+        <td>${round2(dinner)}</td>
+        <td><strong>${round2(total)}</strong></td>
+        <td class="text-end">
+          <div class="d-inline-flex gap-2">
+            <button type="button" class="btn-icon edit-meal-btn" data-id="${meal.id}" title="Edit meal">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button type="button" class="btn-icon danger delete-meal-btn" data-id="${meal.id}" title="Delete meal">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll(".meal-row-check").forEach((check) => {
+    check.addEventListener("change", updateBulkDeleteMealState);
+  });
+  tbody.querySelectorAll(".edit-meal-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openEditMealModal(btn.dataset.id));
+  });
+  tbody.querySelectorAll(".delete-meal-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleDeleteMeal(btn.dataset.id));
+  });
+  renderMealPagination();
+  updateBulkDeleteMealState();
+}
+
+function handleMealDateSearch() {
+  mealCurrentPage = 1;
+  applyMealHistoryDateFilter();
+  renderAdminMealHistory();
+}
+
+function clearMealDateSearch() {
+  const input = document.getElementById("mealHistoryDateSearch");
+  if (input) input.value = "";
+  handleMealDateSearch();
+}
+
+function applyMealHistoryDateFilter() {
+  const searchDate = getHistoryDateSearchValue("mealHistoryDateSearch");
+  adminMealRows = searchDate
+    ? adminMealAllRows.filter((row) => row.date === searchDate)
+    : [...adminMealAllRows];
+}
+
+async function openEditMealModal(id) {
+  const meal = adminMealRows.find((row) => row.id === id);
+  if (!meal) return;
+
+  const member = mealMemberMap.get(meal.userId) || (await getMemberMap()).get(meal.userId);
+  const form = document.getElementById("editMealForm");
+  form.elements.id.value = meal.id;
+  form.elements.member.value = member ? `${member.name || ""} (@${member.username || ""})` : meal.userId || "Unknown member";
+  form.elements.date.value = meal.date || "";
+  form.elements.morning.value = meal.morning || 0;
+  form.elements.lunch.value = meal.lunch || 0;
+  form.elements.dinner.value = meal.dinner || 0;
+  updateEditMealTotalPreview();
+  hideAlert("editMealAlert");
+  showModal("editMealModal");
+}
+
+async function handleEditMeal(e) {
+  e.preventDefault();
+  const form = e.target;
+  const id = form.elements.id.value;
+  const date = form.elements.date.value;
+  const morning = parseFloat(form.elements.morning.value);
+  const lunch = parseFloat(form.elements.lunch.value);
+  const dinner = parseFloat(form.elements.dinner.value);
+  const meal = adminMealRows.find((row) => row.id === id);
+
+  if (!id || !meal || !date || !isValidMealCount(morning) || !isValidMealCount(lunch) || !isValidMealCount(dinner)) {
+    showAlert("editMealAlert", "Please fill all meal fields correctly.", "danger", false);
+    return;
+  }
+
+  try {
+    const duplicate = await getDocs(query(
+      collection(db, "meals"),
+      where("userId", "==", meal.userId),
+      where("date", "==", date)
+    ));
+    if (duplicate.docs.some((d) => d.id !== id)) {
+      showAlert("editMealAlert", "This member already has a meal entry for this date.", "warning", false);
+      return;
+    }
+
+    const totalMeal = round2(morning + lunch + dinner);
+    await updateDoc(doc(db, "meals", id), {
+      date,
+      morning,
+      lunch,
+      dinner,
+      totalMeal,
+      month: date.substring(0, 7),
+      updatedAt: serverTimestamp()
+    });
+    hideModal("editMealModal");
+    showAlert("mealHistoryAlert", "Meal entry updated.", "success");
+    await loadAdminMealHistory();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("editMealAlert", err.message, "danger", false);
+  }
+}
+
+async function handleDeleteMeal(id) {
+  const meal = adminMealRows.find((row) => row.id === id);
+  const label = meal ? `${meal.date || ""} meal entry` : "this meal entry";
+  if (!confirm(`Delete ${label}?`)) return;
+
+  try {
+    await deleteDoc(doc(db, "meals", id));
+    showAlert("mealHistoryAlert", "Meal entry deleted.", "success");
+    await loadAdminMealHistory();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("mealHistoryAlert", err.message, "danger");
+  }
+}
+
+function handleSelectAllMealRows(e) {
+  document.querySelectorAll(".meal-row-check").forEach((check) => {
+    check.checked = e.target.checked;
+  });
+  updateBulkDeleteMealState();
+}
+
+function handleMealPageSizeChange(e) {
+  mealPageSize = parseInt(e.target.value, 10) || 25;
+  mealCurrentPage = 1;
+  renderAdminMealHistory();
+}
+
+function changeMealPage(delta) {
+  mealCurrentPage += delta;
+  normalizeMealPage();
+  renderAdminMealHistory();
+}
+
+function getMealPageCount() {
+  return Math.max(1, Math.ceil(adminMealRows.length / mealPageSize));
+}
+
+function normalizeMealPage() {
+  const pageCount = getMealPageCount();
+  if (mealCurrentPage < 1) mealCurrentPage = 1;
+  if (mealCurrentPage > pageCount) mealCurrentPage = pageCount;
+}
+
+function getVisibleMealRows() {
+  const start = (mealCurrentPage - 1) * mealPageSize;
+  return adminMealRows.slice(start, start + mealPageSize);
+}
+
+function renderMealPagination() {
+  const total = adminMealRows.length;
+  const pageCount = getMealPageCount();
+  const start = total === 0 ? 0 : (mealCurrentPage - 1) * mealPageSize + 1;
+  const end = Math.min(total, mealCurrentPage * mealPageSize);
+  const info = document.getElementById("mealPaginationInfo");
+  const indicator = document.getElementById("mealPageIndicator");
+  const prevBtn = document.getElementById("mealPrevPageBtn");
+  const nextBtn = document.getElementById("mealNextPageBtn");
+
+  if (info) info.textContent = total === 0 ? "Showing 0 entries" : `Showing ${start}-${end} of ${total} entries`;
+  if (indicator) indicator.textContent = `Page ${mealCurrentPage} of ${pageCount}`;
+  if (prevBtn) prevBtn.disabled = mealCurrentPage <= 1;
+  if (nextBtn) nextBtn.disabled = mealCurrentPage >= pageCount;
+}
+
+function getSelectedMealIds() {
+  return Array.from(document.querySelectorAll(".meal-row-check:checked")).map((check) => check.value);
+}
+
+function updateBulkDeleteMealState() {
+  const selectedCount = getSelectedMealIds().length;
+  const bulkBtn = document.getElementById("bulkDeleteMealBtn");
+  const selectAll = document.getElementById("selectAllMealRows");
+  if (bulkBtn) {
+    bulkBtn.disabled = selectedCount === 0;
+    bulkBtn.innerHTML = `<i class="bi bi-trash me-1"></i>Delete Selected${selectedCount ? ` (${selectedCount})` : ""}`;
+  }
+  if (selectAll) {
+    const checks = Array.from(document.querySelectorAll(".meal-row-check"));
+    selectAll.checked = checks.length > 0 && checks.every((check) => check.checked);
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < checks.length;
+  }
+}
+
+async function handleBulkDeleteMeal() {
+  const selectedIds = getSelectedMealIds();
+  if (selectedIds.length === 0) return;
+  if (!confirm(`Delete ${selectedIds.length} selected meal entries?`)) return;
+
+  try {
+    await deleteDocsInBatches("meals", selectedIds);
+    showAlert("mealHistoryAlert", `${selectedIds.length} meal entries deleted.`, "success");
+    await loadAdminMealHistory();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("mealHistoryAlert", err.message, "danger");
+  }
+}
+
+function bindMealTotalPreview() {
+  const form = document.getElementById("editMealForm");
+  if (!form) return;
+  ["morning", "lunch", "dinner"].forEach((name) => {
+    form.elements[name]?.addEventListener("input", updateEditMealTotalPreview);
+  });
+}
+
+function updateEditMealTotalPreview() {
+  const form = document.getElementById("editMealForm");
+  if (!form) return;
+  const morning = parseFloat(form.elements.morning.value) || 0;
+  const lunch = parseFloat(form.elements.lunch.value) || 0;
+  const dinner = parseFloat(form.elements.dinner.value) || 0;
+  form.elements.total.value = round2(morning + lunch + dinner);
+}
+
+function isValidMealCount(value) {
+  return Number.isFinite(value) && value >= 0 && value <= 1;
 }
 
 // Monthly Costs

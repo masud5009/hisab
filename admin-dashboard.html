@@ -278,6 +278,7 @@
         -webkit-overflow-scrolling: touch;
       }
       #section-bazar-history table { min-width: 760px; }
+      #section-meal-history table { min-width: 860px; }
       #section-users table,
       #calcTableWrap table { min-width: 720px; }
     }
@@ -300,6 +301,9 @@
       </div>
       <div class="nav-item">
         <a href="#section-bazar-history"><i class="bi bi-basket"></i> Bazar History</a>
+      </div>
+      <div class="nav-item">
+        <a href="#section-meal-history"><i class="bi bi-egg-fried"></i> Meal History</a>
       </div>
       <div class="nav-item">
         <a href="#section-users"><i class="bi bi-people"></i> Members</a>
@@ -412,6 +416,11 @@
         <div id="bazarHistoryAlert" class="alert d-none m-3 mb-0"></div>
         <div class="d-flex flex-wrap align-items-center gap-2 p-3 border-bottom">
           <span class="text-muted small" id="bazarPaginationInfo">Showing 0 entries</span>
+          <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0" for="bazarHistoryDateSearch">Date</label>
+            <input type="date" id="bazarHistoryDateSearch" class="form-control form-control-sm" style="width:150px" aria-label="Search bazar history by date"/>
+            <button type="button" id="bazarHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+          </div>
           <div class="ms-auto d-flex align-items-center gap-2">
             <label class="form-label mb-0">Rows</label>
             <select id="bazarPageSize" class="form-select form-select-sm" style="width:90px">
@@ -425,7 +434,7 @@
             <button type="button" class="btn-outline-custom" id="bazarNextPageBtn"><i class="bi bi-chevron-right"></i></button>
           </div>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive p-3">
           <table class="table mb-0 align-middle">
             <thead>
               <tr>
@@ -445,6 +454,59 @@
       </div>
     </div>
 
+    <!-- Meal History -->
+    <div class="card mb-4" id="section-meal-history">
+      <div class="card-header-custom">
+        <i class="bi bi-egg-fried"></i> All Meal History
+        <div class="ms-auto d-flex flex-wrap gap-2">
+          <button type="button" class="btn-outline-custom" id="refreshMealHistoryBtn"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+          <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteMealBtn" disabled><i class="bi bi-trash me-1"></i>Delete Selected</button>
+        </div>
+      </div>
+      <div class="card-body-custom p-0">
+        <div id="mealHistoryAlert" class="alert d-none m-3 mb-0"></div>
+        <div class="d-flex flex-wrap align-items-center gap-2 p-3 border-bottom">
+          <span class="text-muted small" id="mealPaginationInfo">Showing 0 entries</span>
+          <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0" for="mealHistoryDateSearch">Date</label>
+            <input type="date" id="mealHistoryDateSearch" class="form-control form-control-sm" style="width:150px" aria-label="Search meal history by date"/>
+            <button type="button" id="mealHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+          </div>
+          <div class="ms-auto d-flex align-items-center gap-2">
+            <label class="form-label mb-0">Rows</label>
+            <select id="mealPageSize" class="form-select form-select-sm" style="width:90px">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <button type="button" class="btn-outline-custom" id="mealPrevPageBtn"><i class="bi bi-chevron-left"></i></button>
+            <span class="small text-muted" id="mealPageIndicator">Page 1 of 1</span>
+            <button type="button" class="btn-outline-custom" id="mealNextPageBtn"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="table-responsive p-3">
+          <table class="table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th style="width:42px"><input type="checkbox" id="selectAllMealRows" aria-label="Select all meal rows"/></th>
+                <th>Date</th>
+                <th>Member</th>
+                <th>Morning</th>
+                <th>Lunch</th>
+                <th>Dinner</th>
+                <th>Total</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminMealHistoryBody">
+              <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Members List ── -->
     <div class="card mb-4" id="section-users">
       <div class="card-header-custom">
@@ -452,7 +514,7 @@
       </div>
       <div class="card-body-custom p-0">
         <div id="usersPanelAlert" class="alert d-none m-3 mb-0"></div>
-        <div class="table-responsive">
+        <div class="table-responsive p-3">
           <table class="table mb-0">
             <thead>
               <tr>
@@ -483,19 +545,19 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Full Name *</label>
-              <input type="text" name="name" class="form-control" placeholder="e.g. Masud Rana" required/>
+              <input type="text" name="name" class="form-control" placeholder="Enter full name" required/>
             </div>
             <div class="col-md-6">
               <label class="form-label">Username *</label>
-              <input type="text" name="username" class="form-control" placeholder="e.g. masud" required/>
+              <input type="text" name="username" class="form-control" placeholder="Enter username" required/>
             </div>
             <div class="col-md-6">
               <label class="form-label">Email *</label>
-              <input type="email" name="email" class="form-control" placeholder="e.g. masud@gmail.com" required autocomplete="email"/>
+              <input type="email" name="email" class="form-control" placeholder="Enter email" required autocomplete="email"/>
             </div>
             <div class="col-md-6">
               <label class="form-label">Phone</label>
-              <input type="tel" name="phone" class="form-control" placeholder="01XXXXXXXXX"/>
+              <input type="tel" name="phone" class="form-control" placeholder="Enter phone number"/>
             </div>
             <div class="col-md-6">
               <label class="form-label">Password *</label>
@@ -535,11 +597,10 @@
           <div class="mb-3">
             <label class="form-label">Email</label>
             <input type="email" name="email" class="form-control" readonly/>
-            <small class="text-muted">Email Firebase Auth account er sathe connected, tai edit korte backend lagbe.</small>
           </div>
           <div class="mb-0">
             <label class="form-label">Phone</label>
-            <input type="tel" name="phone" class="form-control" placeholder="01XXXXXXXXX"/>
+            <input type="tel" name="phone" class="form-control" placeholder="Enter phone number"/>
           </div>
           <div class="app-modal-footer">
             <button type="button" class="btn-outline-custom" data-close-modal="editMemberModal">Cancel</button>
@@ -579,6 +640,51 @@
           <div class="app-modal-footer">
             <button type="button" class="btn-outline-custom" data-close-modal="editBazarModal">Cancel</button>
             <button type="submit" class="btn-primary-custom"><i class="bi bi-floppy me-1"></i>Save Bazar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-modal" id="editMealModal" aria-hidden="true">
+    <div class="app-modal-panel">
+      <div class="app-modal-header">
+        <span><i class="bi bi-egg-fried me-1" style="color:var(--clr-primary)"></i>Edit Meal Entry</span>
+        <button type="button" class="btn-icon" data-close-modal="editMealModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="editMealForm">
+        <div class="app-modal-body">
+          <div id="editMealAlert" class="alert d-none"></div>
+          <input type="hidden" name="id"/>
+          <div class="mb-3">
+            <label class="form-label">Member</label>
+            <input type="text" name="member" class="form-control" readonly/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date *</label>
+            <input type="date" name="date" class="form-control" required/>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Morning</label>
+              <input type="number" name="morning" class="form-control" min="0" max="1" step="0.5" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Lunch</label>
+              <input type="number" name="lunch" class="form-control" min="0" max="1" step="0.5" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Dinner</label>
+              <input type="number" name="dinner" class="form-control" min="0" max="1" step="0.5" required/>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Total</label>
+            <input type="number" name="total" class="form-control" readonly/>
+          </div>
+          <div class="app-modal-footer">
+            <button type="button" class="btn-outline-custom" data-close-modal="editMealModal">Cancel</button>
+            <button type="submit" class="btn-primary-custom"><i class="bi bi-floppy me-1"></i>Save Meal</button>
           </div>
         </div>
       </form>
