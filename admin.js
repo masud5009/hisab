@@ -38,12 +38,12 @@ let memberRows = [];
 let adminBazarAllRows = [];
 let adminBazarRows = [];
 let bazarCurrentPage = 1;
-let bazarPageSize = 25;
+let bazarPageSize = 10;
 let bazarMemberMap = new Map();
 let adminMealAllRows = [];
 let adminMealRows = [];
 let mealCurrentPage = 1;
-let mealPageSize = 25;
+let mealPageSize = 10;
 let mealMemberMap = new Map();
 
 // ─────────────────────────────────────────────
@@ -468,7 +468,7 @@ function handleSelectAllBazarRows(e) {
 }
 
 function handleBazarPageSizeChange(e) {
-  bazarPageSize = parseInt(e.target.value, 10) || 25;
+  bazarPageSize = parseInt(e.target.value, 10) || 10;
   bazarCurrentPage = 1;
   renderAdminBazarHistory();
 }
@@ -745,7 +745,7 @@ function handleSelectAllMealRows(e) {
 }
 
 function handleMealPageSizeChange(e) {
-  mealPageSize = parseInt(e.target.value, 10) || 25;
+  mealPageSize = parseInt(e.target.value, 10) || 10;
   mealCurrentPage = 1;
   renderAdminMealHistory();
 }
