@@ -6,8 +6,12 @@
 import { auth, db } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
 import {
+  calcMealBreakdown,
+  calcMealCost,
+  calcPerPerson,
   calcUserTotalBazar,
-  calcUserTotalMeals
+  calcUserTotalMeals,
+  calcUserPayable
 } from "./calculation.js";
 import {
   collection,
@@ -332,7 +336,7 @@ function updateMealTotal() {
 // ─────────────────────────────────────────────
 async function loadSummary() {
   try {
-    const [mealsSnap, bazarSnap] = await Promise.all([
+    const [mealsSnap, bazarSnap, monthSnap] = await Promise.all([
       getDocs(query(
         collection(db, "meals"),
         where("userId", "==", currentUser.uid),
@@ -342,35 +346,105 @@ async function loadSummary() {
         collection(db, "bazar"),
         where("userId", "==", currentUser.uid),
         where("month", "==", selectedMonth)
-      ))
+      )),
+      getDoc(doc(db, "months", selectedMonth))
     ]);
 
     const userMeals = mealsSnap.docs.map((d) => d.data());
     const userBazar = bazarSnap.docs.map((d) => d.data());
+    const monthData = monthSnap.exists() ? monthSnap.data() : {};
+    const calculationSummary = monthData.calculationSummary || {};
+    const rates = calculationSummary.mealRates || {};
+    const baseRate = calculationSummary.mealRate ?? monthData.mealRate;
+    const mealRates = {
+      morning: getFiniteNumber(rates.morning ?? monthData.morningRate ?? 0),
+      lunch: getFiniteNumber(rates.lunch ?? monthData.lunchRate),
+      dinner: getFiniteNumber(rates.dinner ?? monthData.dinnerRate)
+    };
     const totalMeals = calcUserTotalMeals(userMeals);
     const totalBazar = calcUserTotalBazar(userBazar);
+    const due = await calculateUserDue(userMeals, totalBazar, monthData, mealRates);
 
     document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
     document.getElementById("summTotalMeals").textContent = round2(totalMeals);
+    document.getElementById("summDue").textContent = formatCurrencyOrDash(due);
+    document.getElementById("summBaseRate").textContent = formatCurrencyOrDash(baseRate);
+    document.getElementById("summDinnerRate").textContent = formatCurrencyOrDash(mealRates.dinner);
+    document.getElementById("summLunchRate").textContent = formatCurrencyOrDash(mealRates.lunch);
   } catch (err) {
     console.warn("Failed to load user summary:", err);
-  }
-
-  try {
-    const monthSnap = await getDoc(doc(db, "months", selectedMonth));
-    const monthData = monthSnap.exists() ? monthSnap.data() : {};
-    const rates = monthData.calculationSummary?.mealRates;
-    const baseRate = monthData.calculationSummary?.mealRate ?? monthData.mealRate;
-    const dinnerRate = rates?.dinner ?? monthData.dinnerRate;
-    const lunchRate = rates?.lunch ?? monthData.lunchRate;
-    document.getElementById("summBaseRate").textContent = formatCurrencyOrDash(baseRate);
-    document.getElementById("summDinnerRate").textContent = formatCurrencyOrDash(dinnerRate);
-    document.getElementById("summLunchRate").textContent = formatCurrencyOrDash(lunchRate);
-  } catch (err) {
-    console.warn("Failed to load monthly rates:", err);
+    document.getElementById("summDue").textContent = "—";
     document.getElementById("summBaseRate").textContent = "—";
     document.getElementById("summDinnerRate").textContent = "—";
     document.getElementById("summLunchRate").textContent = "—";
+  }
+}
+
+async function calculateUserDue(userMeals, totalBazar, monthData, mealRates) {
+  const mealBreakdown = calcMealBreakdown(userMeals);
+  const hasRequiredRates =
+    (mealBreakdown.morning === 0 || Number.isFinite(mealRates.morning)) &&
+    (mealBreakdown.lunch === 0 || Number.isFinite(mealRates.lunch)) &&
+    (mealBreakdown.dinner === 0 || Number.isFinite(mealRates.dinner));
+  if (!hasRequiredRates) return null;
+
+  const sharedCosts = await getPerPersonCostsForDue(monthData);
+  const rentSplit = await getCurrentUserRentSplit();
+  const userMealCost = calcMealCost(mealBreakdown, mealRates);
+  const payable = calcUserPayable({
+    userMealCost,
+    khalaPerPerson: sharedCosts.khala,
+    gasPerPerson: sharedCosts.gas,
+    electricityPerPerson: sharedCosts.electricity,
+    wifiPerPerson: sharedCosts.wifi,
+    bariVara: rentSplit?.amount || 0,
+    userBazar: totalBazar
+  });
+  return payable.totalPayable;
+}
+
+async function getPerPersonCostsForDue(monthData) {
+  const cachedCosts = monthData.calculationSummary?.perPersonCosts;
+  if (cachedCosts) {
+    return {
+      khala: getFiniteNumber(cachedCosts.khala) ?? 0,
+      gas: getFiniteNumber(cachedCosts.gas) ?? 0,
+      electricity: getFiniteNumber(cachedCosts.electricity) ?? 0,
+      wifi: getFiniteNumber(cachedCosts.wifi) ?? 0
+    };
+  }
+
+  const userCount = await getUserCountForDue(monthData);
+  return {
+    khala: calcPerPerson(monthData.khalaTotal || 0, userCount),
+    gas: calcPerPerson(monthData.gasTotal || 0, userCount),
+    electricity: calcPerPerson(monthData.electricityTotal || 0, userCount),
+    wifi: calcPerPerson(monthData.wifiTotal || 0, userCount)
+  };
+}
+
+async function getUserCountForDue(monthData) {
+  const cachedUserCount = parseInt(monthData.calculationSummary?.userCount, 10);
+  if (Number.isFinite(cachedUserCount) && cachedUserCount > 0) return cachedUserCount;
+
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("role", "==", "user")));
+    return snap.size;
+  } catch {
+    return 0;
+  }
+}
+
+async function getCurrentUserRentSplit() {
+  try {
+    const snap = await getDocs(query(
+      collection(db, "rentSplits"),
+      where("userId", "==", currentUser.uid),
+      where("month", "==", selectedMonth)
+    ));
+    return snap.docs[0]?.data() || null;
+  } catch {
+    return null;
   }
 }
 
@@ -621,9 +695,16 @@ function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+function getFiniteNumber(value) {
+  const amount = parseFloat(value);
+  return Number.isFinite(amount) ? amount : null;
+}
+
 function formatCurrencyOrDash(value) {
   const amount = parseFloat(value);
-  return Number.isFinite(amount) ? `৳${round2(amount)}` : "—";
+  if (!Number.isFinite(amount)) return "—";
+  const rounded = round2(amount);
+  return rounded < 0 ? `-৳${Math.abs(rounded)}` : `৳${rounded}`;
 }
 
 function showAlert(id, msg, type) {

@@ -187,7 +187,7 @@ wifiPerPerson  = wifiTotal / activeUsers
 bariVara       = saved person-wise rent entered by admin
 
 totalPayable = mealCost + khalaPerPerson + gasPerPerson
-             + electricityPerPerson + wifiPerPerson + bariVara
+             + electricityPerPerson + wifiPerPerson + bariVara - userBazar
 ```
 
 ### Meal Units

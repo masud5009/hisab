@@ -146,8 +146,9 @@ export function calcUserPayable({
   userBazar
 }) {
   const mealCost = Number.isFinite(userMealCost) ? userMealCost : 0;
+  const prepaidBazar = Number.isFinite(userBazar) ? userBazar : 0;
   const totalPayable =
-    mealCost + khalaPerPerson + gasPerPerson + electricityPerPerson + wifiPerPerson + bariVara;
+    mealCost + khalaPerPerson + gasPerPerson + electricityPerPerson + wifiPerPerson + bariVara - prepaidBazar;
 
   return {
     mealCost: round2(mealCost),
@@ -248,6 +249,12 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
       configuredMealPercentages: mealPercentages,
       totalBazar: round2(totalBazar),
       totalBariVara: round2(totalBariVara),
+      perPersonCosts: {
+        khala: round2(khalaPerPerson),
+        gas: round2(gasPerPerson),
+        electricity: round2(electricityPerPerson),
+        wifi: round2(wifiPerPerson)
+      },
       mealRates: {
         morning: round2(mealRates.morning),
         lunch: round2(mealRates.lunch),

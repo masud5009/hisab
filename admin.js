@@ -1018,6 +1018,8 @@ async function cacheCalculationSummary(summary) {
         mealRates: summary.mealRates,
         mealUnits: summary.mealUnits,
         mealPercentages: summary.mealPercentages,
+        perPersonCosts: summary.perPersonCosts,
+        userCount: summary.userCount,
         updatedAt: serverTimestamp()
       }
     }, { merge: true });
@@ -1082,12 +1084,15 @@ function renderCalcTable({ rows, summary }, container) {
         <th>Electricity</th>
         <th>WiFi</th>
         <th>Bari Vara</th>
-        <th>Total Payable</th>
+        <th>Due</th>
+        <th>Pay</th>
         <th>Lock</th>
       </tr>
     </thead>`;
 
-  const tbody = rows.map((row) => `
+  const tbody = rows.map((row) => {
+    const balance = getBalanceParts(row.totalPayable);
+    return `
     <tr id="row-${row.uid}" class="${row.locked ? "table-warning" : ""}">
       <td><strong>${row.name}</strong><br><small class="text-muted">@${row.username}</small></td>
       <td>${row.morningMeals}</td>
@@ -1110,14 +1115,16 @@ function renderCalcTable({ rows, summary }, container) {
               data-uid="${row.uid}" value="${row.bariVara}" min="0" step="0.01" style="width:90px">`
         }
       </td>
-      <td><strong class="text-success">৳<span class="total-payable-value" data-base-payable="${basePayable(row)}">${row.totalPayable}</span></strong></td>
+      <td><strong class="text-danger due-value" data-base-payable="${basePayable(row)}">${formatBalanceAmount(balance.due)}</strong></td>
+      <td><strong class="text-success pay-value">${formatBalanceAmount(balance.pay)}</strong></td>
       <td>
         <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
           data-uid="${row.uid}" data-locked="${row.locked}">
           ${row.locked ? "🔒 Locked" : "🔓 Lock"}
         </button>
       </td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 
   container.innerHTML = `
     <div class="table-responsive">
@@ -1226,9 +1233,12 @@ function rentSplitDocId(uid) {
 function updateRentPreview(input) {
   const amount = parseFloat(input.value) || 0;
   const row = input.closest("tr");
-  const totalEl = row?.querySelector(".total-payable-value");
-  const basePayableAmount = parseFloat(totalEl?.dataset.basePayable) || 0;
-  if (totalEl) totalEl.textContent = round2(basePayableAmount + amount);
+  const dueEl = row?.querySelector(".due-value");
+  const payEl = row?.querySelector(".pay-value");
+  const basePayableAmount = parseFloat(dueEl?.dataset.basePayable) || 0;
+  const balance = getBalanceParts(basePayableAmount + amount);
+  if (dueEl) dueEl.textContent = formatBalanceAmount(balance.due);
+  if (payEl) payEl.textContent = formatBalanceAmount(balance.pay);
 }
 
 function basePayable(row) {
@@ -1237,12 +1247,25 @@ function basePayable(row) {
     row.khalaPerPerson +
     row.gasPerPerson +
     row.electricityPerPerson +
-    row.wifiPerPerson
+    row.wifiPerPerson -
+    row.totalBazar
   );
 }
 
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function getBalanceParts(balance) {
+  const amount = round2(parseFloat(balance) || 0);
+  return {
+    due: amount > 0 ? amount : 0,
+    pay: amount < 0 ? Math.abs(amount) : 0
+  };
+}
+
+function formatBalanceAmount(amount) {
+  return amount > 0 ? `৳${round2(amount)}` : "—";
 }
 
 function parseNonNegativeNumber(value, fallback) {
@@ -1292,12 +1315,15 @@ function exportToPdf() {
   doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcData.summary.mealRates.morning}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcData.summary.mealRates.lunch}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcData.summary.mealRates.dinner})`, 14, 29);
   doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 35);
 
-  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Bazar", "Base Rate", "Dinner Rate", "Lunch Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Total Payable"]];
-  const body = calcData.rows.map((r) => [
-    r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.dinnerRate}`, `৳${r.lunchRate}`, `৳${r.mealCost}`,
-    `৳${r.khalaPerPerson}`, `৳${r.gasPerPerson}`, `৳${r.electricityPerPerson}`,
-    `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, `৳${r.totalPayable}`
-  ]);
+  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Bazar", "Base Rate", "Dinner Rate", "Lunch Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Due", "Pay"]];
+  const body = calcData.rows.map((r) => {
+    const balance = getBalanceParts(r.totalPayable);
+    return [
+      r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.dinnerRate}`, `৳${r.lunchRate}`, `৳${r.mealCost}`,
+      `৳${r.khalaPerPerson}`, `৳${r.gasPerPerson}`, `৳${r.electricityPerPerson}`,
+      `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, formatBalanceAmount(balance.due), formatBalanceAmount(balance.pay)
+    ];
+  });
 
   doc.autoTable({ head, body, startY: 40, theme: "grid" });
   doc.save(`hisab-${selectedMonth}.pdf`);
