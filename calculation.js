@@ -10,16 +10,18 @@ export const DEFAULT_MEAL_PERCENTAGES = Object.freeze({
 });
 
 /**
- * Calculate base meal rate: totalBazar / raw meal count across all users
+ * Calculate base meal rate: totalBazar / weighted meal units across all users.
+ * Example: lunch 100% and dinner 60% means 1 lunch = 1 unit, 1 dinner = 0.6 unit.
  * @param {Array} allMeals  - Array of meal docs for the month
  * @param {Array} allBazar  - Array of bazar docs for the month
+ * @param {object} mealPercentages - { morning, lunch, dinner }
  * @returns {number} mealRate
  */
-export function calcMealRate(allMeals, allBazar) {
-  const totalMeals = calcMealBreakdown(allMeals).total;
+export function calcMealRate(allMeals, allBazar, mealPercentages = getMealPercentages()) {
+  const totalUnits = calcMealUnits(calcMealBreakdown(allMeals), mealPercentages).total;
   const totalBazar = allBazar.reduce((sum, b) => sum + (b.amount || 0), 0);
-  if (totalMeals === 0) return 0;
-  return totalBazar / totalMeals;
+  if (totalUnits === 0) return 0;
+  return totalBazar / totalUnits;
 }
 
 export function getMealPercentages(monthCosts = {}) {
@@ -53,22 +55,36 @@ export function calcMealBreakdown(meals) {
   }, { morning: 0, lunch: 0, dinner: 0, total: 0 });
 }
 
+export function calcMealUnits(mealBreakdown, mealPercentages = getMealPercentages()) {
+  const morning = mealBreakdown.morning * mealPercentages.morning / 100;
+  const lunch = mealBreakdown.lunch * mealPercentages.lunch / 100;
+  const dinner = mealBreakdown.dinner * mealPercentages.dinner / 100;
+
+  return {
+    morning,
+    lunch,
+    dinner,
+    total: morning + lunch + dinner
+  };
+}
+
 export function calcMealTypeRates(mealBreakdown, totalBazar, mealPercentages = getMealPercentages()) {
-  const baseRate = mealBreakdown.total === 0 ? 0 : totalBazar / mealBreakdown.total;
+  const mealUnits = calcMealUnits(mealBreakdown, mealPercentages);
+  const baseRate = mealUnits.total === 0 ? 0 : totalBazar / mealUnits.total;
   const morningRate = baseRate * mealPercentages.morning / 100;
+  const lunchRate = baseRate * mealPercentages.lunch / 100;
   const dinnerRate = baseRate * mealPercentages.dinner / 100;
-  const lunchPercent = mealPercentages.lunch + Math.max(0, 100 - mealPercentages.dinner);
-  const lunchRate = baseRate * lunchPercent / 100;
 
   return {
     base: baseRate,
     morning: morningRate,
     lunch: lunchRate,
     dinner: dinnerRate,
+    units: mealUnits,
     percentages: {
-      morning: ratePercent(morningRate, baseRate),
-      lunch: lunchPercent,
-      dinner: ratePercent(dinnerRate, baseRate)
+      morning: mealPercentages.morning,
+      lunch: mealPercentages.lunch,
+      dinner: mealPercentages.dinner
     }
   };
 }
@@ -168,6 +184,7 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
   const mealRates = calcMealTypeRates(mealBreakdown, totalBazar, mealPercentages);
   const mealRate = mealRates.base;
   const totalMeals = mealBreakdown.total;
+  const totalMealUnits = mealRates.units.total;
 
   const rows = users.map((user) => {
     const userMeals = allMeals.filter((m) => m.userId === user.uid);
@@ -217,6 +234,12 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
       totalMorningMeals: round2(mealBreakdown.morning),
       totalLunchMeals: round2(mealBreakdown.lunch),
       totalDinnerMeals: round2(mealBreakdown.dinner),
+      totalMealUnits: round2(totalMealUnits),
+      mealUnits: {
+        morning: round2(mealRates.units.morning),
+        lunch: round2(mealRates.units.lunch),
+        dinner: round2(mealRates.units.dinner)
+      },
       mealPercentages: {
         morning: round2(mealRates.percentages.morning),
         lunch: round2(mealRates.percentages.lunch),
@@ -245,9 +268,4 @@ function parsePercent(value, fallback) {
   const parsed = parseFloat(value);
   if (!Number.isFinite(parsed) || parsed < 0) return fallback;
   return parsed;
-}
-
-function ratePercent(rate, baseRate) {
-  if (baseRate === 0) return 0;
-  return rate / baseRate * 100;
 }

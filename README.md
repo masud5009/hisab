@@ -168,14 +168,18 @@ Usernames are converted to fake emails internally:
 Default meal percentages: morning `0%`, lunch base `100%`, dinner `60%`. Percentages are stored per month and remain editable.
 
 ```
-baseRate      = totalBazar (all users) / totalMeals (all users)
-dinnerRate    = baseRate × dinnerMealPercent/100
-morningRate   = baseRate × morningMealPercent/100
-lunchRate     = baseRate × (lunchMealPercent + max(0, 100 - dinnerMealPercent))/100
-mealCost      = morningMeals × morningRate + lunchMeals × lunchRate + dinnerMeals × dinnerRate
 morningMeals  = sum of meals.morning
 lunchMeals    = sum of meals.lunch
 dinnerMeals   = sum of meals.dinner
+morningUnit   = morningMeals x morningMealPercent/100
+lunchUnit     = lunchMeals x lunchMealPercent/100
+dinnerUnit    = dinnerMeals x dinnerMealPercent/100
+totalUnit     = morningUnit + lunchUnit + dinnerUnit
+baseRate      = totalBazar (all users) / totalUnit (all users)
+morningRate   = baseRate x morningMealPercent/100
+lunchRate     = baseRate x lunchMealPercent/100
+dinnerRate    = baseRate x dinnerMealPercent/100
+mealCost      = morningMeals x morningRate + lunchMeals x lunchRate + dinnerMeals x dinnerRate
 khalaPerPerson = khalaTotal / activeUsers
 gasPerPerson   = gasTotal / activeUsers
 electricityPerPerson = electricityTotal / activeUsers

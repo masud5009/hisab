@@ -1012,9 +1012,11 @@ async function cacheCalculationSummary(summary) {
       lunchRate: summary.mealRates.lunch,
       calculationSummary: {
         totalMeals: summary.totalMeals,
+        totalMealUnits: summary.totalMealUnits,
         totalBazar: summary.totalBazar,
         mealRate: summary.mealRate,
         mealRates: summary.mealRates,
+        mealUnits: summary.mealUnits,
         mealPercentages: summary.mealPercentages,
         updatedAt: serverTimestamp()
       }
@@ -1040,6 +1042,7 @@ function renderCalcTable({ rows, summary }, container) {
       { label: "Morning", value: summary.totalMorningMeals, icon: "bi-sunrise", variant: "orange" },
       { label: "Lunch", value: summary.totalLunchMeals, icon: "bi-sun", variant: "warning" },
       { label: "Dinner", value: summary.totalDinnerMeals, icon: "bi-moon-stars", variant: "purple" },
+      { label: "Total Unit", value: summary.totalMealUnits, icon: "bi-calculator", variant: "primary" },
       { label: "Total Bazar", value: `৳${summary.totalBazar}`, icon: "bi-cart-check", variant: "success" },
       { label: "Room Rent", value: `৳${summary.totalBariVara}`, icon: "bi-house", variant: "secondary" },
       { label: "Base Rate", value: `৳${summary.mealRate}`, icon: "bi-tag", variant: "warning" },
@@ -1285,7 +1288,7 @@ function exportToPdf() {
   doc.setFontSize(16);
   doc.text(`Meal & Expense Report — ${selectedMonth}`, 14, 15);
   doc.setFontSize(10);
-  doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals}`, 14, 23);
+  doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals} | Total Unit: ${calcData.summary.totalMealUnits}`, 14, 23);
   doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcData.summary.mealRates.morning}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcData.summary.mealRates.lunch}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcData.summary.mealRates.dinner})`, 14, 29);
   doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 35);
 
