@@ -45,11 +45,17 @@ let adminMealRows = [];
 let mealCurrentPage = 1;
 let mealPageSize = 10;
 let mealMemberMap = new Map();
+let adminMilkAllRows = [];
+let adminMilkRows = [];
+let milkCurrentPage = 1;
+let milkPageSize = 10;
+let milkMemberMap = new Map();
 const ADMIN_SECTION_IDS = [
   "section-calc",
   "section-costs",
   "section-bazar-history",
   "section-meal-history",
+  "section-milk-history",
   "section-users",
   "section-add-user"
 ];
@@ -69,6 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadCalculation();
   loadAdminBazarHistory();
   loadAdminMealHistory();
+  loadAdminMilkHistory();
 
   // Event bindings
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
@@ -97,6 +104,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("mealPrevPageBtn", "click", () => changeMealPage(-1));
   bindIfExists("mealNextPageBtn", "click", () => changeMealPage(1));
   bindMealTotalPreview();
+  bindIfExists("editMilkForm", "submit", handleEditMilk);
+  bindIfExists("refreshMilkHistoryBtn", "click", loadAdminMilkHistory);
+  bindIfExists("bulkDeleteMilkBtn", "click", handleBulkDeleteMilk);
+  bindIfExists("milkHistoryDateSearch", "input", handleMilkDateSearch);
+  bindIfExists("milkHistoryClearSearch", "click", clearMilkDateSearch);
+  bindIfExists("selectAllMilkRows", "change", handleSelectAllMilkRows);
+  bindIfExists("milkPageSize", "change", handleMilkPageSizeChange);
+  bindIfExists("milkPrevPageBtn", "click", () => changeMilkPage(-1));
+  bindIfExists("milkNextPageBtn", "click", () => changeMilkPage(1));
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => hideModal(btn.dataset.closeModal));
@@ -137,11 +153,13 @@ function onMonthChange() {
   loadCalculation();
   loadAdminBazarHistory();
   loadAdminMealHistory();
+  loadAdminMilkHistory();
 }
 
 function updateHistoryDateSearchRanges() {
   setHistoryDateSearchRange("bazarHistoryDateSearch");
   setHistoryDateSearchRange("mealHistoryDateSearch");
+  setHistoryDateSearchRange("milkHistoryDateSearch");
 }
 
 function setHistoryDateSearchRange(id) {
@@ -208,6 +226,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     "section-costs": { label: "Calculation Settings", icon: "bi-cash-stack" },
     "section-bazar-history": { label: "Bazar History", icon: "bi-basket" },
     "section-meal-history": { label: "Meal History", icon: "bi-egg-fried" },
+    "section-milk-history": { label: "Milk History", icon: "bi-cup-straw" },
     "section-users": { label: "Members", icon: "bi-people" },
     "section-add-user": { label: "Add Member", icon: "bi-person-plus" },
   };
@@ -263,6 +282,7 @@ await secondaryAuth.signOut();
     loadUsersPanel();
     loadAdminBazarHistory();
     loadAdminMealHistory();
+    loadAdminMilkHistory();
     loadCalculation();
   } catch (err) {
     showAlert("addUserAlert", err.message, "danger");
@@ -351,6 +371,7 @@ async function handleEditMember(e) {
     loadUsersPanel();
     loadAdminBazarHistory();
     loadAdminMealHistory();
+    loadAdminMilkHistory();
     loadCalculation();
   } catch (err) {
     showAlert("editMemberAlert", err.message, "danger", false);
@@ -366,6 +387,7 @@ async function handleDeleteMember(uid, name) {
     loadUsersPanel();
     loadAdminBazarHistory();
     loadAdminMealHistory();
+    loadAdminMilkHistory();
     loadCalculation();
   } catch (err) {
     showAlert("usersPanelAlert", err.message, "danger");
@@ -918,6 +940,245 @@ function updateEditMealTotalPreview() {
 
 function isValidMealCount(value) {
   return Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+// ─────────────────────────────────────────────
+// Admin Milk History
+// ─────────────────────────────────────────────
+async function loadAdminMilkHistory() {
+  const tbody = document.getElementById("adminMilkHistoryBody");
+  if (!tbody) return;
+  const selectAll = document.getElementById("selectAllMilkRows");
+  const bulkBtn = document.getElementById("bulkDeleteMilkBtn");
+  tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Loading milk history...</td></tr>`;
+  if (selectAll) selectAll.checked = false;
+  if (bulkBtn) bulkBtn.disabled = true;
+
+  try {
+    milkMemberMap = await getMemberMap();
+    const snap = await getDocs(query(collection(db, "milk"), where("month", "==", selectedMonth)));
+    adminMilkAllRows = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
+    milkCurrentPage = 1;
+    applyMilkHistoryDateFilter();
+    renderAdminMilkHistory();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderAdminMilkHistory() {
+  const tbody = document.getElementById("adminMilkHistoryBody");
+
+  if (adminMilkRows.length === 0) {
+    const searchDate = getHistoryDateSearchValue("milkHistoryDateSearch");
+    const message = searchDate ? `No milk entries found for ${searchDate}.` : "No milk entries found for this month.";
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">${message}</td></tr>`;
+    renderMilkPagination();
+    updateBulkDeleteMilkState();
+    return;
+  }
+
+  normalizeMilkPage();
+  const pageRows = getVisibleMilkRows();
+
+  tbody.innerHTML = pageRows.map((milk) => {
+    const member = milkMemberMap.get(milk.userId);
+    const memberName = member?.name || "Unknown member";
+    const username = member?.username ? `@${member.username}` : milk.userId || "";
+
+    return `
+      <tr>
+        <td><input type="checkbox" class="milk-row-check" value="${milk.id}" aria-label="Select milk row"/></td>
+        <td>${escapeHtml(milk.date || "")}</td>
+        <td><strong>${escapeHtml(memberName)}</strong><br><small class="text-muted">${escapeHtml(username)}</small></td>
+        <td>${milk.hasMilk ? '✅' : '❌'}</td>
+        <td class="text-end">
+          <div class="d-inline-flex gap-2">
+            <button type="button" class="btn-icon edit-milk-btn" data-id="${milk.id}" title="Edit milk">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button type="button" class="btn-icon danger delete-milk-btn" data-id="${milk.id}" title="Delete milk">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll(".milk-row-check").forEach((check) => {
+    check.addEventListener("change", updateBulkDeleteMilkState);
+  });
+  tbody.querySelectorAll(".edit-milk-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openEditMilkModal(btn.dataset.id));
+  });
+  tbody.querySelectorAll(".delete-milk-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleDeleteMilk(btn.dataset.id));
+  });
+  renderMilkPagination();
+  updateBulkDeleteMilkState();
+}
+
+function handleMilkDateSearch() {
+  milkCurrentPage = 1;
+  applyMilkHistoryDateFilter();
+  renderAdminMilkHistory();
+}
+
+function clearMilkDateSearch() {
+  const input = document.getElementById("milkHistoryDateSearch");
+  if (input) input.value = "";
+  handleMilkDateSearch();
+}
+
+function applyMilkHistoryDateFilter() {
+  const searchDate = getHistoryDateSearchValue("milkHistoryDateSearch");
+  adminMilkRows = searchDate
+    ? adminMilkAllRows.filter((row) => row.date === searchDate)
+    : [...adminMilkAllRows];
+}
+
+async function openEditMilkModal(id) {
+  const milk = adminMilkRows.find((row) => row.id === id);
+  if (!milk) return;
+
+  const member = milkMemberMap.get(milk.userId) || (await getMemberMap()).get(milk.userId);
+  const form = document.getElementById("editMilkForm");
+  form.elements.id.value = milk.id;
+  form.elements.member.value = member ? `${member.name || ""} (@${member.username || ""})` : milk.userId || "Unknown member";
+  form.elements.date.value = milk.date || "";
+  form.elements.hasMilk.checked = milk.hasMilk || false;
+  hideAlert("editMilkAlert");
+  showModal("editMilkModal");
+}
+
+async function handleEditMilk(e) {
+  e.preventDefault();
+  const form = e.target;
+  const id = form.elements.id.value;
+  const date = form.elements.date.value;
+  const hasMilk = form.elements.hasMilk.checked;
+
+  if (!id || !date) {
+    showAlert("editMilkAlert", "Please fill all fields correctly.", "danger", false);
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "milk", id), {
+      date,
+      hasMilk,
+      month: date.substring(0, 7),
+      updatedAt: serverTimestamp()
+    });
+    hideModal("editMilkModal");
+    showAlert("milkHistoryAlert", "Milk entry updated.", "success");
+    await loadAdminMilkHistory();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("editMilkAlert", err.message, "danger", false);
+  }
+}
+
+async function handleDeleteMilk(id) {
+  const milk = adminMilkRows.find((row) => row.id === id);
+  const label = milk ? `${milk.date || ""} milk entry` : "this milk entry";
+  if (!confirm(`Delete ${label}?`)) return;
+
+  try {
+    await deleteDoc(doc(db, "milk", id));
+    showAlert("milkHistoryAlert", "Milk entry deleted.", "success");
+    await loadAdminMilkHistory();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("milkHistoryAlert", err.message, "danger");
+  }
+}
+
+function handleSelectAllMilkRows(e) {
+  document.querySelectorAll(".milk-row-check").forEach((check) => {
+    check.checked = e.target.checked;
+  });
+  updateBulkDeleteMilkState();
+}
+
+function handleMilkPageSizeChange(e) {
+  milkPageSize = parseInt(e.target.value, 10) || 10;
+  milkCurrentPage = 1;
+  renderAdminMilkHistory();
+}
+
+function changeMilkPage(delta) {
+  milkCurrentPage += delta;
+  normalizeMilkPage();
+  renderAdminMilkHistory();
+}
+
+function getMilkPageCount() {
+  return Math.max(1, Math.ceil(adminMilkRows.length / milkPageSize));
+}
+
+function normalizeMilkPage() {
+  const pageCount = getMilkPageCount();
+  if (milkCurrentPage < 1) milkCurrentPage = 1;
+  if (milkCurrentPage > pageCount) milkCurrentPage = pageCount;
+}
+
+function getVisibleMilkRows() {
+  const start = (milkCurrentPage - 1) * milkPageSize;
+  return adminMilkRows.slice(start, start + milkPageSize);
+}
+
+function renderMilkPagination() {
+  const total = adminMilkRows.length;
+  const pageCount = getMilkPageCount();
+  const start = total === 0 ? 0 : (milkCurrentPage - 1) * milkPageSize + 1;
+  const end = Math.min(total, milkCurrentPage * milkPageSize);
+  const info = document.getElementById("milkPaginationInfo");
+  const indicator = document.getElementById("milkPageIndicator");
+  const prevBtn = document.getElementById("milkPrevPageBtn");
+  const nextBtn = document.getElementById("milkNextPageBtn");
+
+  if (info) info.textContent = total === 0 ? "Showing 0 entries" : `Showing ${start}-${end} of ${total} entries`;
+  if (indicator) indicator.textContent = `Page ${milkCurrentPage} of ${pageCount}`;
+  if (prevBtn) prevBtn.disabled = milkCurrentPage <= 1;
+  if (nextBtn) nextBtn.disabled = milkCurrentPage >= pageCount;
+}
+
+function getSelectedMilkIds() {
+  return Array.from(document.querySelectorAll(".milk-row-check:checked")).map((check) => check.value);
+}
+
+function updateBulkDeleteMilkState() {
+  const selectedCount = getSelectedMilkIds().length;
+  const bulkBtn = document.getElementById("bulkDeleteMilkBtn");
+  const selectAll = document.getElementById("selectAllMilkRows");
+  if (bulkBtn) {
+    bulkBtn.disabled = selectedCount === 0;
+    bulkBtn.innerHTML = `<i class="bi bi-trash me-1"></i>Delete Selected${selectedCount ? ` (${selectedCount})` : ""}`;
+  }
+  if (selectAll) {
+    const checks = Array.from(document.querySelectorAll(".milk-row-check"));
+    selectAll.checked = checks.length > 0 && checks.every((check) => check.checked);
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < checks.length;
+  }
+}
+
+async function handleBulkDeleteMilk() {
+  const selectedIds = getSelectedMilkIds();
+  if (selectedIds.length === 0) return;
+  if (!confirm(`Delete ${selectedIds.length} selected milk entries?`)) return;
+
+  try {
+    await deleteDocsInBatches("milk", selectedIds);
+    showAlert("milkHistoryAlert", `${selectedIds.length} milk entries deleted.`, "success");
+    await loadAdminMilkHistory();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("milkHistoryAlert", err.message, "danger");
+  }
 }
 
 // Monthly Costs

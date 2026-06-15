@@ -32,15 +32,19 @@ let currentUser = null;
 let selectedMonth = getCurrentMonth();
 let editBazarModal = null;
 let editMealModal = null;
+let editMilkModal = null;
 const HISTORY_PAGE_SIZE = 5;
 let bazarHistoryRows = [];
 let mealHistoryRows = [];
+let milkHistoryRows = [];
 let bazarHistoryPage = 1;
 let mealHistoryPage = 1;
+let milkHistoryPage = 1;
 const USER_SECTION_IDS = [
   "section-summary",
   "section-bazar",
   "section-meals",
+  "section-milk",
   "section-history"
 ];
 
@@ -76,18 +80,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadSummary();
   loadBazarHistory();
   loadMealHistory();
+  loadMilkHistory();
   updateMealHistorySearchRange();
+  updateMilkHistorySearchRange();
 
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("bazarForm").addEventListener("submit", handleAddBazar);
   document.getElementById("mealForm").addEventListener("submit", handleAddMeal);
+  document.getElementById("milkForm").addEventListener("submit", handleAddMilk);
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
   document.getElementById("mealHistoryDateSearch").addEventListener("input", loadMealHistory);
   document.getElementById("mealHistoryClearSearch").addEventListener("click", clearMealHistorySearch);
+  document.getElementById("milkHistoryDateSearch").addEventListener("input", loadMilkHistory);
+  document.getElementById("milkHistoryClearSearch").addEventListener("click", clearMilkHistorySearch);
   bindIfExists("bazarHistoryPrev", "click", () => changeBazarHistoryPage(-1));
   bindIfExists("bazarHistoryNext", "click", () => changeBazarHistoryPage(1));
   bindIfExists("mealHistoryPrev", "click", () => changeMealHistoryPage(-1));
   bindIfExists("mealHistoryNext", "click", () => changeMealHistoryPage(1));
+  bindIfExists("milkHistoryPrev", "click", () => changeMilkHistoryPage(-1));
+  bindIfExists("milkHistoryNext", "click", () => changeMilkHistoryPage(1));
 
   // Live total meal counter
   document.getElementById("mealMorning").addEventListener("input", updateMealTotal);
@@ -117,6 +128,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
   }
+
+  // Edit milk modal setup
+  const editMilkEl = document.getElementById('editMilkModal');
+  if (editMilkEl && window.bootstrap) {
+    editMilkModal = new bootstrap.Modal(editMilkEl);
+    document.getElementById('editMilkForm').addEventListener('submit', submitEditMilk);
+  }
 });
 
 // ─────────────────────────────────────────────
@@ -144,14 +162,27 @@ function onMonthChange() {
   selectedMonth = document.getElementById("monthSelector").value;
   bazarHistoryPage = 1;
   mealHistoryPage = 1;
+  milkHistoryPage = 1;
   updateMealHistorySearchRange();
+  updateMilkHistorySearchRange();
   loadSummary();
   loadBazarHistory();
   loadMealHistory();
+  loadMilkHistory();
 }
 
 function updateMealHistorySearchRange() {
   const input = document.getElementById("mealHistoryDateSearch");
+  if (!input) return;
+  const [year, month] = selectedMonth.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  input.min = `${selectedMonth}-01`;
+  input.max = `${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
+  if (input.value && !input.value.startsWith(selectedMonth)) input.value = "";
+}
+
+function updateMilkHistorySearchRange() {
+  const input = document.getElementById("milkHistoryDateSearch");
   if (!input) return;
   const [year, month] = selectedMonth.split("-").map(Number);
   const lastDay = new Date(year, month, 0).getDate();
@@ -214,6 +245,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     "section-summary": { label: "My Dashboard", icon: "bi-pie-chart" },
     "section-bazar": { label: "Add Bazar", icon: "bi-basket" },
     "section-meals": { label: "Add Meals", icon: "bi-egg-fried" },
+    "section-milk": { label: "Add Milk", icon: "bi-cup-straw" },
     "section-history": { label: "History", icon: "bi-clock-history" },
   };
   const heading = document.getElementById("topbarHeading");
@@ -324,6 +356,46 @@ async function handleAddMeal(e) {
   }
 }
 
+// ─────────────────────────────────────────────
+// Add Milk
+// ─────────────────────────────────────────────
+async function handleAddMilk(e) {
+  e.preventDefault();
+  const form = e.target;
+  const date = form.milkDate.value;
+  const hasMilk = form.milkCheck.checked;
+
+  if (!date) {
+    showAlert("milkAlert", "Please select a date.", "warning");
+    return;
+  }
+
+  if (!hasMilk) {
+    showAlert("milkAlert", "Please check the box if you had milk.", "warning");
+    return;
+  }
+
+  try {
+    setButtonLoading('milkAddBtn', 'milkAddSpinner', true);
+    await addDoc(collection(db, "milk"), {
+      userId: currentUser.uid,
+      date,
+      hasMilk,
+      month: date.substring(0, 7),
+      createdAt: serverTimestamp()
+    });
+    showAlert("milkAlert", "Milk entry added!", "success");
+    form.reset();
+    loadSummary();
+    milkHistoryPage = 1;
+    loadMilkHistory();
+  } catch (err) {
+    showAlert("milkAlert", err.message, "danger");
+  } finally {
+    setButtonLoading('milkAddBtn', 'milkAddSpinner', false);
+  }
+}
+
 function updateMealTotal() {
   const m = parseFloat(document.getElementById("mealMorning").value) || 0;
   const l = parseFloat(document.getElementById("mealLunch").value) || 0;
@@ -336,7 +408,7 @@ function updateMealTotal() {
 // ─────────────────────────────────────────────
 async function loadSummary() {
   try {
-    const [mealsSnap, bazarSnap, monthSnap] = await Promise.all([
+    const [mealsSnap, bazarSnap, milkSnap, monthSnap] = await Promise.all([
       getDocs(query(
         collection(db, "meals"),
         where("userId", "==", currentUser.uid),
@@ -347,11 +419,18 @@ async function loadSummary() {
         where("userId", "==", currentUser.uid),
         where("month", "==", selectedMonth)
       )),
+      getDocs(query(
+        collection(db, "milk"),
+        where("userId", "==", currentUser.uid),
+        where("month", "==", selectedMonth)
+      )),
       getDoc(doc(db, "months", selectedMonth))
     ]);
 
     const userMeals = mealsSnap.docs.map((d) => d.data());
     const userBazar = bazarSnap.docs.map((d) => d.data());
+    const userMilk = milkSnap.docs.map((d) => d.data());
+    const totalMilk = userMilk.filter(m => m.hasMilk).length;
     const monthData = monthSnap.exists() ? monthSnap.data() : {};
     const calculationSummary = monthData.calculationSummary || {};
     const rates = calculationSummary.mealRates || {};
@@ -367,6 +446,7 @@ async function loadSummary() {
 
     document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
     document.getElementById("summTotalMeals").textContent = round2(totalMeals);
+    document.getElementById("summTotalMilk").textContent = totalMilk;
     document.getElementById("summDue").textContent = formatCurrencyOrDash(due);
     document.getElementById("summBaseRate").textContent = formatCurrencyOrDash(baseRate);
     document.getElementById("summDinnerRate").textContent = formatCurrencyOrDash(mealRates.dinner);
@@ -598,7 +678,10 @@ function getHistoryPageRows(rows, page) {
 }
 
 function getHistoryPageCount(type) {
-  const total = type === "bazar" ? bazarHistoryRows.length : mealHistoryRows.length;
+  let total;
+  if (type === "bazar") total = bazarHistoryRows.length;
+  else if (type === "milk") total = milkHistoryRows.length;
+  else total = mealHistoryRows.length;
   return Math.max(1, Math.ceil(total / HISTORY_PAGE_SIZE));
 }
 
@@ -607,6 +690,9 @@ function normalizeHistoryPage(type) {
   if (type === "bazar") {
     if (bazarHistoryPage < 1) bazarHistoryPage = 1;
     if (bazarHistoryPage > pageCount) bazarHistoryPage = pageCount;
+  } else if (type === "milk") {
+    if (milkHistoryPage < 1) milkHistoryPage = 1;
+    if (milkHistoryPage > pageCount) milkHistoryPage = pageCount;
   } else {
     if (mealHistoryPage < 1) mealHistoryPage = 1;
     if (mealHistoryPage > pageCount) mealHistoryPage = pageCount;
@@ -614,14 +700,14 @@ function normalizeHistoryPage(type) {
 }
 
 function renderHistoryPagination(type) {
-  const isBazar = type === "bazar";
-  const rows = isBazar ? bazarHistoryRows : mealHistoryRows;
-  const page = isBazar ? bazarHistoryPage : mealHistoryPage;
+  let rows, page, prefix;
+  if (type === "bazar") { rows = bazarHistoryRows; page = bazarHistoryPage; prefix = "bazarHistory"; }
+  else if (type === "milk") { rows = milkHistoryRows; page = milkHistoryPage; prefix = "milkHistory"; }
+  else { rows = mealHistoryRows; page = mealHistoryPage; prefix = "mealHistory"; }
   const pageCount = getHistoryPageCount(type);
   const total = rows.length;
   const start = total === 0 ? 0 : (page - 1) * HISTORY_PAGE_SIZE + 1;
   const end = Math.min(total, page * HISTORY_PAGE_SIZE);
-  const prefix = isBazar ? "bazarHistory" : "mealHistory";
   const info = document.getElementById(`${prefix}PageInfo`);
   const label = document.getElementById(`${prefix}PageLabel`);
   const prev = document.getElementById(`${prefix}Prev`);
@@ -677,6 +763,102 @@ async function submitEditMeal(e) {
     showAlert('mealAlert', err.message, 'danger');
   } finally {
     setButtonLoading('editMealSaveBtn', 'editMealSpinner', false);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Milk History
+// ─────────────────────────────────────────────
+async function loadMilkHistory() {
+  milkHistoryPage = 1;
+  const searchDate = document.getElementById("milkHistoryDateSearch")?.value || "";
+  const snap = await getDocs(query(
+    collection(db, "milk"),
+    where("userId", "==", currentUser.uid),
+    where("month", "==", selectedMonth)
+  ));
+  const tbody = document.getElementById("milkHistoryBody");
+  tbody.innerHTML = "";
+  milkHistoryRows = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((m) => !searchDate || m.date === searchDate)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  renderMilkHistoryPage(searchDate);
+}
+
+function renderMilkHistoryPage(searchDate = document.getElementById("milkHistoryDateSearch")?.value || "") {
+  const tbody = document.getElementById("milkHistoryBody");
+  tbody.innerHTML = "";
+  normalizeHistoryPage("milk");
+  const rows = getHistoryPageRows(milkHistoryRows, milkHistoryPage);
+
+  rows.forEach((m) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Date">${m.date}</td>
+      <td data-label="Milk">${m.hasMilk ? '✅ Had Milk' : '❌ No Milk'}</td>
+      <td data-label="Actions">
+        <button class="btn btn-sm btn-outline-primary milk-edit" data-id="${m.id}">Edit</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    const editBtn = tr.querySelector('.milk-edit');
+    if (editBtn) editBtn.addEventListener('click', () => openEditMilkModal(m.id, m));
+  });
+  if (milkHistoryRows.length === 0) {
+    const message = searchDate ? `No milk entry found for ${searchDate}` : "No milk entries";
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">${message}</td></tr>`;
+  }
+  renderHistoryPagination("milk");
+}
+
+function changeMilkHistoryPage(delta) {
+  milkHistoryPage += delta;
+  renderMilkHistoryPage();
+}
+
+function clearMilkHistorySearch() {
+  document.getElementById("milkHistoryDateSearch").value = "";
+  milkHistoryPage = 1;
+  loadMilkHistory();
+}
+
+// ─────────────────────────────────────────────
+// Edit Milk Modal
+// ─────────────────────────────────────────────
+function openEditMilkModal(milkId, milkData) {
+  if (!editMilkModal) return;
+  document.getElementById('editMilkId').value = milkId;
+  document.getElementById('editMilkDate').value = milkData.date || '';
+  document.getElementById('editMilkCheck').checked = milkData.hasMilk || false;
+  editMilkModal.show();
+}
+
+async function submitEditMilk(e) {
+  e.preventDefault();
+  const id = document.getElementById('editMilkId').value;
+  const date = document.getElementById('editMilkDate').value;
+  const hasMilk = document.getElementById('editMilkCheck').checked;
+  if (!id || !date) {
+    showAlert('milkAlert', 'Please fill all fields correctly.', 'warning');
+    return;
+  }
+  try {
+    setButtonLoading('editMilkSaveBtn', 'editMilkSpinner', true);
+    await updateDoc(doc(db, 'milk', id), {
+      date,
+      hasMilk,
+      month: date.substring(0,7)
+    });
+    showAlert('milkAlert', 'Milk entry updated.', 'success');
+    editMilkModal.hide();
+    loadSummary();
+    milkHistoryPage = 1;
+    loadMilkHistory();
+  } catch (err) {
+    showAlert('milkAlert', err.message, 'danger');
+  } finally {
+    setButtonLoading('editMilkSaveBtn', 'editMilkSpinner', false);
   }
 }
 
