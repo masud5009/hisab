@@ -688,25 +688,28 @@
       </div>
     </div>
 
-    <!-- ── Summary Widgets ── -->
-    <div id="calcSummaryWidgets" class="summary-widgets"></div>
+    <!-- ── Dashboard (Summary Widgets + Monthly Calculation) ── -->
+    <div id="section-calc">
+      <!-- Summary Widgets -->
+      <div id="calcSummaryWidgets" class="summary-widgets"></div>
 
-    <!-- ── Calculation Table ── -->
-    <div class="card mb-4" id="section-calc">
-      <div class="card-header-custom">
-        <i class="bi bi-table"></i> Monthly Calculation
-        <div class="ms-auto d-flex flex-wrap gap-2">
-          <button class="btn-outline-custom" id="saveRoomRentsBtn"><i class="bi bi-house-check me-1"></i>Save Room Rents</button>
-          <button class="btn-outline-custom" id="recalculateBtn"><i class="bi bi-arrow-clockwise me-1"></i>Recalculate</button>
-          <button class="btn-primary-custom" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</button>
+      <!-- Calculation Table -->
+      <div class="card mb-4">
+        <div class="card-header-custom">
+          <i class="bi bi-table"></i> Monthly Calculation
+          <div class="ms-auto d-flex flex-wrap gap-2">
+            <button class="btn-outline-custom" id="saveRoomRentsBtn"><i class="bi bi-house-check me-1"></i>Save Room Rents</button>
+            <button class="btn-outline-custom" id="recalculateBtn"><i class="bi bi-arrow-clockwise me-1"></i>Recalculate</button>
+            <button class="btn-primary-custom" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</button>
+          </div>
         </div>
-      </div>
-      <div class="card-body-custom">
-        <div id="calcAlert" class="alert d-none"></div>
-        <div id="calcTableWrap">
-          <div class="text-center py-5 text-muted">
-            <div class="spinner-border text-warning mb-2"></div>
-            <div>Loading calculation...</div>
+        <div class="card-body-custom">
+          <div id="calcAlert" class="alert d-none"></div>
+          <div id="calcTableWrap">
+            <div class="text-center py-5 text-muted">
+              <div class="spinner-border text-warning mb-2"></div>
+              <div>Loading calculation...</div>
+            </div>
           </div>
         </div>
       </div>
