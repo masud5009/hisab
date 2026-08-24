@@ -472,15 +472,15 @@
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">সকালের নাস্তা 🌅</label>
-              <input type="number" id="mealMorning" class="form-control" min="0" max="1" step="0.5" value="0" placeholder="0"/>
+              <input type="number" id="mealMorning" class="form-control" min="0" step="0.5" value="0" placeholder="0"/>
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">দুপুরের খাবার ☀️</label>
-              <input type="number" id="mealLunch" class="form-control" min="0" max="1" step="0.5" value="0" placeholder="0"/>
+              <input type="number" id="mealLunch" class="form-control" min="0" step="0.5" value="0" placeholder="0"/>
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">রাতের খাবার 🌙</label>
-              <input type="number" id="mealDinner" class="form-control" min="0" max="1" step="0.5" value="1" placeholder="0"/>
+              <input type="number" id="mealDinner" class="form-control" min="0" step="0.5" value="1" placeholder="0"/>
             </div>
             <div class="col-md-2 col-6">
               <div class="meal-preview">
@@ -534,99 +534,101 @@
     </div>
 
     <!-- ── History ── -->
-    <div class="row g-3" id="section-history">
-      <div class="col-md-6">
-        <div class="card bazar-card">
-          <div class="card-header-custom">
-            <i class="bi bi-basket"></i> Bazar History
-          </div>
-          <div class="card-body-custom p-0">
-            <div class="table-responsive">
-              <table class="table bazar-table mb-0">
-                <thead>
-                  <tr><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="bazarHistoryBody">
-                  <tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr>
-                </tbody>
-              </table>
+    <div id="section-history">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card bazar-card">
+            <div class="card-header-custom">
+              <i class="bi bi-basket"></i> Bazar History
             </div>
-            <div class="history-pagination">
-              <span id="bazarHistoryPageInfo">Showing 0 entries</span>
-              <div class="history-page-controls">
-                <button type="button" id="bazarHistoryPrev" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-left"></i></button>
-                <span id="bazarHistoryPageLabel">Page 1 of 1</span>
-                <button type="button" id="bazarHistoryNext" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-right"></i></button>
+            <div class="card-body-custom p-0">
+              <div class="table-responsive">
+                <table class="table bazar-table mb-0">
+                  <thead>
+                    <tr><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="bazarHistoryBody">
+                    <tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="history-pagination">
+                <span id="bazarHistoryPageInfo">Showing 0 entries</span>
+                <div class="history-page-controls">
+                  <button type="button" id="bazarHistoryPrev" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-left"></i></button>
+                  <span id="bazarHistoryPageLabel">Page 1 of 1</span>
+                  <button type="button" id="bazarHistoryNext" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card meal-card">
+            <div class="card-header-custom">
+              <span class="card-header-title">
+                <i class="bi bi-egg-fried"></i> Meal History
+              </span>
+              <div class="history-filter">
+                <input type="date" id="mealHistoryDateSearch" class="form-control" aria-label="Search meal history by date"/>
+                <button type="button" id="mealHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+              </div>
+            </div>
+            <div class="card-body-custom p-0">
+              <div class="table-responsive">
+                <table class="table meal-table mb-0">
+                  <thead>
+                    <tr><th>Date</th><th>Morning</th><th>Lunch</th><th>Dinner</th><th>Total</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="mealHistoryBody">
+                    <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="history-pagination">
+                <span id="mealHistoryPageInfo">Showing 0 entries</span>
+                <div class="history-page-controls">
+                  <button type="button" id="mealHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
+                  <span id="mealHistoryPageLabel">Page 1 of 1</span>
+                  <button type="button" id="mealHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="card meal-card">
-          <div class="card-header-custom">
-            <span class="card-header-title">
-              <i class="bi bi-egg-fried"></i> Meal History
-            </span>
-            <div class="history-filter">
-              <input type="date" id="mealHistoryDateSearch" class="form-control" aria-label="Search meal history by date"/>
-              <button type="button" id="mealHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
-            </div>
-          </div>
-          <div class="card-body-custom p-0">
-            <div class="table-responsive">
-              <table class="table meal-table mb-0">
-                <thead>
-                  <tr><th>Date</th><th>Morning</th><th>Lunch</th><th>Dinner</th><th>Total</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="mealHistoryBody">
-                  <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="history-pagination">
-              <span id="mealHistoryPageInfo">Showing 0 entries</span>
-              <div class="history-page-controls">
-                <button type="button" id="mealHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
-                <span id="mealHistoryPageLabel">Page 1 of 1</span>
-                <button type="button" id="mealHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ── Milk History ── -->
-    <div class="row g-3 mt-1">
-      <div class="col-12">
-        <div class="card meal-card">
-          <div class="card-header-custom">
-            <span class="card-header-title">
-              <i class="bi bi-cup-straw"></i> Milk History
-            </span>
-            <div class="history-filter">
-              <input type="date" id="milkHistoryDateSearch" class="form-control" aria-label="Search milk history by date"/>
-              <button type="button" id="milkHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+      <!-- ── Milk History ── -->
+      <div class="row g-3 mt-1">
+        <div class="col-12">
+          <div class="card meal-card">
+            <div class="card-header-custom">
+              <span class="card-header-title">
+                <i class="bi bi-cup-straw"></i> Milk History
+              </span>
+              <div class="history-filter">
+                <input type="date" id="milkHistoryDateSearch" class="form-control" aria-label="Search milk history by date"/>
+                <button type="button" id="milkHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+              </div>
             </div>
-          </div>
-          <div class="card-body-custom p-0">
-            <div class="table-responsive">
-              <table class="table meal-table mb-0">
-                <thead>
-                  <tr><th>Date</th><th>Milk</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="milkHistoryBody">
-                  <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="history-pagination">
-              <span id="milkHistoryPageInfo">Showing 0 entries</span>
-              <div class="history-page-controls">
-                <button type="button" id="milkHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
-                <span id="milkHistoryPageLabel">Page 1 of 1</span>
-                <button type="button" id="milkHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
+            <div class="card-body-custom p-0">
+              <div class="table-responsive">
+                <table class="table meal-table mb-0">
+                  <thead>
+                    <tr><th>Date</th><th>Milk</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="milkHistoryBody">
+                    <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="history-pagination">
+                <span id="milkHistoryPageInfo">Showing 0 entries</span>
+                <div class="history-page-controls">
+                  <button type="button" id="milkHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
+                  <span id="milkHistoryPageLabel">Page 1 of 1</span>
+                  <button type="button" id="milkHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
+                </div>
               </div>
             </div>
           </div>
@@ -688,15 +690,15 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Morning</label>
-              <input type="number" id="editMealMorning" class="form-control" min="0" max="1" step="0.5" required />
+              <input type="number" id="editMealMorning" class="form-control" min="0" step="0.5" required />
             </div>
             <div class="mb-3">
               <label class="form-label">Lunch</label>
-              <input type="number" id="editMealLunch" class="form-control" min="0" max="1" step="0.5" required />
+              <input type="number" id="editMealLunch" class="form-control" min="0" step="0.5" required />
             </div>
             <div class="mb-3">
               <label class="form-label">Dinner</label>
-              <input type="number" id="editMealDinner" class="form-control" min="0" max="1" step="0.5" required />
+              <input type="number" id="editMealDinner" class="form-control" min="0" step="0.5" required />
             </div>
             <div class="mb-3">
               <div class="meal-preview">

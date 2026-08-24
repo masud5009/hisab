@@ -939,7 +939,7 @@ function updateEditMealTotalPreview() {
 }
 
 function isValidMealCount(value) {
-  return Number.isFinite(value) && value >= 0 && value <= 1;
+  return Number.isFinite(value) && value >= 0;
 }
 
 // ─────────────────────────────────────────────
