@@ -84,7 +84,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateMealHistorySearchRange();
   updateMilkHistorySearchRange();
 
-  document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+  bindIfExists("logoutBtn", "click", handleLogout);
+  bindIfExists("mobileLogoutBtn", "click", handleLogout);
   document.getElementById("bazarForm").addEventListener("submit", handleAddBazar);
   document.getElementById("mealForm").addEventListener("submit", handleAddMeal);
   document.getElementById("milkForm").addEventListener("submit", handleAddMilk);

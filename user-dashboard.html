@@ -311,8 +311,79 @@
     .dashboard-tab-panel[hidden] { display: none !important; }
 
     @media (max-width: 768px) {
-      .sidebar { width: 100%; height: auto; position: relative; }
-      .main-content { margin-left: 0; padding: 1rem; }
+      .sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        background: #ffffff;
+        border-right: none;
+        border-top: 1px solid var(--clr-border);
+        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+        padding: 0;
+        z-index: 1040;
+        display: flex;
+        flex-direction: row;
+      }
+      .sidebar-brand,
+      .sidebar-footer {
+        display: none !important;
+      }
+      .sidebar nav {
+        display: flex;
+        width: 100%;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0.4rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+        margin: 0;
+      }
+      .sidebar .nav-item {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+      }
+      .sidebar .nav-item a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        padding: 0.4rem 0.3rem;
+        border-left: none;
+        border-radius: 12px;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--clr-muted);
+        text-decoration: none;
+        transition: all 0.15s ease-in-out;
+        width: 100%;
+        max-width: 68px;
+        text-align: center;
+      }
+      .sidebar .nav-item a i {
+        font-size: 1.25rem;
+        line-height: 1;
+      }
+      .sidebar .nav-item a:hover {
+        color: var(--clr-user);
+        background: var(--clr-user-glow);
+      }
+      .sidebar .nav-item a.active {
+        color: var(--clr-user);
+        background: var(--clr-user-glow);
+        font-weight: 700;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 1rem 1rem calc(4.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
+      }
+      .topbar {
+        margin-bottom: 1.25rem;
+      }
       .history-filter {
         width: 100%;
         margin-left: 0;
@@ -358,19 +429,19 @@
     </div>
     <nav>
       <div class="nav-item">
-        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> Dashboard</a>
+        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> <span class="nav-text"><span class="d-none d-md-inline">My </span>Dashboard</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-bazar"><i class="bi bi-basket"></i> Add Bazar</a>
+        <a href="#section-bazar"><i class="bi bi-basket"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Bazar</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-meals"><i class="bi bi-egg-fried"></i> Add Meals</a>
+        <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Meals</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-milk"><i class="bi bi-cup-straw"></i> Add Milk</a>
+        <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Milk</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-history"><i class="bi bi-clock-history"></i> History</a>
+        <a href="#section-history"><i class="bi bi-clock-history"></i> <span class="nav-text">History</span></a>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -388,7 +459,12 @@
     <!-- Topbar -->
     <div class="topbar">
       <h2 id="topbarHeading"><i class="bi bi-person-circle me-2" style="color:var(--clr-user)"></i>My Dashboard</h2>
-      <select class="month-selector" id="monthSelector"></select>
+      <div class="d-flex align-items-center gap-2">
+        <select class="month-selector" id="monthSelector"></select>
+        <button class="btn btn-sm btn-outline-danger d-md-none" id="mobileLogoutBtn" title="Logout" aria-label="Logout">
+          <i class="bi bi-box-arrow-left"></i>
+        </button>
+      </div>
     </div>
 
     <!-- ── Summary ── -->
