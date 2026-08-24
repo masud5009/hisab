@@ -65,7 +65,10 @@ const ADMIN_SECTION_IDS = [
 // ─────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   currentAdmin = await requireAuth("admin", "admin-login.html");
-  document.getElementById("adminName").textContent = currentAdmin.name;
+  const adminNameEl = document.getElementById("adminName");
+  if (adminNameEl) adminNameEl.textContent = currentAdmin.name;
+  const adminNameDrawerEl = document.getElementById("adminNameDrawer");
+  if (adminNameDrawerEl) adminNameDrawerEl.textContent = currentAdmin.name;
 
   initMonthSelector();
   initDashboardTabs(ADMIN_SECTION_IDS);
@@ -78,7 +81,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadAdminMilkHistory();
 
   // Event bindings
-  document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+  bindIfExists("logoutBtn", "click", handleLogout);
+  bindIfExists("mobileLogoutBtn", "click", handleLogout);
+  bindIfExists("drawerLogoutBtn", "click", handleLogout);
+  bindIfExists("mobileMoreBtn", "click", openAdminMoreDrawer);
+  bindIfExists("adminMoreDrawerClose", "click", closeAdminMoreDrawer);
+  bindIfExists("adminMoreDrawerBackdrop", "click", closeAdminMoreDrawer);
   document.getElementById("addUserForm").addEventListener("submit", handleAddUser);
   document.getElementById("editMemberForm").addEventListener("submit", handleEditMember);
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
@@ -177,6 +185,32 @@ function getHistoryDateSearchValue(id) {
   return value.startsWith(selectedMonth) ? value : "";
 }
 
+function openAdminMoreDrawer() {
+  const drawer = document.getElementById("adminMoreDrawer");
+  const backdrop = document.getElementById("adminMoreDrawerBackdrop");
+  if (drawer && backdrop) {
+    backdrop.classList.remove("d-none");
+    requestAnimationFrame(() => {
+      drawer.classList.add("show");
+      backdrop.classList.add("show");
+    });
+  }
+}
+
+function closeAdminMoreDrawer() {
+  const drawer = document.getElementById("adminMoreDrawer");
+  const backdrop = document.getElementById("adminMoreDrawerBackdrop");
+  if (drawer && backdrop) {
+    drawer.classList.remove("show");
+    backdrop.classList.remove("show");
+    setTimeout(() => {
+      if (!backdrop.classList.contains("show")) {
+        backdrop.classList.add("d-none");
+      }
+    }, 250);
+  }
+}
+
 function initDashboardTabs(sectionIds) {
   const tabLinks = getDashboardTabLinks(sectionIds);
   const tabSet = new Set(sectionIds);
@@ -194,6 +228,7 @@ function initDashboardTabs(sectionIds) {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       const targetId = link.getAttribute("href").slice(1);
+      closeAdminMoreDrawer();
       showDashboardTab(sectionIds, targetId, true);
     });
   });
@@ -220,6 +255,12 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     link.setAttribute("aria-selected", String(isActive));
   });
 
+  const moreSubSectionIds = ["section-costs", "section-users", "section-add-user"];
+  const moreBtn = document.getElementById("mobileMoreBtn");
+  if (moreBtn) {
+    moreBtn.classList.toggle("active", moreSubSectionIds.includes(activeId));
+  }
+
   // Update topbar heading based on active tab
   const headingMap = {
     "section-calc": { label: "Dashboard", icon: "bi-grid-1x2" },
@@ -243,7 +284,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
 }
 
 function getDashboardTabLinks(sectionIds) {
-  return Array.from(document.querySelectorAll('aside nav a[href^="#section-"]'))
+  return Array.from(document.querySelectorAll('aside.sidebar nav a[href^="#section-"], #adminMoreDrawer a[href^="#section-"]'))
     .filter((link) => sectionIds.includes(link.getAttribute("href").slice(1)));
 }
 

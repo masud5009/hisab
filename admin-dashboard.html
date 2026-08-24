@@ -358,10 +358,190 @@
     .widget--purple::before { background: #7c3aed; }
     .widget--purple .widget-icon { background: rgba(124,58,237,0.1); color: #7c3aed; }
 
+    /* ── Floating Right Drawer (Mobile) ── */
+    .drawer-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 1050;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease-in-out;
+    }
+    .drawer-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .admin-drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: min(85vw, 320px);
+      background: #ffffff;
+      box-shadow: -8px 0 30px rgba(15, 23, 42, 0.15);
+      z-index: 1060;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .admin-drawer.show {
+      transform: translateX(0);
+    }
+    .admin-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--clr-border);
+    }
+    .btn-close-drawer {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: var(--clr-muted);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+    .btn-close-drawer:hover {
+      color: var(--clr-text);
+      background: #f1f5f9;
+    }
+    .admin-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 0.75rem;
+    }
+    .drawer-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 0.75rem 0.35rem;
+    }
+    .drawer-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.75rem;
+      border-radius: 10px;
+      color: var(--clr-text);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      margin-bottom: 0.25rem;
+    }
+    .drawer-nav-item i {
+      font-size: 1.25rem;
+      color: var(--clr-primary);
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .drawer-nav-item strong {
+      display: block;
+      font-size: 0.875rem;
+    }
+    .drawer-nav-item small {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--clr-muted);
+    }
+    .drawer-nav-item:hover,
+    .drawer-nav-item.active {
+      background: var(--clr-primary-glow);
+      color: var(--clr-text);
+    }
+    .admin-drawer-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--clr-border);
+      background: #f8fafc;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-      .sidebar { width: 100%; height: auto; position: relative; }
-      .main-content { margin-left: 0; padding: 1rem; }
+      .sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        background: #ffffff;
+        border-right: none;
+        border-top: 1px solid var(--clr-border);
+        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+        padding: 0;
+        z-index: 1040;
+        display: flex;
+        flex-direction: row;
+      }
+      .sidebar-brand,
+      .sidebar-footer {
+        display: none !important;
+      }
+      .sidebar nav {
+        display: flex;
+        width: 100%;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0.4rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+        margin: 0;
+      }
+      .sidebar .nav-item {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+      }
+      .sidebar .nav-item a,
+      .mobile-more-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        padding: 0.4rem 0.3rem;
+        border-left: none;
+        border-radius: 12px;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--clr-muted);
+        text-decoration: none;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+        width: 100%;
+        max-width: 68px;
+        text-align: center;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .sidebar .nav-item a i,
+      .mobile-more-link i {
+        font-size: 1.25rem;
+        line-height: 1;
+      }
+      .sidebar .nav-item a:hover,
+      .mobile-more-link:hover {
+        color: var(--clr-primary);
+        background: var(--clr-primary-glow);
+      }
+      .sidebar .nav-item a.active,
+      .mobile-more-link.active {
+        color: var(--clr-primary);
+        background: var(--clr-primary-glow);
+        font-weight: 700;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 1rem 1rem calc(4.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
+      }
+      .topbar {
+        margin-bottom: 1.25rem;
+      }
       .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -383,25 +563,31 @@
     </div>
     <nav>
       <div class="nav-item">
-        <a href="#section-calc" class="active"><i class="bi bi-table"></i> Dashboard</a>
+        <a href="#section-calc" class="active"><i class="bi bi-table"></i> <span class="nav-text">Dashboard</span></a>
+      </div>
+      <div class="nav-item d-none d-md-block">
+        <a href="#section-costs"><i class="bi bi-cash-stack"></i> <span class="nav-text">Calculation Settings</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-costs"><i class="bi bi-cash-stack"></i> Calculation Settings</a>
+        <a href="#section-bazar-history"><i class="bi bi-basket"></i> <span class="nav-text"><span class="d-none d-md-inline">Bazar </span>History</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-bazar-history"><i class="bi bi-basket"></i> Bazar History</a>
+        <a href="#section-meal-history"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span class="d-none d-md-inline">Meal </span>History</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-meal-history"><i class="bi bi-egg-fried"></i> Meal History</a>
+        <a href="#section-milk-history"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span class="d-none d-md-inline">Milk </span>History</span></a>
       </div>
-      <div class="nav-item">
-        <a href="#section-milk-history"><i class="bi bi-cup-straw"></i> Milk History</a>
+      <div class="nav-item d-none d-md-block">
+        <a href="#section-users"><i class="bi bi-people"></i> <span class="nav-text">Members</span></a>
       </div>
-      <div class="nav-item">
-        <a href="#section-users"><i class="bi bi-people"></i> Members</a>
+      <div class="nav-item d-none d-md-block">
+        <a href="#section-add-user"><i class="bi bi-person-plus"></i> <span class="nav-text">Add Member</span></a>
       </div>
-      <div class="nav-item">
-        <a href="#section-add-user"><i class="bi bi-person-plus"></i> Add Member</a>
+      <div class="nav-item d-md-none">
+        <button type="button" id="mobileMoreBtn" class="mobile-more-link" aria-label="Open more menu">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+          <span>More</span>
+        </button>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -413,13 +599,93 @@
     </div>
   </aside>
 
+  <!-- More Floating Drawer (Mobile) -->
+  <div id="adminMoreDrawerBackdrop" class="drawer-backdrop d-none"></div>
+  <aside id="adminMoreDrawer" class="admin-drawer" aria-label="More navigation options">
+    <div class="admin-drawer-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-grid-3x3-gap-fill" style="color:var(--clr-primary); font-size:1.15rem;"></i>
+        <strong style="font-size:1rem; font-weight:700;">More Menu</strong>
+      </div>
+      <button type="button" id="adminMoreDrawerClose" class="btn-close-drawer" aria-label="Close menu">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="admin-drawer-body">
+      <div class="drawer-section-title">Settings & Members</div>
+      <a href="#section-costs" class="drawer-nav-item">
+        <i class="bi bi-cash-stack"></i>
+        <div>
+          <strong>Calculation Settings</strong>
+          <small>Rates, fixed costs & meal %</small>
+        </div>
+      </a>
+      <a href="#section-users" class="drawer-nav-item">
+        <i class="bi bi-people"></i>
+        <div>
+          <strong>Members</strong>
+          <small>Manage members & room rents</small>
+        </div>
+      </a>
+      <a href="#section-add-user" class="drawer-nav-item">
+        <i class="bi bi-person-plus"></i>
+        <div>
+          <strong>Add Member</strong>
+          <small>Register new member account</small>
+        </div>
+      </a>
+
+      <div class="drawer-section-title mt-3">All Navigation</div>
+      <a href="#section-calc" class="drawer-nav-item">
+        <i class="bi bi-table"></i>
+        <div>
+          <strong>Dashboard</strong>
+          <small>Monthly calculation overview</small>
+        </div>
+      </a>
+      <a href="#section-bazar-history" class="drawer-nav-item">
+        <i class="bi bi-basket"></i>
+        <div>
+          <strong>Bazar History</strong>
+          <small>All member bazar records</small>
+        </div>
+      </a>
+      <a href="#section-meal-history" class="drawer-nav-item">
+        <i class="bi bi-egg-fried"></i>
+        <div>
+          <strong>Meal History</strong>
+          <small>All member meal entries</small>
+        </div>
+      </a>
+      <a href="#section-milk-history" class="drawer-nav-item">
+        <i class="bi bi-cup-straw"></i>
+        <div>
+          <strong>Milk History</strong>
+          <small>All member milk entries</small>
+        </div>
+      </a>
+    </div>
+    <div class="admin-drawer-footer">
+      <div class="admin-info mb-2">
+        <strong id="adminNameDrawer">Admin</strong>
+        <span class="text-muted small">Administrator</span>
+      </div>
+      <button class="btn-logout" id="drawerLogoutBtn"><i class="bi bi-box-arrow-left me-1"></i> Logout</button>
+    </div>
+  </aside>
+
   <!-- Main -->
   <main class="main-content">
 
     <!-- Topbar -->
     <div class="topbar">
       <h2 id="topbarHeading"><i class="bi bi-grid-1x2 me-2" style="color:var(--clr-primary)"></i>Dashboard</h2>
-      <select class="month-selector" id="monthSelector"></select>
+      <div class="d-flex align-items-center gap-2">
+        <select class="month-selector" id="monthSelector"></select>
+        <button class="btn btn-sm btn-outline-danger d-md-none" id="mobileLogoutBtn" title="Logout" aria-label="Logout">
+          <i class="bi bi-box-arrow-left"></i>
+        </button>
+      </div>
     </div>
 
     <!-- ── Summary Widgets ── -->
