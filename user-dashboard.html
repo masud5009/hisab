@@ -526,6 +526,54 @@
       display: none !important;
     }
 
+    /* ── Skeleton Loading ── */
+    .skeleton {
+      background: linear-gradient(90deg, #e9eef5 25%, #f8fafc 50%, #e9eef5 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.5s infinite linear;
+      border-radius: 4px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    @keyframes skeleton-shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    .skeleton-text {
+      height: 0.95rem;
+      border-radius: 4px;
+    }
+
+    .skeleton-value {
+      height: 1.4rem;
+      border-radius: 6px;
+    }
+
+    .skeleton-btn {
+      width: 52px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    .skeleton-user-name {
+      height: 0.95rem;
+      width: 85px;
+      border-radius: 4px;
+      margin-bottom: 3px;
+    }
+
+    .skeleton-user-sub {
+      height: 0.75rem;
+      width: 60px;
+      border-radius: 3px;
+    }
+
     /* ── Floating Right Drawer (Mobile) ── */
     .drawer-backdrop {
       position: fixed;
@@ -892,6 +940,11 @@
       #section-history .table tbody tr td[colspan]::before {
         display: none;
       }
+
+      #section-history .table tbody td[data-label="Actions"] .skeleton-btn {
+        width: 100%;
+        height: 32px;
+      }
     }
   </style>
 </head>
@@ -935,8 +988,8 @@
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
-        <strong id="userName">Member</strong>
-        <span id="userUsername" style="font-size:0.75rem">@username</span>
+        <strong id="userName"><span class="skeleton skeleton-user-name"></span></strong>
+        <span id="userUsername" style="font-size:0.75rem; display:block;"><span class="skeleton skeleton-user-sub"></span></span>
       </div>
       <button class="btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-left me-1"></i> Logout</button>
     </div>
@@ -1025,41 +1078,41 @@
     </div>
 
     <!-- ── Summary ── -->
-    <div id="section-summary">
+    <div id="section-summary" class="dashboard-tab-panel" role="tabpanel">
       <div class="summary-grid">
         <div class="summ-card bazar">
           <div class="summ-label">My Bazar</div>
-          <div class="summ-value" id="summTotalBazar">—</div>
+          <div class="summ-value" id="summTotalBazar"><span class="skeleton skeleton-value" style="width: 70px;"></span></div>
         </div>
         <div class="summ-card meal">
           <div class="summ-label">Total Meal</div>
-          <div class="summ-value" id="summTotalMeals">—</div>
+          <div class="summ-value" id="summTotalMeals"><span class="skeleton skeleton-value" style="width: 50px;"></span></div>
         </div>
         <div class="summ-card highlight">
           <div class="summ-label">Total Milk</div>
-          <div class="summ-value" id="summTotalMilk">—</div>
+          <div class="summ-value" id="summTotalMilk"><span class="skeleton skeleton-value" style="width: 40px;"></span></div>
         </div>
         <div class="summ-card payable">
           <div class="summ-label">Due</div>
-          <div class="summ-value" id="summDue">—</div>
+          <div class="summ-value" id="summDue"><span class="skeleton skeleton-value" style="width: 75px;"></span></div>
         </div>
         <div class="summ-card rate">
           <div class="summ-label">Base Rate</div>
-          <div class="summ-value" id="summBaseRate">—</div>
+          <div class="summ-value" id="summBaseRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
         </div>
         <div class="summ-card rate">
           <div class="summ-label">Dinner Rate</div>
-          <div class="summ-value" id="summDinnerRate">—</div>
+          <div class="summ-value" id="summDinnerRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
         </div>
         <div class="summ-card rate">
           <div class="summ-label">Lunch Rate</div>
-          <div class="summ-value" id="summLunchRate">—</div>
+          <div class="summ-value" id="summLunchRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
         </div>
       </div>
     </div>
 
     <!-- ── Add Bazar ── -->
-    <div class="card bazar-card" id="section-bazar">
+    <div class="card bazar-card dashboard-tab-panel" id="section-bazar" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-basket"></i> Add Bazar
       </div>
@@ -1093,7 +1146,7 @@
     </div>
 
     <!-- ── Add Meals ── -->
-    <div class="card meal-card" id="section-meals">
+    <div class="card meal-card dashboard-tab-panel" id="section-meals" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-egg-fried"></i> Add Meal
       </div>
@@ -1141,7 +1194,7 @@
     </div>
 
     <!-- ── Add Milk ── -->
-    <div class="card meal-card" id="section-milk">
+    <div class="card meal-card dashboard-tab-panel" id="section-milk" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-cup-straw"></i> Add Milk Entry
       </div>
@@ -1172,7 +1225,7 @@
     </div>
 
     <!-- ── History ── -->
-    <div id="section-history">
+    <div id="section-history" class="dashboard-tab-panel" role="tabpanel" hidden>
       <div class="row g-3">
         <div class="col-md-6">
           <div class="card bazar-card">
@@ -1191,8 +1244,23 @@
                     </tr>
                   </thead>
                   <tbody id="bazarHistoryBody">
-                    <tr>
-                      <td colspan="4" class="text-center text-muted py-4">Loading...</td>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Description"><span class="skeleton skeleton-text" style="width: 130px;"></span></td>
+                      <td data-label="Amount"><span class="skeleton skeleton-text" style="width: 65px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+                    </tr>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Description"><span class="skeleton skeleton-text" style="width: 110px;"></span></td>
+                      <td data-label="Amount"><span class="skeleton skeleton-text" style="width: 60px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+                    </tr>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Description"><span class="skeleton skeleton-text" style="width: 140px;"></span></td>
+                      <td data-label="Amount"><span class="skeleton skeleton-text" style="width: 70px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -1237,8 +1305,29 @@
                     </tr>
                   </thead>
                   <tbody id="mealHistoryBody">
-                    <tr>
-                      <td colspan="6" class="text-center text-muted py-4">Loading...</td>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Morning"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Lunch"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Dinner"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Total"><span class="skeleton skeleton-text" style="width: 35px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+                    </tr>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Morning"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Lunch"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Dinner"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Total"><span class="skeleton skeleton-text" style="width: 35px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+                    </tr>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Morning"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Lunch"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Dinner"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+                      <td data-label="Total"><span class="skeleton skeleton-text" style="width: 35px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -1284,8 +1373,20 @@
                     </tr>
                   </thead>
                   <tbody id="milkHistoryBody">
-                    <tr>
-                      <td colspan="3" class="text-center text-muted py-4">Loading...</td>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+                    </tr>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+                    </tr>
+                    <tr class="skeleton-row">
+                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+                      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
+                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
                     </tr>
                   </tbody>
                 </table>

@@ -71,18 +71,8 @@ function bindIfExists(id, eventName, handler) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  currentUser = await requireAuth("user", "user-login.html");
-  document.getElementById("userName").textContent = currentUser.name;
-  document.getElementById("userUsername").textContent = "@" + currentUser.username;
-
-  initMonthSelector();
   initDashboardTabs(USER_SECTION_IDS);
-  loadSummary();
-  loadBazarHistory();
-  loadMealHistory();
-  loadMilkHistory();
-  updateMealHistorySearchRange();
-  updateMilkHistorySearchRange();
+  initMonthSelector();
 
   bindIfExists("logoutBtn", "click", handleLogout);
   bindIfExists("mobileLogoutBtn", "click", handleLogout);
@@ -139,6 +129,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     editMilkModal = new bootstrap.Modal(editMilkEl);
     document.getElementById('editMilkForm').addEventListener('submit', submitEditMilk);
   }
+
+  currentUser = await requireAuth("user", "user-login.html");
+  document.getElementById("userName").textContent = currentUser.name;
+  document.getElementById("userUsername").textContent = "@" + currentUser.username;
+
+  loadSummary();
+  loadBazarHistory();
+  loadMealHistory();
+  loadMilkHistory();
+  updateMealHistorySearchRange();
+  updateMilkHistorySearchRange();
 });
 
 // ─────────────────────────────────────────────
@@ -443,7 +444,24 @@ function updateMealTotal() {
 // ─────────────────────────────────────────────
 // Summary
 // ─────────────────────────────────────────────
+function renderSummarySkeleton() {
+  const configs = [
+    { id: "summTotalBazar", width: "70px" },
+    { id: "summTotalMeals", width: "50px" },
+    { id: "summTotalMilk", width: "40px" },
+    { id: "summDue", width: "75px" },
+    { id: "summBaseRate", width: "60px" },
+    { id: "summDinnerRate", width: "60px" },
+    { id: "summLunchRate", width: "60px" }
+  ];
+  configs.forEach(({ id, width }) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<span class="skeleton skeleton-value" style="width:${width};"></span>`;
+  });
+}
+
 async function loadSummary() {
+  renderSummarySkeleton();
   try {
     const [mealsSnap, bazarSnap, milkSnap, monthSnap] = await Promise.all([
       getDocs(query(
@@ -568,7 +586,22 @@ async function getCurrentUserRentSplit() {
 // ─────────────────────────────────────────────
 // Bazar History
 // ─────────────────────────────────────────────
+function renderBazarHistorySkeleton() {
+  const tbody = document.getElementById("bazarHistoryBody");
+  if (!tbody) return;
+  setHistoryPaginationLoading("bazar");
+  tbody.innerHTML = Array.from({ length: 5 }, () => `
+    <tr class="skeleton-row">
+      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+      <td data-label="Description"><span class="skeleton skeleton-text" style="width: 130px;"></span></td>
+      <td data-label="Amount"><span class="skeleton skeleton-text" style="width: 65px;"></span></td>
+      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+    </tr>
+  `).join("");
+}
+
 async function loadBazarHistory() {
+  renderBazarHistorySkeleton();
   const snap = await getDocs(query(
     collection(db, "bazar"),
     where("userId", "==", currentUser.uid),
@@ -653,7 +686,24 @@ async function submitEditBazar(e) {
 // ─────────────────────────────────────────────
 // Meal History
 // ─────────────────────────────────────────────
+function renderMealHistorySkeleton() {
+  const tbody = document.getElementById("mealHistoryBody");
+  if (!tbody) return;
+  setHistoryPaginationLoading("meal");
+  tbody.innerHTML = Array.from({ length: 5 }, () => `
+    <tr class="skeleton-row">
+      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+      <td data-label="Morning"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+      <td data-label="Lunch"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+      <td data-label="Dinner"><span class="skeleton skeleton-text" style="width: 30px;"></span></td>
+      <td data-label="Total"><span class="skeleton skeleton-text" style="width: 35px;"></span></td>
+      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+    </tr>
+  `).join("");
+}
+
 async function loadMealHistory() {
+  renderMealHistorySkeleton();
   mealHistoryPage = 1;
   const searchDate = document.getElementById("mealHistoryDateSearch")?.value || "";
   const snap = await getDocs(query(
@@ -736,6 +786,21 @@ function normalizeHistoryPage(type) {
   }
 }
 
+function setHistoryPaginationLoading(type) {
+  let prefix;
+  if (type === "bazar") prefix = "bazarHistory";
+  else if (type === "milk") prefix = "milkHistory";
+  else prefix = "mealHistory";
+  const info = document.getElementById(`${prefix}PageInfo`);
+  const label = document.getElementById(`${prefix}PageLabel`);
+  const prev = document.getElementById(`${prefix}Prev`);
+  const next = document.getElementById(`${prefix}Next`);
+  if (info) info.textContent = "Loading entries...";
+  if (label) label.textContent = "Page — of —";
+  if (prev) prev.disabled = true;
+  if (next) next.disabled = true;
+}
+
 function renderHistoryPagination(type) {
   let rows, page, prefix;
   if (type === "bazar") { rows = bazarHistoryRows; page = bazarHistoryPage; prefix = "bazarHistory"; }
@@ -806,7 +871,21 @@ async function submitEditMeal(e) {
 // ─────────────────────────────────────────────
 // Milk History
 // ─────────────────────────────────────────────
+function renderMilkHistorySkeleton() {
+  const tbody = document.getElementById("milkHistoryBody");
+  if (!tbody) return;
+  setHistoryPaginationLoading("milk");
+  tbody.innerHTML = Array.from({ length: 5 }, () => `
+    <tr class="skeleton-row">
+      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
+      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
+      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
+    </tr>
+  `).join("");
+}
+
 async function loadMilkHistory() {
+  renderMilkHistorySkeleton();
   milkHistoryPage = 1;
   const searchDate = document.getElementById("milkHistoryDateSearch")?.value || "";
   const snap = await getDocs(query(
