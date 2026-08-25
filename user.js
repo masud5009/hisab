@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     editMealModal = new bootstrap.Modal(editMealEl);
     document.getElementById('editMealForm').addEventListener('submit', submitEditMeal);
     // live preview inside modal
-    const ids = ['editMealMorning','editMealLunch','editMealDinner'];
+    const ids = ['editMealMorning', 'editMealLunch', 'editMealDinner'];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', () => {
@@ -635,7 +635,7 @@ async function submitEditBazar(e) {
       date,
       description,
       amount,
-      month: date.substring(0,7)
+      month: date.substring(0, 7)
     });
     showAlert('bazarAlert', 'Bazar entry updated.', 'success');
     editBazarModal.hide();
@@ -789,7 +789,7 @@ async function submitEditMeal(e) {
       lunch,
       dinner,
       totalMeal,
-      month: date.substring(0,7)
+      month: date.substring(0, 7)
     });
     showAlert('mealAlert', 'Meal entry updated.', 'success');
     editMealModal.hide();
@@ -885,7 +885,7 @@ async function submitEditMilk(e) {
     await updateDoc(doc(db, 'milk', id), {
       date,
       hasMilk,
-      month: date.substring(0,7)
+      month: date.substring(0, 7)
     });
     showAlert('milkAlert', 'Milk entry updated.', 'success');
     editMilkModal.hide();

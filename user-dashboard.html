@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Dashboard — হিসাব</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml"/>
-  <link rel="manifest" href="./manifest.webmanifest"/>
-  <meta name="theme-color" content="#2563eb"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-title" content="Hisab"/>
-  <link rel="apple-touch-icon" href="./pwa-icon-192.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Hisab" />
+  <link rel="apple-touch-icon" href="./pwa-icon-192.png" />
   <style>
     :root {
       --clr-bg: #f6f8fb;
       --clr-card: #ffffff;
       --clr-border: #d8dee8;
       --clr-user: #2563eb;
-      --clr-user-glow: rgba(37,99,235,0.1);
+      --clr-user-glow: rgba(37, 99, 235, 0.1);
       --clr-green: #16a34a;
       --clr-yellow: #b7791f;
       --clr-bazar: #047857;
@@ -34,48 +35,90 @@
       --clr-muted: #667085;
       --sidebar-w: 220px;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       background: var(--clr-bg);
       color: var(--clr-text);
       font-family: 'Space Grotesk', sans-serif;
       margin: 0;
     }
+
     /* Sidebar */
     .sidebar {
-      position: fixed; top: 0; left: 0;
-      width: var(--sidebar-w); height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
       background: #ffffff;
       border-right: 1px solid var(--clr-border);
-      display: flex; flex-direction: column;
+      display: flex;
+      flex-direction: column;
       padding: 1.5rem 0;
       z-index: 100;
     }
-    .sidebar-brand { padding: 0 1.25rem 1.25rem; border-bottom: 1px solid var(--clr-border); margin-bottom: 1.25rem; }
-    .brand-name { font-size: 1.3rem; font-weight: 700; color: var(--clr-user); }
-    .brand-sub { font-size: 0.7rem; color: var(--clr-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .sidebar-brand {
+      padding: 0 1.25rem 1.25rem;
+      border-bottom: 1px solid var(--clr-border);
+      margin-bottom: 1.25rem;
+    }
+
+    .brand-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--clr-user);
+    }
+
+    .brand-sub {
+      font-size: 0.7rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
     .nav-item a {
-      display: flex; align-items: center; gap: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
       padding: 0.6rem 1.25rem;
-      
+
       color: var(--clr-muted);
       text-decoration: none;
-      font-size: 0.875rem; font-weight: 500;
+      font-size: 0.875rem;
+      font-weight: 500;
       border-left: 3px solid transparent;
       transition: all 0.15s;
     }
-    .nav-item a:hover, .nav-item a.active {
+
+    .nav-item a:hover,
+    .nav-item a.active {
       color: var(--clr-text);
       background: var(--clr-user-glow);
       border-left-color: var(--clr-user);
     }
+
     .sidebar-footer {
       margin-top: auto;
       padding: 1rem 1.25rem;
       border-top: 1px solid var(--clr-border);
     }
-    .user-info { font-size: 0.8rem; color: var(--clr-muted); margin-bottom: 0.75rem; }
-    .user-info strong { color: var(--clr-text); display: block; }
+
+    .user-info {
+      font-size: 0.8rem;
+      color: var(--clr-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .user-info strong {
+      color: var(--clr-text);
+      display: block;
+    }
+
     .btn-logout {
       width: 100%;
       background: transparent;
@@ -88,7 +131,11 @@
       transition: all 0.15s;
       font-family: 'Space Grotesk', sans-serif;
     }
-    .btn-logout:hover { border-color: #e74c3c; color: #e74c3c; }
+
+    .btn-logout:hover {
+      border-color: #e74c3c;
+      color: #e74c3c;
+    }
 
     /* Main */
     .main-content {
@@ -96,11 +143,22 @@
       min-height: 100vh;
       padding: 2rem;
     }
+
     .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
-    .topbar h2 { font-size: 1.25rem; font-weight: 700; margin: 0; }
+
+    .topbar h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
     .month-selector {
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
@@ -110,7 +168,11 @@
       font-size: 0.875rem;
       font-family: 'Space Grotesk', sans-serif;
     }
-    .month-selector:focus { outline: none; border-color: var(--clr-user); }
+
+    .month-selector:focus {
+      outline: none;
+      border-color: var(--clr-user);
+    }
 
     /* Summary cards */
     .summary-grid {
@@ -119,34 +181,73 @@
       gap: 1rem;
       margin-bottom: 2rem;
     }
+
     .summ-card {
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
       border-radius: 8px;
       padding: 1rem;
-      box-shadow: 0 10px 24px rgba(15,23,42,0.05);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
     }
-    .summ-label { font-size: 0.72rem; color: var(--clr-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem; }
-    .summ-value { font-size: 1.35rem; font-weight: 700; color: var(--clr-text); }
-    .summ-card.highlight { border-color: var(--clr-user); background: var(--clr-user-glow); }
-    .summ-card.highlight .summ-value { color: var(--clr-user); }
-    .summ-card.payable { border-color: var(--clr-yellow); background: rgba(183,121,31,0.1); }
-    .summ-card.payable .summ-value { color: var(--clr-yellow); }
+
+    .summ-label {
+      font-size: 0.72rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+
+    .summ-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--clr-text);
+    }
+
+    .summ-card.highlight {
+      border-color: var(--clr-user);
+      background: var(--clr-user-glow);
+    }
+
+    .summ-card.highlight .summ-value {
+      color: var(--clr-user);
+    }
+
+    .summ-card.payable {
+      border-color: var(--clr-yellow);
+      background: rgba(183, 121, 31, 0.1);
+    }
+
+    .summ-card.payable .summ-value {
+      color: var(--clr-yellow);
+    }
+
     .summ-card.bazar {
       border-color: var(--clr-bazar-border);
       background: var(--clr-bazar-soft);
     }
-    .summ-card.bazar .summ-value { color: var(--clr-bazar); }
+
+    .summ-card.bazar .summ-value {
+      color: var(--clr-bazar);
+    }
+
     .summ-card.meal {
       border-color: var(--clr-meal-border);
       background: var(--clr-meal-soft);
     }
-    .summ-card.meal .summ-value { color: var(--clr-meal); }
+
+    .summ-card.meal .summ-value {
+      color: var(--clr-meal);
+    }
+
     .summ-card.rate {
       border-color: var(--clr-border);
       background: #f8fafc;
     }
-    .summ-card.rate .summ-value { color: var(--clr-user); }
+
+    .summ-card.rate .summ-value {
+      color: var(--clr-user);
+    }
 
     /* Cards */
     .card {
@@ -155,46 +256,89 @@
       border-radius: 8px;
       overflow: hidden;
       margin-bottom: 1.5rem;
-      box-shadow: 0 12px 30px rgba(15,23,42,0.06);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
     }
-    .modal-content { border-radius: 8px; }
+
+    .modal-content {
+      border-radius: 8px;
+    }
+
     .card-header-custom {
       padding: 0.9rem 1.25rem;
       border-bottom: 1px solid var(--clr-border);
-      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
       flex-wrap: wrap;
-      font-weight: 600; font-size: 0.875rem;
+      font-weight: 600;
+      font-size: 0.875rem;
     }
-    .card-header-title { display: flex; align-items: center; gap: 0.5rem; }
-    .card-header-custom i { color: var(--clr-user); }
-    .card-body-custom { padding: 1.25rem; }
+
+    .card-header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-header-custom i {
+      color: var(--clr-user);
+    }
+
+    .card-body-custom {
+      padding: 1.25rem;
+    }
+
     .card.bazar-card {
       border-color: var(--clr-bazar-border);
-      box-shadow: 0 12px 30px rgba(4,120,87,0.08);
+      box-shadow: 0 12px 30px rgba(4, 120, 87, 0.08);
     }
+
     .card.bazar-card .card-header-custom {
       background: var(--clr-bazar-soft);
       border-bottom-color: var(--clr-bazar-border);
       color: #064e3b;
     }
-    .card.bazar-card .card-header-custom i { color: var(--clr-bazar); }
+
+    .card.bazar-card .card-header-custom i {
+      color: var(--clr-bazar);
+    }
+
     .card.meal-card {
       border-color: var(--clr-meal-border);
-      box-shadow: 0 12px 30px rgba(180,83,9,0.08);
+      box-shadow: 0 12px 30px rgba(180, 83, 9, 0.08);
     }
+
     .cursor-pointer {
-    cursor: pointer;
-}
+      cursor: pointer;
+    }
+
     .card.meal-card .card-header-custom {
       background: var(--clr-meal-soft);
       border-bottom-color: var(--clr-meal-border);
       color: #78350f;
     }
-    .card.meal-card .card-header-custom i { color: var(--clr-meal); }
-    .card.bazar-card .btn-add { background: var(--clr-bazar); }
-    .card.bazar-card .btn-add:hover { background: #065f46; }
-    .card.meal-card .btn-add { background: var(--clr-meal); }
-    .card.meal-card .btn-add:hover { background: #92400e; }
+
+    .card.meal-card .card-header-custom i {
+      color: var(--clr-meal);
+    }
+
+    .card.bazar-card .btn-add {
+      background: var(--clr-bazar);
+    }
+
+    .card.bazar-card .btn-add:hover {
+      background: #065f46;
+    }
+
+    .card.meal-card .btn-add {
+      background: var(--clr-meal);
+    }
+
+    .card.meal-card .btn-add:hover {
+      background: #92400e;
+    }
+
     .history-filter {
       display: flex;
       align-items: center;
@@ -202,17 +346,20 @@
       margin-left: auto;
       font-weight: 500;
     }
+
     .history-filter .form-control {
       width: 150px;
       min-height: 32px;
       padding: 0.3rem 0.55rem;
       font-size: 0.8rem;
     }
+
     .history-filter .btn {
       border-radius: 8px;
       font-size: 0.78rem;
       padding: 0.3rem 0.6rem;
     }
+
     .history-pagination {
       display: flex;
       align-items: center;
@@ -223,18 +370,25 @@
       color: var(--clr-muted);
       font-size: 0.8rem;
     }
+
     .history-page-controls {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
+
     .history-page-controls .btn {
       border-radius: 8px;
       padding: 0.25rem 0.55rem;
     }
 
     /* Form */
-    .form-label { font-size: 0.8rem; color: var(--clr-muted); font-weight: 500; }
+    .form-label {
+      font-size: 0.8rem;
+      color: var(--clr-muted);
+      font-weight: 500;
+    }
+
     .form-control {
       background: #ffffff;
       border: 1px solid var(--clr-border);
@@ -243,23 +397,43 @@
       font-family: 'Space Grotesk', sans-serif;
       font-size: 0.875rem;
     }
+
     .form-control:focus {
-      background: #ffffff; color: var(--clr-text);
+      background: #ffffff;
+      color: var(--clr-text);
       border-color: var(--clr-user);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
-    .form-control::placeholder { color: var(--clr-muted); }
+
+    .form-control::placeholder {
+      color: var(--clr-muted);
+    }
 
     /* Meal input row */
-    .meal-inputs { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-    .meal-input-group { flex: 1; min-width: 80px; }
-    .meal-input-group label { font-size: 0.75rem; color: var(--clr-muted); }
+    .meal-inputs {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .meal-input-group {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .meal-input-group label {
+      font-size: 0.75rem;
+      color: var(--clr-muted);
+    }
+
     .meal-preview {
-      background: rgba(183,121,31,0.1);
-      border: 1px solid rgba(183,121,31,0.25);
+      background: rgba(183, 121, 31, 0.1);
+      border: 1px solid rgba(183, 121, 31, 0.25);
       border-radius: 8px;
       padding: 0.5rem 1rem;
-      display: flex; align-items: center; gap: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       font-size: 0.875rem;
       color: var(--clr-yellow);
       font-weight: 600;
@@ -267,7 +441,11 @@
     }
 
     /* Table */
-    .table { color: var(--clr-text); font-size: 0.85rem; }
+    .table {
+      color: var(--clr-text);
+      font-size: 0.85rem;
+    }
+
     .table thead th {
       background: #f1f5f9;
       color: var(--clr-muted);
@@ -277,23 +455,50 @@
       text-transform: uppercase;
       border-color: var(--clr-border);
     }
-    .table td, .table th { border-color: var(--clr-border); vertical-align: middle; }
+
+    .table td,
+    .table th {
+      border-color: var(--clr-border);
+      vertical-align: middle;
+    }
+
     .bazar-table thead th {
       background: #d1fae5;
       color: #065f46;
       border-color: var(--clr-bazar-border);
     }
-    .bazar-table td, .bazar-table th { border-color: var(--clr-bazar-border); }
-    .bazar-table tbody tr:nth-child(even) { background: #f0fdf4; }
-    .bazar-table tbody tr:hover { background: #dcfce7; }
+
+    .bazar-table td,
+    .bazar-table th {
+      border-color: var(--clr-bazar-border);
+    }
+
+    .bazar-table tbody tr:nth-child(even) {
+      background: #f0fdf4;
+    }
+
+    .bazar-table tbody tr:hover {
+      background: #dcfce7;
+    }
+
     .meal-table thead th {
       background: #fef3c7;
       color: #92400e;
       border-color: var(--clr-meal-border);
     }
-    .meal-table td, .meal-table th { border-color: var(--clr-meal-border); }
-    .meal-table tbody tr:nth-child(even) { background: #fffbeb; }
-    .meal-table tbody tr:hover { background: #fef3c7; }
+
+    .meal-table td,
+    .meal-table th {
+      border-color: var(--clr-meal-border);
+    }
+
+    .meal-table tbody tr:nth-child(even) {
+      background: #fffbeb;
+    }
+
+    .meal-table tbody tr:hover {
+      background: #fef3c7;
+    }
 
     .btn-add {
       background: var(--clr-user);
@@ -307,15 +512,27 @@
       font-family: 'Space Grotesk', sans-serif;
       transition: all 0.15s;
     }
-    .btn-add:hover { background: #1d4ed8; }
 
-    .alert { border-radius: 8px; font-size: 0.85rem; }
-    .dashboard-tab-panel[hidden] { display: none !important; }
+    .btn-add:hover {
+      background: #1d4ed8;
+    }
+
+    .alert {
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .dashboard-tab-panel[hidden] {
+      display: none !important;
+    }
 
     /* ── Floating Right Drawer (Mobile) ── */
     .drawer-backdrop {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: rgba(15, 23, 42, 0.5);
       backdrop-filter: blur(2px);
       z-index: 1050;
@@ -323,13 +540,17 @@
       pointer-events: none;
       transition: opacity 0.25s ease-in-out;
     }
+
     .drawer-backdrop.show {
       opacity: 1;
       pointer-events: auto;
     }
+
     .user-drawer {
       position: fixed;
-      top: 0; right: 0; bottom: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
       width: min(85vw, 320px);
       background: #ffffff;
       box-shadow: -8px 0 30px rgba(15, 23, 42, 0.15);
@@ -339,9 +560,11 @@
       transform: translateX(100%);
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     .user-drawer.show {
       transform: translateX(0);
     }
+
     .user-drawer-header {
       display: flex;
       align-items: center;
@@ -349,6 +572,7 @@
       padding: 1.1rem 1.25rem;
       border-bottom: 1px solid var(--clr-border);
     }
+
     .btn-close-drawer {
       background: none;
       border: none;
@@ -358,15 +582,18 @@
       padding: 0.25rem 0.5rem;
       border-radius: 6px;
     }
+
     .btn-close-drawer:hover {
       color: var(--clr-text);
       background: #f1f5f9;
     }
+
     .user-drawer-body {
       flex: 1;
       overflow-y: auto;
       padding: 1rem 0.75rem;
     }
+
     .drawer-section-title {
       font-size: 0.7rem;
       font-weight: 700;
@@ -375,6 +602,7 @@
       letter-spacing: 0.08em;
       padding: 0.5rem 0.75rem 0.35rem;
     }
+
     .drawer-nav-item {
       display: flex;
       align-items: center;
@@ -386,6 +614,7 @@
       transition: all 0.15s ease;
       margin-bottom: 0.25rem;
     }
+
     .drawer-nav-item i {
       font-size: 1.25rem;
       color: var(--clr-user);
@@ -393,15 +622,18 @@
       text-align: center;
       flex-shrink: 0;
     }
+
     .drawer-nav-item strong {
       display: block;
       font-size: 0.875rem;
     }
+
     .drawer-nav-item small {
       display: block;
       font-size: 0.72rem;
       color: var(--clr-muted);
     }
+
     .drawer-nav-item:hover,
     .drawer-nav-item.active {
       background: var(--clr-user-glow);
@@ -428,10 +660,12 @@
         display: flex;
         flex-direction: row;
       }
+
       .sidebar-brand,
       .sidebar-footer {
         display: none !important;
       }
+
       .sidebar nav {
         display: flex;
         width: 100%;
@@ -440,12 +674,14 @@
         padding: 0.4rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
         margin: 0;
       }
+
       .sidebar .nav-item {
         flex: 1;
         display: flex;
         justify-content: center;
         margin: 0;
       }
+
       .sidebar .nav-item a,
       .mobile-more-link {
         display: flex;
@@ -469,26 +705,31 @@
         text-align: center;
         font-family: 'Space Grotesk', sans-serif;
       }
+
       .sidebar .nav-item a i,
       .mobile-more-link i {
         font-size: 1.25rem;
         line-height: 1;
       }
+
       .sidebar .nav-item a:hover,
       .mobile-more-link:hover {
         color: var(--clr-user);
         background: var(--clr-user-glow);
       }
+
       .sidebar .nav-item a.active,
       .mobile-more-link.active {
         color: var(--clr-user);
         background: var(--clr-user-glow);
         font-weight: 700;
       }
+
       .main-content {
         margin-left: 0;
         padding: 1rem 1rem calc(4.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
       }
+
       .topbar {
         display: flex;
         align-items: center;
@@ -497,6 +738,7 @@
         gap: 0.5rem;
         margin-bottom: 1.25rem;
       }
+
       .topbar h2 {
         font-size: 1.15rem;
         font-weight: 700;
@@ -508,9 +750,11 @@
         margin: 0;
         min-width: 0;
       }
+
       .topbar h2 i {
         flex-shrink: 0;
       }
+
       .topbar .month-selector {
         padding: 0.4rem 0.65rem;
         font-size: 0.8rem;
@@ -518,40 +762,49 @@
         min-width: 0;
         flex-shrink: 1;
       }
+
       #mobileLogoutBtn {
         padding: 0.35rem 0.55rem;
         font-size: 0.8rem;
         border-radius: 8px;
         flex-shrink: 0;
       }
+
       .history-filter {
         width: 100%;
         margin-left: 0;
       }
+
       .history-filter .form-control {
         width: auto;
         flex: 1;
       }
+
       .history-pagination {
         align-items: stretch;
         flex-direction: column;
       }
+
       .history-page-controls {
         justify-content: space-between;
       }
+
       /* ── Mobile History Data Cards ── */
       #section-history .table-responsive {
         overflow-x: visible;
       }
+
       #section-history .table {
         display: block;
         width: 100%;
         border: none;
         background: transparent;
       }
+
       #section-history .table thead {
         display: none;
       }
+
       #section-history .table tbody {
         display: flex;
         flex-direction: column;
@@ -559,6 +812,7 @@
         padding: 0.75rem;
         width: 100%;
       }
+
       #section-history .table tbody tr {
         display: flex;
         flex-direction: column;
@@ -569,12 +823,15 @@
         padding: 0.85rem 1rem;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
       }
+
       #section-history .bazar-table tbody tr {
         border-color: var(--clr-bazar-border);
       }
+
       #section-history .meal-table tbody tr {
         border-color: var(--clr-meal-border);
       }
+
       #section-history .table tbody td {
         display: flex;
         justify-content: space-between;
@@ -584,6 +841,7 @@
         font-size: 0.875rem;
         white-space: normal;
       }
+
       #section-history .table tbody td::before {
         content: attr(data-label);
         font-size: 0.72rem;
@@ -592,15 +850,18 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
+
       #section-history .table tbody td[data-label="Actions"] {
         margin-top: 0.35rem;
         padding-top: 0.5rem;
         border-top: 1px dashed var(--clr-border);
         justify-content: flex-end;
       }
+
       #section-history .table tbody td[data-label="Actions"]::before {
         display: none;
       }
+
       #section-history .table tbody td[data-label="Actions"] .btn {
         width: 100%;
         padding: 0.4rem;
@@ -608,50 +869,59 @@
         font-weight: 600;
         border-radius: 6px;
       }
+
       #section-history .bazar-table tbody td[data-label="Amount"] {
         font-weight: 700;
         color: var(--clr-bazar);
         font-size: 1rem;
       }
+
       #section-history .meal-table tbody td[data-label="Total"] {
         font-weight: 700;
         color: var(--clr-meal);
         font-size: 1rem;
       }
+
       #section-history .table tbody tr td[colspan] {
         justify-content: center;
         text-align: center;
         padding: 1.5rem 0;
         color: var(--clr-muted);
       }
+
       #section-history .table tbody tr td[colspan]::before {
         display: none;
       }
     }
   </style>
 </head>
+
 <body>
 
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-name cursor-pointer" onclick="window.location.href='user-dashboard.html'">
-    হিসাব
-</div>
+        হিসাব
+      </div>
       <div class="brand-sub">Member Panel</div>
     </div>
     <nav>
       <div class="nav-item">
-        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> <span class="nav-text"><span class="d-none d-md-inline">My </span>Dashboard</span></a>
+        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> <span class="nav-text"><span
+              class="d-none d-md-inline">My </span>Dashboard</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-bazar"><i class="bi bi-basket"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Bazar</span></a>
+        <a href="#section-bazar"><i class="bi bi-basket"></i> <span class="nav-text"><span
+              class="d-none d-md-inline">Add </span>Bazar</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Meals</span></a>
+        <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span
+              class="d-none d-md-inline">Add </span>Meals</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
-        <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Milk</span></a>
+        <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span
+              class="d-none d-md-inline">Add </span>Milk</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
         <a href="#section-history"><i class="bi bi-clock-history"></i> <span class="nav-text">History</span></a>
@@ -799,20 +1069,22 @@
           <div class="row g-3">
             <div class="col-md-3 col-6">
               <label class="form-label">Date *</label>
-              <input type="date" id="bazarDate" class="form-control" required/>
+              <input type="date" id="bazarDate" class="form-control" required />
             </div>
             <div class="col-md-5 col-12">
               <label class="form-label">Description *</label>
-              <input type="text" id="bazarDesc" class="form-control" placeholder="e.g. Fish, vegetables..." required/>
+              <input type="text" id="bazarDesc" class="form-control" placeholder="e.g. Fish, vegetables..." required />
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">Amount (৳) *</label>
-              <input type="number" id="bazarAmount" class="form-control" min="0.01" step="0.01" placeholder="0.00" required/>
+              <input type="number" id="bazarAmount" class="form-control" min="0.01" step="0.01" placeholder="0.00"
+                required />
             </div>
             <div class="col-md-2 col-6 d-flex align-items-end">
               <button type="submit" id="bazarAddBtn" class="btn-add w-100">
                 <i class="bi bi-plus-circle me-1"></i> Add
-                <span id="bazarAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                <span id="bazarAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                  aria-hidden="true"></span>
               </button>
             </div>
           </div>
@@ -831,19 +1103,19 @@
           <div class="row g-3 align-items-end">
             <div class="col-md-2 col-6">
               <label class="form-label">তারিখ <strong class="text-danger">**</strong></label>
-              <input type="date" id="mealDate" class="form-control" required/>
+              <input type="date" id="mealDate" class="form-control" required />
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">সকালের নাস্তা 🌅</label>
-              <input type="number" id="mealMorning" class="form-control" min="0" step="0.5" value="0" placeholder="0"/>
+              <input type="number" id="mealMorning" class="form-control" min="0" step="0.5" value="0" placeholder="0" />
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">দুপুরের খাবার ☀️</label>
-              <input type="number" id="mealLunch" class="form-control" min="0" step="0.5" value="0" placeholder="0"/>
+              <input type="number" id="mealLunch" class="form-control" min="0" step="0.5" value="0" placeholder="0" />
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label">রাতের খাবার 🌙</label>
-              <input type="number" id="mealDinner" class="form-control" min="0" step="0.5" value="1" placeholder="0"/>
+              <input type="number" id="mealDinner" class="form-control" min="0" step="0.5" value="1" placeholder="0" />
             </div>
             <div class="col-md-2 col-6">
               <div class="meal-preview">
@@ -854,13 +1126,15 @@
             <div class="col-md-2 col-6">
               <button type="submit" id="mealAddBtn" class="btn-add w-100">
                 <i class="bi bi-plus-circle me-1"></i> Add
-                <span id="mealAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                <span id="mealAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                  aria-hidden="true"></span>
               </button>
             </div>
           </div>
           <small class="text-muted d-block mt-2">
             <i class="bi bi-info-circle me-1"></i>
-            সম্পূর্ণ খাবারের জন্য <strong class="text-danger">1</strong>, অর্ধেক খাবারের জন্য <strong class="text-danger">0.5</strong> ব্যবহার করুন।
+            সম্পূর্ণ খাবারের জন্য <strong class="text-danger">1</strong>, অর্ধেক খাবারের জন্য <strong
+              class="text-danger">0.5</strong> ব্যবহার করুন।
           </small>
         </form>
       </div>
@@ -877,7 +1151,7 @@
           <div class="row g-3 align-items-end">
             <div class="col-md-3 col-6">
               <label class="form-label">তারিখ <strong class="text-danger">**</strong></label>
-              <input type="date" id="milkDate" class="form-control" required/>
+              <input type="date" id="milkDate" class="form-control" required />
             </div>
             <div class="col-md-3 col-6 d-flex align-items-center" style="padding-top: 32px;">
               <div class="form-check">
@@ -888,7 +1162,8 @@
             <div class="col-md-3 col-6">
               <button type="submit" id="milkAddBtn" class="btn-add w-100">
                 <i class="bi bi-plus-circle me-1"></i> Add
-                <span id="milkAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                <span id="milkAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                  aria-hidden="true"></span>
               </button>
             </div>
           </div>
@@ -908,19 +1183,28 @@
               <div class="table-responsive">
                 <table class="table bazar-table mb-0">
                   <thead>
-                    <tr><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Amount</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody id="bazarHistoryBody">
-                    <tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr>
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-4">Loading...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
               <div class="history-pagination">
                 <span id="bazarHistoryPageInfo">Showing 0 entries</span>
                 <div class="history-page-controls">
-                  <button type="button" id="bazarHistoryPrev" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-left"></i></button>
+                  <button type="button" id="bazarHistoryPrev" class="btn btn-sm btn-outline-success"><i
+                      class="bi bi-chevron-left"></i></button>
                   <span id="bazarHistoryPageLabel">Page 1 of 1</span>
-                  <button type="button" id="bazarHistoryNext" class="btn btn-sm btn-outline-success"><i class="bi bi-chevron-right"></i></button>
+                  <button type="button" id="bazarHistoryNext" class="btn btn-sm btn-outline-success"><i
+                      class="bi bi-chevron-right"></i></button>
                 </div>
               </div>
             </div>
@@ -933,27 +1217,40 @@
                 <i class="bi bi-egg-fried"></i> Meal History
               </span>
               <div class="history-filter">
-                <input type="date" id="mealHistoryDateSearch" class="form-control" aria-label="Search meal history by date"/>
-                <button type="button" id="mealHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+                <input type="date" id="mealHistoryDateSearch" class="form-control"
+                  aria-label="Search meal history by date" />
+                <button type="button" id="mealHistoryClearSearch"
+                  class="btn btn-sm btn-outline-secondary">Clear</button>
               </div>
             </div>
             <div class="card-body-custom p-0">
               <div class="table-responsive">
                 <table class="table meal-table mb-0">
                   <thead>
-                    <tr><th>Date</th><th>Morning</th><th>Lunch</th><th>Dinner</th><th>Total</th><th>Actions</th></tr>
+                    <tr>
+                      <th>Date</th>
+                      <th>Morning</th>
+                      <th>Lunch</th>
+                      <th>Dinner</th>
+                      <th>Total</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody id="mealHistoryBody">
-                    <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
+                    <tr>
+                      <td colspan="6" class="text-center text-muted py-4">Loading...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
               <div class="history-pagination">
                 <span id="mealHistoryPageInfo">Showing 0 entries</span>
                 <div class="history-page-controls">
-                  <button type="button" id="mealHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
+                  <button type="button" id="mealHistoryPrev" class="btn btn-sm btn-outline-warning"><i
+                      class="bi bi-chevron-left"></i></button>
                   <span id="mealHistoryPageLabel">Page 1 of 1</span>
-                  <button type="button" id="mealHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
+                  <button type="button" id="mealHistoryNext" class="btn btn-sm btn-outline-warning"><i
+                      class="bi bi-chevron-right"></i></button>
                 </div>
               </div>
             </div>
@@ -970,27 +1267,37 @@
                 <i class="bi bi-cup-straw"></i> Milk History
               </span>
               <div class="history-filter">
-                <input type="date" id="milkHistoryDateSearch" class="form-control" aria-label="Search milk history by date"/>
-                <button type="button" id="milkHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+                <input type="date" id="milkHistoryDateSearch" class="form-control"
+                  aria-label="Search milk history by date" />
+                <button type="button" id="milkHistoryClearSearch"
+                  class="btn btn-sm btn-outline-secondary">Clear</button>
               </div>
             </div>
             <div class="card-body-custom p-0">
               <div class="table-responsive">
                 <table class="table meal-table mb-0">
                   <thead>
-                    <tr><th>Date</th><th>Milk</th><th>Actions</th></tr>
+                    <tr>
+                      <th>Date</th>
+                      <th>Milk</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody id="milkHistoryBody">
-                    <tr><td colspan="3" class="text-center text-muted py-4">Loading...</td></tr>
+                    <tr>
+                      <td colspan="3" class="text-center text-muted py-4">Loading...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
               <div class="history-pagination">
                 <span id="milkHistoryPageInfo">Showing 0 entries</span>
                 <div class="history-page-controls">
-                  <button type="button" id="milkHistoryPrev" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-left"></i></button>
+                  <button type="button" id="milkHistoryPrev" class="btn btn-sm btn-outline-warning"><i
+                      class="bi bi-chevron-left"></i></button>
                   <span id="milkHistoryPageLabel">Page 1 of 1</span>
-                  <button type="button" id="milkHistoryNext" class="btn btn-sm btn-outline-warning"><i class="bi bi-chevron-right"></i></button>
+                  <button type="button" id="milkHistoryNext" class="btn btn-sm btn-outline-warning"><i
+                      class="bi bi-chevron-right"></i></button>
                 </div>
               </div>
             </div>
@@ -1028,7 +1335,8 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" id="editBazarSaveBtn" class="btn btn-primary">Save changes
-              <span id="editBazarSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+              <span id="editBazarSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                aria-hidden="true"></span>
             </button>
           </div>
         </form>
@@ -1072,7 +1380,8 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" id="editMealSaveBtn" class="btn btn-primary">Save changes
-              <span id="editMealSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+              <span id="editMealSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                aria-hidden="true"></span>
             </button>
           </div>
         </form>
@@ -1105,7 +1414,8 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" id="editMilkSaveBtn" class="btn btn-primary">Save changes
-              <span id="editMilkSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+              <span id="editMilkSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                aria-hidden="true"></span>
             </button>
           </div>
         </form>
@@ -1117,4 +1427,5 @@
   <script type="module" src="./user.js"></script>
   <script src="./pwa.js"></script>
 </body>
+
 </html>
