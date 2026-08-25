@@ -105,7 +105,7 @@
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
       color: var(--clr-text);
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 0.45rem 0.9rem;
       font-size: 0.875rem;
       font-family: 'Space Grotesk', sans-serif;
@@ -122,7 +122,7 @@
     .summ-card {
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 1rem;
       box-shadow: 0 10px 24px rgba(15,23,42,0.05);
     }
@@ -152,10 +152,12 @@
     .card {
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
-      border-radius: 14px;
+      border-radius: 8px;
+      overflow: hidden;
       margin-bottom: 1.5rem;
       box-shadow: 0 12px 30px rgba(15,23,42,0.06);
     }
+    .modal-content { border-radius: 8px; }
     .card-header-custom {
       padding: 0.9rem 1.25rem;
       border-bottom: 1px solid var(--clr-border);
@@ -310,6 +312,102 @@
     .alert { border-radius: 8px; font-size: 0.85rem; }
     .dashboard-tab-panel[hidden] { display: none !important; }
 
+    /* ── Floating Right Drawer (Mobile) ── */
+    .drawer-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 1050;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease-in-out;
+    }
+    .drawer-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .user-drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: min(85vw, 320px);
+      background: #ffffff;
+      box-shadow: -8px 0 30px rgba(15, 23, 42, 0.15);
+      z-index: 1060;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .user-drawer.show {
+      transform: translateX(0);
+    }
+    .user-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--clr-border);
+    }
+    .btn-close-drawer {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: var(--clr-muted);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+    .btn-close-drawer:hover {
+      color: var(--clr-text);
+      background: #f1f5f9;
+    }
+    .user-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 0.75rem;
+    }
+    .drawer-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 0.75rem 0.35rem;
+    }
+    .drawer-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.75rem;
+      border-radius: 10px;
+      color: var(--clr-text);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      margin-bottom: 0.25rem;
+    }
+    .drawer-nav-item i {
+      font-size: 1.25rem;
+      color: var(--clr-user);
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .drawer-nav-item strong {
+      display: block;
+      font-size: 0.875rem;
+    }
+    .drawer-nav-item small {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--clr-muted);
+    }
+    .drawer-nav-item:hover,
+    .drawer-nav-item.active {
+      background: var(--clr-user-glow);
+      color: var(--clr-text);
+    }
+
     @media (max-width: 768px) {
       .sidebar {
         position: fixed;
@@ -319,10 +417,12 @@
         right: 0;
         width: 100%;
         height: auto;
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
         border-right: none;
-        border-top: 1px solid var(--clr-border);
-        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+        border-top: 1px solid rgba(216, 222, 232, 0.85);
+        box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.09), 0 -1px 3px rgba(15, 23, 42, 0.04);
         padding: 0;
         z-index: 1040;
         display: flex;
@@ -346,7 +446,8 @@
         justify-content: center;
         margin: 0;
       }
-      .sidebar .nav-item a {
+      .sidebar .nav-item a,
+      .mobile-more-link {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -359,20 +460,27 @@
         font-weight: 500;
         color: var(--clr-muted);
         text-decoration: none;
+        background: transparent;
+        border: none;
+        cursor: pointer;
         transition: all 0.15s ease-in-out;
         width: 100%;
         max-width: 68px;
         text-align: center;
+        font-family: 'Space Grotesk', sans-serif;
       }
-      .sidebar .nav-item a i {
+      .sidebar .nav-item a i,
+      .mobile-more-link i {
         font-size: 1.25rem;
         line-height: 1;
       }
-      .sidebar .nav-item a:hover {
+      .sidebar .nav-item a:hover,
+      .mobile-more-link:hover {
         color: var(--clr-user);
         background: var(--clr-user-glow);
       }
-      .sidebar .nav-item a.active {
+      .sidebar .nav-item a.active,
+      .mobile-more-link.active {
         color: var(--clr-user);
         background: var(--clr-user-glow);
         font-weight: 700;
@@ -382,7 +490,39 @@
         padding: 1rem 1rem calc(4.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
       }
       .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
         margin-bottom: 1.25rem;
+      }
+      .topbar h2 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        margin: 0;
+        min-width: 0;
+      }
+      .topbar h2 i {
+        flex-shrink: 0;
+      }
+      .topbar .month-selector {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        min-width: 0;
+        flex-shrink: 1;
+      }
+      #mobileLogoutBtn {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        flex-shrink: 0;
       }
       .history-filter {
         width: 100%;
@@ -437,11 +577,17 @@
       <div class="nav-item">
         <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Meals</span></a>
       </div>
-      <div class="nav-item">
+      <div class="nav-item d-none d-md-block">
         <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Milk</span></a>
       </div>
-      <div class="nav-item">
+      <div class="nav-item d-none d-md-block">
         <a href="#section-history"><i class="bi bi-clock-history"></i> <span class="nav-text">History</span></a>
+      </div>
+      <div class="nav-item d-md-none">
+        <button type="button" id="mobileMoreBtn" class="mobile-more-link" aria-label="Open more menu">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+          <span>More</span>
+        </button>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -453,12 +599,80 @@
     </div>
   </aside>
 
+  <!-- More Floating Drawer (Mobile) -->
+  <div id="userMoreDrawerBackdrop" class="drawer-backdrop d-none"></div>
+  <aside id="userMoreDrawer" class="user-drawer" aria-label="More navigation options">
+    <div class="user-drawer-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-grid-3x3-gap-fill" style="color:var(--clr-user); font-size:1.15rem;"></i>
+        <strong style="font-size:1rem; font-weight:700;">More Menu</strong>
+      </div>
+      <button type="button" id="userMoreDrawerClose" class="btn-close-drawer" aria-label="Close menu">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="user-drawer-body">
+      <div class="drawer-section-title">Quick Actions & History</div>
+      <a href="#section-milk" class="drawer-nav-item">
+        <i class="bi bi-cup-straw"></i>
+        <div>
+          <strong>Add Milk</strong>
+          <small>Daily milk purchase & count</small>
+        </div>
+      </a>
+      <a href="#section-history" class="drawer-nav-item">
+        <i class="bi bi-clock-history"></i>
+        <div>
+          <strong>History</strong>
+          <small>Bazar, meal & milk history logs</small>
+        </div>
+      </a>
+
+      <div class="drawer-section-title mt-3">All Navigation</div>
+      <a href="#section-summary" class="drawer-nav-item">
+        <i class="bi bi-pie-chart"></i>
+        <div>
+          <strong>My Dashboard</strong>
+          <small>Personal summary & balance</small>
+        </div>
+      </a>
+      <a href="#section-bazar" class="drawer-nav-item">
+        <i class="bi bi-basket"></i>
+        <div>
+          <strong>Add Bazar</strong>
+          <small>Submit new bazar entry</small>
+        </div>
+      </a>
+      <a href="#section-meals" class="drawer-nav-item">
+        <i class="bi bi-egg-fried"></i>
+        <div>
+          <strong>Add Meals</strong>
+          <small>Log daily meals</small>
+        </div>
+      </a>
+      <a href="#section-milk" class="drawer-nav-item">
+        <i class="bi bi-cup-straw"></i>
+        <div>
+          <strong>Add Milk</strong>
+          <small>Daily milk purchase & count</small>
+        </div>
+      </a>
+      <a href="#section-history" class="drawer-nav-item">
+        <i class="bi bi-clock-history"></i>
+        <div>
+          <strong>History</strong>
+          <small>Bazar, meal & milk history logs</small>
+        </div>
+      </a>
+    </div>
+  </aside>
+
   <!-- Main -->
   <main class="main-content">
 
     <!-- Topbar -->
     <div class="topbar">
-      <h2 id="topbarHeading"><i class="bi bi-person-circle me-2" style="color:var(--clr-user)"></i>My Dashboard</h2>
+      <h2 id="topbarHeading"><i class="bi bi-pie-chart me-2" style="color:var(--clr-user)"></i>Dashboard</h2>
       <div class="d-flex align-items-center gap-2">
         <select class="month-selector" id="monthSelector"></select>
         <button class="btn btn-sm btn-outline-danger d-md-none" id="mobileLogoutBtn" title="Logout" aria-label="Logout">

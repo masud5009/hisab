@@ -86,6 +86,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   bindIfExists("logoutBtn", "click", handleLogout);
   bindIfExists("mobileLogoutBtn", "click", handleLogout);
+  bindIfExists("mobileMoreBtn", "click", openUserMoreDrawer);
+  bindIfExists("userMoreDrawerClose", "click", closeUserMoreDrawer);
+  bindIfExists("userMoreDrawerBackdrop", "click", closeUserMoreDrawer);
   document.getElementById("bazarForm").addEventListener("submit", handleAddBazar);
   document.getElementById("mealForm").addEventListener("submit", handleAddMeal);
   document.getElementById("milkForm").addEventListener("submit", handleAddMilk);
@@ -198,6 +201,32 @@ function clearMealHistorySearch() {
   loadMealHistory();
 }
 
+function openUserMoreDrawer() {
+  const drawer = document.getElementById("userMoreDrawer");
+  const backdrop = document.getElementById("userMoreDrawerBackdrop");
+  if (drawer && backdrop) {
+    backdrop.classList.remove("d-none");
+    requestAnimationFrame(() => {
+      drawer.classList.add("show");
+      backdrop.classList.add("show");
+    });
+  }
+}
+
+function closeUserMoreDrawer() {
+  const drawer = document.getElementById("userMoreDrawer");
+  const backdrop = document.getElementById("userMoreDrawerBackdrop");
+  if (drawer && backdrop) {
+    drawer.classList.remove("show");
+    backdrop.classList.remove("show");
+    setTimeout(() => {
+      if (!backdrop.classList.contains("show")) {
+        backdrop.classList.add("d-none");
+      }
+    }, 250);
+  }
+}
+
 function initDashboardTabs(sectionIds) {
   const tabLinks = getDashboardTabLinks(sectionIds);
   const tabSet = new Set(sectionIds);
@@ -215,6 +244,7 @@ function initDashboardTabs(sectionIds) {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       const targetId = link.getAttribute("href").slice(1);
+      closeUserMoreDrawer();
       showDashboardTab(sectionIds, targetId, true);
     });
   });
@@ -241,9 +271,15 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     link.setAttribute("aria-selected", String(isActive));
   });
 
+  const moreSubSectionIds = ["section-milk", "section-history"];
+  const moreBtn = document.getElementById("mobileMoreBtn");
+  if (moreBtn) {
+    moreBtn.classList.toggle("active", moreSubSectionIds.includes(activeId));
+  }
+
   // Update topbar heading based on active tab
   const headingMap = {
-    "section-summary": { label: "My Dashboard", icon: "bi-pie-chart" },
+    "section-summary": { label: "Dashboard", icon: "bi-pie-chart" },
     "section-bazar": { label: "Add Bazar", icon: "bi-basket" },
     "section-meals": { label: "Add Meals", icon: "bi-egg-fried" },
     "section-milk": { label: "Add Milk", icon: "bi-cup-straw" },
@@ -262,7 +298,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
 }
 
 function getDashboardTabLinks(sectionIds) {
-  return Array.from(document.querySelectorAll('aside nav a[href^="#section-"]'))
+  return Array.from(document.querySelectorAll('aside.sidebar nav a[href^="#section-"], #userMoreDrawer a[href^="#section-"]'))
     .filter((link) => sectionIds.includes(link.getAttribute("href").slice(1)));
 }
 

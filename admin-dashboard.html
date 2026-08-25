@@ -120,7 +120,7 @@
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
       color: var(--clr-text);
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 0.5rem 1rem;
       font-size: 0.9rem;
       font-family: 'Space Grotesk', sans-serif;
@@ -131,7 +131,8 @@
     .card {
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
-      border-radius: 14px;
+      border-radius: 8px;
+      overflow: hidden;
       box-shadow: 0 12px 30px rgba(15,23,42,0.06);
     }
     .card-header-custom {
@@ -246,7 +247,7 @@
       width: min(520px, 100%);
       background: #ffffff;
       border: 1px solid var(--clr-border);
-      border-radius: 12px;
+      border-radius: 8px;
       box-shadow: 0 24px 70px rgba(15,23,42,0.22);
       overflow: hidden;
     }
@@ -283,7 +284,7 @@
     .summary-widget {
       background: var(--clr-card);
       border: 1px solid var(--clr-border);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 1rem 1.15rem;
       display: flex;
       align-items: center;
@@ -306,7 +307,7 @@
     }
     .summary-widget .widget-icon {
       width: 42px; height: 42px;
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -469,10 +470,12 @@
         right: 0;
         width: 100%;
         height: auto;
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
         border-right: none;
-        border-top: 1px solid var(--clr-border);
-        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+        border-top: 1px solid rgba(216, 222, 232, 0.85);
+        box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.09), 0 -1px 3px rgba(15, 23, 42, 0.04);
         padding: 0;
         z-index: 1040;
         display: flex;
@@ -540,7 +543,39 @@
         padding: 1rem 1rem calc(4.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
       }
       .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
         margin-bottom: 1.25rem;
+      }
+      .topbar h2 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        margin: 0;
+        min-width: 0;
+      }
+      .topbar h2 i {
+        flex-shrink: 0;
+      }
+      .topbar .month-selector {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        min-width: 0;
+        flex-shrink: 1;
+      }
+      #mobileLogoutBtn {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        flex-shrink: 0;
       }
       .table-responsive {
         overflow-x: auto;
