@@ -64,21 +64,8 @@ const ADMIN_SECTION_IDS = [
 // Init
 // ─────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
-  currentAdmin = await requireAuth("admin", "admin-login.html");
-  const adminNameEl = document.getElementById("adminName");
-  if (adminNameEl) adminNameEl.textContent = currentAdmin.name;
-  const adminNameDrawerEl = document.getElementById("adminNameDrawer");
-  if (adminNameDrawerEl) adminNameDrawerEl.textContent = currentAdmin.name;
-
-  initMonthSelector();
   initDashboardTabs(ADMIN_SECTION_IDS);
-  updateHistoryDateSearchRanges();
-  loadUsersPanel();
-  loadMonthCosts();
-  loadCalculation();
-  loadAdminBazarHistory();
-  loadAdminMealHistory();
-  loadAdminMilkHistory();
+  initMonthSelector();
 
   // Event bindings
   bindIfExists("logoutBtn", "click", handleLogout);
@@ -130,6 +117,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (e.target === modal) hideModal(modal.id);
     });
   });
+
+  currentAdmin = await requireAuth("admin", "admin-login.html");
+  const adminNameEl = document.getElementById("adminName");
+  if (adminNameEl) adminNameEl.textContent = currentAdmin.name;
+  const adminNameDrawerEl = document.getElementById("adminNameDrawer");
+  if (adminNameDrawerEl) adminNameDrawerEl.textContent = currentAdmin.name;
+
+  updateHistoryDateSearchRanges();
+  loadUsersPanel();
+  loadMonthCosts();
+  loadCalculation();
+  loadAdminBazarHistory();
+  loadAdminMealHistory();
+  loadAdminMilkHistory();
 });
 
 // ─────────────────────────────────────────────
@@ -255,7 +256,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     link.setAttribute("aria-selected", String(isActive));
   });
 
-  const moreSubSectionIds = ["section-costs", "section-users", "section-add-user"];
+  const moreSubSectionIds = ["section-bazar-history", "section-meal-history", "section-milk-history", "section-users"];
   const moreBtn = document.getElementById("mobileMoreBtn");
   if (moreBtn) {
     moreBtn.classList.toggle("active", moreSubSectionIds.includes(activeId));
@@ -264,7 +265,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
   // Update topbar heading based on active tab
   const headingMap = {
     "section-calc": { label: "Dashboard", icon: "bi-grid-1x2" },
-    "section-costs": { label: "Calculation Settings", icon: "bi-cash-stack" },
+    "section-costs": { label: "Settings", icon: "bi-cash-stack" },
     "section-bazar-history": { label: "Bazar History", icon: "bi-basket" },
     "section-meal-history": { label: "Meal History", icon: "bi-egg-fried" },
     "section-milk-history": { label: "Milk History", icon: "bi-cup-straw" },

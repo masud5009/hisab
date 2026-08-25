@@ -600,23 +600,23 @@
       <div class="nav-item">
         <a href="#section-calc" class="active"><i class="bi bi-table"></i> <span class="nav-text">Dashboard</span></a>
       </div>
-      <div class="nav-item d-none d-md-block">
-        <a href="#section-costs"><i class="bi bi-cash-stack"></i> <span class="nav-text">Calculation Settings</span></a>
+      <div class="nav-item">
+        <a href="#section-add-user"><i class="bi bi-person-plus"></i> <span class="nav-text"><span class="d-none d-md-inline">Add </span>Member</span></a>
       </div>
       <div class="nav-item">
+        <a href="#section-costs"><i class="bi bi-cash-stack"></i> <span class="nav-text"><span class="d-none d-md-inline">Calculation </span>Settings</span></a>
+      </div>
+      <div class="nav-item d-none d-md-block">
         <a href="#section-bazar-history"><i class="bi bi-basket"></i> <span class="nav-text"><span class="d-none d-md-inline">Bazar </span>History</span></a>
       </div>
-      <div class="nav-item">
+      <div class="nav-item d-none d-md-block">
         <a href="#section-meal-history"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span class="d-none d-md-inline">Meal </span>History</span></a>
       </div>
-      <div class="nav-item">
+      <div class="nav-item d-none d-md-block">
         <a href="#section-milk-history"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span class="d-none d-md-inline">Milk </span>History</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
         <a href="#section-users"><i class="bi bi-people"></i> <span class="nav-text">Members</span></a>
-      </div>
-      <div class="nav-item d-none d-md-block">
-        <a href="#section-add-user"><i class="bi bi-person-plus"></i> <span class="nav-text">Add Member</span></a>
       </div>
       <div class="nav-item d-md-none">
         <button type="button" id="mobileMoreBtn" class="mobile-more-link" aria-label="Open more menu">
@@ -647,12 +647,26 @@
       </button>
     </div>
     <div class="admin-drawer-body">
-      <div class="drawer-section-title">Settings & Members</div>
-      <a href="#section-costs" class="drawer-nav-item">
-        <i class="bi bi-cash-stack"></i>
+      <div class="drawer-section-title">History Logs & Members</div>
+      <a href="#section-bazar-history" class="drawer-nav-item">
+        <i class="bi bi-basket"></i>
         <div>
-          <strong>Calculation Settings</strong>
-          <small>Rates, fixed costs & meal %</small>
+          <strong>Bazar History</strong>
+          <small>All member bazar records</small>
+        </div>
+      </a>
+      <a href="#section-meal-history" class="drawer-nav-item">
+        <i class="bi bi-egg-fried"></i>
+        <div>
+          <strong>Meal History</strong>
+          <small>All member meal entries</small>
+        </div>
+      </a>
+      <a href="#section-milk-history" class="drawer-nav-item">
+        <i class="bi bi-cup-straw"></i>
+        <div>
+          <strong>Milk History</strong>
+          <small>All member milk entries</small>
         </div>
       </a>
       <a href="#section-users" class="drawer-nav-item">
@@ -662,13 +676,6 @@
           <small>Manage members & room rents</small>
         </div>
       </a>
-      <a href="#section-add-user" class="drawer-nav-item">
-        <i class="bi bi-person-plus"></i>
-        <div>
-          <strong>Add Member</strong>
-          <small>Register new member account</small>
-        </div>
-      </a>
 
       <div class="drawer-section-title mt-3">All Navigation</div>
       <a href="#section-calc" class="drawer-nav-item">
@@ -676,6 +683,20 @@
         <div>
           <strong>Dashboard</strong>
           <small>Monthly calculation overview</small>
+        </div>
+      </a>
+      <a href="#section-add-user" class="drawer-nav-item">
+        <i class="bi bi-person-plus"></i>
+        <div>
+          <strong>Add Member</strong>
+          <small>Register new member account</small>
+        </div>
+      </a>
+      <a href="#section-costs" class="drawer-nav-item">
+        <i class="bi bi-cash-stack"></i>
+        <div>
+          <strong>Settings</strong>
+          <small>Rates, fixed costs & meal %</small>
         </div>
       </a>
       <a href="#section-bazar-history" class="drawer-nav-item">
@@ -697,6 +718,13 @@
         <div>
           <strong>Milk History</strong>
           <small>All member milk entries</small>
+        </div>
+      </a>
+      <a href="#section-users" class="drawer-nav-item">
+        <i class="bi bi-people"></i>
+        <div>
+          <strong>Members</strong>
+          <small>Manage members & room rents</small>
         </div>
       </a>
     </div>
@@ -724,7 +752,7 @@
     </div>
 
     <!-- ── Dashboard (Summary Widgets + Monthly Calculation) ── -->
-    <div id="section-calc">
+    <div id="section-calc" class="dashboard-tab-panel" role="tabpanel">
       <!-- Summary Widgets -->
       <div id="calcSummaryWidgets" class="summary-widgets"></div>
 
@@ -751,9 +779,9 @@
     </div>
 
     <!-- ── Monthly Costs ── -->
-    <div class="card mb-4" id="section-costs">
+    <div class="card mb-4 dashboard-tab-panel" id="section-costs" role="tabpanel" hidden>
       <div class="card-header-custom">
-        <i class="bi bi-cash-stack"></i> Calculation Settings
+        <i class="bi bi-cash-stack"></i> Settings
       </div>
       <div class="card-body-custom">
         <div id="monthCostAlert" class="alert d-none"></div>
@@ -803,7 +831,7 @@
     </div>
 
     <!-- Bazar History -->
-    <div class="card mb-4" id="section-bazar-history">
+    <div class="card mb-4 dashboard-tab-panel" id="section-bazar-history" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-basket"></i> All Bazar History
         <div class="ms-auto d-flex flex-wrap gap-2">
@@ -854,7 +882,7 @@
     </div>
 
     <!-- Meal History -->
-    <div class="card mb-4" id="section-meal-history">
+    <div class="card mb-4 dashboard-tab-panel" id="section-meal-history" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-egg-fried"></i> All Meal History
         <div class="ms-auto d-flex flex-wrap gap-2">
@@ -907,7 +935,7 @@
     </div>
 
     <!-- Milk History -->
-    <div class="card mb-4" id="section-milk-history">
+    <div class="card mb-4 dashboard-tab-panel" id="section-milk-history" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-cup-straw"></i> All Milk History
         <div class="ms-auto d-flex flex-wrap gap-2">
@@ -957,7 +985,7 @@
     </div>
 
     <!-- ── Members List ── -->
-    <div class="card mb-4" id="section-users">
+    <div class="card mb-4 dashboard-tab-panel" id="section-users" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-people"></i> All Members
       </div>
@@ -984,7 +1012,7 @@
     </div>
 
     <!-- ── Add Member ── -->
-    <div class="card mb-4" id="section-add-user">
+    <div class="card mb-4 dashboard-tab-panel" id="section-add-user" role="tabpanel" hidden>
       <div class="card-header-custom">
         <i class="bi bi-person-plus"></i> Add New Member
       </div>
