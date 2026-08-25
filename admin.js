@@ -7,6 +7,7 @@
 import { auth, db, firebaseConfig } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
 import { DEFAULT_MEAL_PERCENTAGES, buildCalculationTable, getMealPercentages } from "./calculation.js";
+import { t, getLanguage, toggleLanguage, applyTranslations } from "./i18n.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -64,10 +65,18 @@ const ADMIN_SECTION_IDS = [
 // Init
 // ─────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
+  applyTranslations();
   initDashboardTabs(ADMIN_SECTION_IDS);
   initMonthSelector();
 
   // Event bindings
+  bindIfExists("langToggleBtn", "click", () => {
+    toggleLanguage();
+    applyTranslations();
+    if (calcData) {
+      renderCalcTable(calcData, document.getElementById("calcTableWrap"));
+    }
+  });
   bindIfExists("logoutBtn", "click", handleLogout);
   bindIfExists("mobileLogoutBtn", "click", handleLogout);
   bindIfExists("drawerLogoutBtn", "click", handleLogout);
@@ -80,6 +89,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("saveRoomRentsBtn").addEventListener("click", handleSaveRoomRents);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
   document.getElementById("exportPdfBtn").addEventListener("click", exportToPdf);
+  bindIfExists("exportCsvBtn", "click", exportCalcToCsv);
+  bindIfExists("shareMessSummaryBtn", "click", shareMessSummaryWa);
+  bindIfExists("exportBazarCsvBtn", "click", exportBazarToCsv);
+  bindIfExists("exportMealCsvBtn", "click", exportMealToCsv);
+  bindIfExists("exportMilkCsvBtn", "click", exportMilkToCsv);
   bindIfExists("editBazarForm", "submit", handleEditBazar);
   bindIfExists("refreshBazarHistoryBtn", "click", loadAdminBazarHistory);
   bindIfExists("bulkDeleteBazarBtn", "click", handleBulkDeleteBazar);
@@ -1335,27 +1349,29 @@ function renderCalcTable({ rows, summary }, container) {
   const widgetContainer = document.getElementById("calcSummaryWidgets");
 
   if (rows.length === 0) {
-    container.innerHTML = `<div class="alert alert-info">No users or data found for this month.</div>`;
+    container.innerHTML = `<div class="alert alert-info">${t("no_data")}</div>`;
     if (widgetContainer) widgetContainer.innerHTML = "";
     return;
   }
 
+  updateAdminAnalytics(summary);
+
   // Summary widget cards (rendered outside the card)
   if (widgetContainer) {
     const widgets = [
-      { label: "Total Meals", value: summary.totalMeals, icon: "bi-clipboard-data", variant: "primary" },
-      { label: "Morning", value: summary.totalMorningMeals, icon: "bi-sunrise", variant: "orange" },
-      { label: "Lunch", value: summary.totalLunchMeals, icon: "bi-sun", variant: "warning" },
-      { label: "Dinner", value: summary.totalDinnerMeals, icon: "bi-moon-stars", variant: "purple" },
-      { label: "Total Unit", value: summary.totalMealUnits, icon: "bi-calculator", variant: "primary" },
-      { label: "Total Bazar", value: `৳${summary.totalBazar}`, icon: "bi-cart-check", variant: "success" },
-      { label: "Room Rent", value: `৳${summary.totalBariVara}`, icon: "bi-house", variant: "secondary" },
-      { label: "Base Rate", value: `৳${summary.mealRate}`, icon: "bi-tag", variant: "warning" },
-      { label: "Dinner Rate", value: `৳${summary.mealRates.dinner}`, icon: "bi-moon", variant: "purple" },
-      { label: "Lunch Rate", value: `৳${summary.mealRates.lunch}`, icon: "bi-brightness-high", variant: "info" },
-      { label: "Morning Rate", value: `৳${summary.mealRates.morning}`, icon: "bi-sunrise", variant: "orange" },
-      { label: "Rate %", value: `M ${summary.mealPercentages.morning}% / L ${summary.mealPercentages.lunch}% / D ${summary.mealPercentages.dinner}%`, icon: "bi-percent", variant: "secondary" },
-      { label: "Members", value: summary.userCount, icon: "bi-people", variant: "info" },
+      { label: t("total_meals"), value: summary.totalMeals, icon: "bi-clipboard-data", variant: "primary" },
+      { label: t("morning"), value: summary.totalMorningMeals, icon: "bi-sunrise", variant: "orange" },
+      { label: t("lunch"), value: summary.totalLunchMeals, icon: "bi-sun", variant: "warning" },
+      { label: t("dinner"), value: summary.totalDinnerMeals, icon: "bi-moon-stars", variant: "purple" },
+      { label: t("total_unit"), value: summary.totalMealUnits, icon: "bi-calculator", variant: "primary" },
+      { label: t("total_bazar"), value: `৳${summary.totalBazar}`, icon: "bi-cart-check", variant: "success" },
+      { label: t("room_rent"), value: `৳${summary.totalBariVara}`, icon: "bi-house", variant: "secondary" },
+      { label: t("base_rate"), value: `৳${summary.mealRate}`, icon: "bi-tag", variant: "warning" },
+      { label: t("dinner_rate"), value: `৳${summary.mealRates.dinner}`, icon: "bi-moon", variant: "purple" },
+      { label: t("lunch_rate"), value: `৳${summary.mealRates.lunch}`, icon: "bi-brightness-high", variant: "info" },
+      { label: t("morning_rate"), value: `৳${summary.mealRates.morning}`, icon: "bi-sunrise", variant: "orange" },
+      { label: t("rate_percent"), value: `M ${summary.mealPercentages.morning}% / L ${summary.mealPercentages.lunch}% / D ${summary.mealPercentages.dinner}%`, icon: "bi-percent", variant: "secondary" },
+      { label: t("members"), value: summary.userCount, icon: "bi-people", variant: "info" },
     ];
 
     widgetContainer.innerHTML = widgets.map(w => `
@@ -1372,24 +1388,25 @@ function renderCalcTable({ rows, summary }, container) {
   const thead = `
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Morning</th>
-        <th>Lunch</th>
-        <th>Dinner</th>
-        <th>Total Meals</th>
-        <th>Bazar</th>
-        <th>Base Rate</th>
-        <th>Dinner Rate</th>
-        <th>Lunch Rate</th>
-        <th>Meal Cost</th>
-        <th>Khala</th>
-        <th>Gas</th>
-        <th>Electricity</th>
-        <th>WiFi</th>
-        <th>Bari Vara</th>
-        <th>Due</th>
-        <th>Pay</th>
-        <th>Lock</th>
+        <th>${t("th_name")}</th>
+        <th>${t("th_morning")}</th>
+        <th>${t("th_lunch")}</th>
+        <th>${t("th_dinner")}</th>
+        <th>${t("th_total_meals")}</th>
+        <th>${t("th_bazar")}</th>
+        <th>${t("th_base_rate")}</th>
+        <th>${t("th_dinner_rate")}</th>
+        <th>${t("th_lunch_rate")}</th>
+        <th>${t("th_meal_cost")}</th>
+        <th>${t("th_khala")}</th>
+        <th>${t("th_gas")}</th>
+        <th>${t("th_electricity")}</th>
+        <th>${t("th_wifi")}</th>
+        <th>${t("th_bari_vara")}</th>
+        <th>${t("th_due")}</th>
+        <th>${t("th_pay")}</th>
+        <th>${t("th_share")}</th>
+        <th>Action</th>
       </tr>
     </thead>`;
 
@@ -1421,9 +1438,14 @@ function renderCalcTable({ rows, summary }, container) {
       <td><strong class="text-danger due-value" data-base-payable="${basePayable(row)}">${formatBalanceAmount(balance.due)}</strong></td>
       <td><strong class="text-success pay-value">${formatBalanceAmount(balance.pay)}</strong></td>
       <td>
+        <button class="btn btn-sm btn-outline-success share-member-wa-btn" data-uid="${row.uid}" title="Share / Copy WhatsApp Statement">
+          <i class="bi bi-whatsapp"></i>
+        </button>
+      </td>
+      <td>
         <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
           data-uid="${row.uid}" data-locked="${row.locked}">
-          ${row.locked ? "🔒 Locked" : "🔓 Lock"}
+          ${row.locked ? "🔒 " + t("btn_locked") : "🔓 " + t("btn_lock")}
         </button>
       </td>
     </tr>`;
@@ -1441,12 +1463,298 @@ function renderCalcTable({ rows, summary }, container) {
   container.querySelectorAll(".lock-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleLock(btn.dataset.uid, btn.dataset.locked === "true"));
   });
+  container.querySelectorAll(".share-member-wa-btn").forEach((btn) => {
+    btn.addEventListener("click", () => shareMemberStatementWa(btn.dataset.uid));
+  });
   container.querySelectorAll(".remove-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleRemoveFromCalc(btn.dataset.uid, btn.dataset.name));
   });
   container.querySelectorAll(".bari-vara-input").forEach((input) => {
     input.addEventListener("input", () => updateRentPreview(input));
   });
+}
+
+function updateAdminAnalytics(summary) {
+  if (!summary) return;
+  const totalMeals = summary.totalMeals || 0;
+  const morning = summary.totalMorningMeals || 0;
+  const lunch = summary.totalLunchMeals || 0;
+  const dinner = summary.totalDinnerMeals || 0;
+
+  const totalMealsBadge = document.getElementById("analyticsTotalMealsBadge");
+  if (totalMealsBadge) totalMealsBadge.textContent = `${totalMeals} ${t("total_meals")}`;
+
+  const mPct = totalMeals > 0 ? (morning / totalMeals) * 100 : 0;
+  const lPct = totalMeals > 0 ? (lunch / totalMeals) * 100 : 0;
+  const dPct = totalMeals > 0 ? (dinner / totalMeals) * 100 : 0;
+
+  const barM = document.getElementById("mealBarMorning");
+  const barL = document.getElementById("mealBarLunch");
+  const barD = document.getElementById("mealBarDinner");
+  if (barM) barM.style.width = `${mPct}%`;
+  if (barL) barL.style.width = `${lPct}%`;
+  if (barD) barD.style.width = `${dPct}%`;
+
+  const valM = document.getElementById("analyticsMorningVal");
+  const valL = document.getElementById("analyticsLunchVal");
+  const valD = document.getElementById("analyticsDinnerVal");
+  if (valM) valM.textContent = `${morning} (${Math.round(mPct)}%)`;
+  if (valL) valL.textContent = `${lunch} (${Math.round(lPct)}%)`;
+  if (valD) valD.textContent = `${dinner} (${Math.round(dPct)}%)`;
+
+  const totalBazar = summary.totalBazar || 0;
+  const totalRent = summary.totalBariVara || 0;
+  const userCount = summary.userCount || 1;
+  const perPersonCosts = summary.perPersonCosts || {};
+  const totalUtilities = (
+    (perPersonCosts.khala || 0) +
+    (perPersonCosts.gas || 0) +
+    (perPersonCosts.electricity || 0) +
+    (perPersonCosts.wifi || 0)
+  ) * userCount;
+  const totalExpense = totalBazar + totalRent + totalUtilities;
+
+  const totalExpenseBadge = document.getElementById("analyticsTotalExpenseBadge");
+  if (totalExpenseBadge) totalExpenseBadge.textContent = `৳${round2(totalExpense)} Total`;
+
+  const bPct = totalExpense > 0 ? (totalBazar / totalExpense) * 100 : 0;
+  const rPct = totalExpense > 0 ? (totalRent / totalExpense) * 100 : 0;
+  const uPct = totalExpense > 0 ? (totalUtilities / totalExpense) * 100 : 0;
+
+  const barB = document.getElementById("expenseBarBazar");
+  const barR = document.getElementById("expenseBarRent");
+  const barU = document.getElementById("expenseBarUtilities");
+  if (barB) barB.style.width = `${bPct}%`;
+  if (barR) barR.style.width = `${rPct}%`;
+  if (barU) barU.style.width = `${uPct}%`;
+
+  const valB = document.getElementById("analyticsBazarVal");
+  const valR = document.getElementById("analyticsRentVal");
+  const valU = document.getElementById("analyticsUtilitiesVal");
+  if (valB) valB.textContent = `৳${totalBazar} (${Math.round(bPct)}%)`;
+  if (valR) valR.textContent = `৳${totalRent} (${Math.round(rPct)}%)`;
+  if (valU) valU.textContent = `৳${round2(totalUtilities)} (${Math.round(uPct)}%)`;
+}
+
+function exportCalcToCsv() {
+  if (!calcData || !calcData.rows || calcData.rows.length === 0) {
+    alert(t("no_data"));
+    return;
+  }
+  const headers = [
+    "Name",
+    "Username",
+    "Morning Meals",
+    "Lunch Meals",
+    "Dinner Meals",
+    "Total Meals",
+    "Bazar (TK)",
+    "Base Rate",
+    "Dinner Rate",
+    "Lunch Rate",
+    "Meal Cost (TK)",
+    "Khala (TK)",
+    "Gas (TK)",
+    "Electricity (TK)",
+    "WiFi (TK)",
+    "Room Rent (TK)",
+    "Due (TK)",
+    "Payable (TK)"
+  ];
+
+  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
+
+  const rows = calcData.rows.map((r) => {
+    const balance = getBalanceParts(r.totalPayable);
+    return [
+      escapeCsv(r.name),
+      escapeCsv(r.username),
+      r.morningMeals,
+      r.lunchMeals,
+      r.dinnerMeals,
+      r.totalMeals,
+      r.totalBazar,
+      r.mealRate,
+      r.dinnerRate,
+      r.lunchRate,
+      r.mealCost,
+      r.khalaPerPerson,
+      r.gasPerPerson,
+      r.electricityPerPerson,
+      r.wifiPerPerson,
+      r.bariVara,
+      balance.due !== null ? balance.due : 0,
+      balance.pay !== null ? balance.pay : 0
+    ].join(",");
+  });
+
+  // Summary Row
+  const summaryRow = [
+    escapeCsv("TOTAL / SUMMARY"),
+    escapeCsv(`Month: ${selectedMonth}`),
+    calcData.summary.totalMorningMeals,
+    calcData.summary.totalLunchMeals,
+    calcData.summary.totalDinnerMeals,
+    calcData.summary.totalMeals,
+    calcData.summary.totalBazar,
+    calcData.summary.mealRate,
+    calcData.summary.mealRates?.dinner,
+    calcData.summary.mealRates?.lunch,
+    "",
+    calcData.summary.perPersonCosts?.khala,
+    calcData.summary.perPersonCosts?.gas,
+    calcData.summary.perPersonCosts?.electricity,
+    calcData.summary.perPersonCosts?.wifi,
+    calcData.summary.totalBariVara,
+    "",
+    ""
+  ].join(",");
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows, "", summaryRow].join("\r\n");
+  downloadCsvFile(csvContent, `hisab-calculation-${selectedMonth}.csv`);
+}
+
+function exportBazarToCsv() {
+  if (!adminBazarAllRows || adminBazarAllRows.length === 0) {
+    alert(t("no_data"));
+    return;
+  }
+  const headers = ["Date", "Member", "Username", "Description", "Amount (TK)"];
+  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
+  const rows = adminBazarAllRows.map((r) => [
+    escapeCsv(r.date),
+    escapeCsv(r.userName || "Unknown"),
+    escapeCsv(r.userUsername || ""),
+    escapeCsv(r.description),
+    r.amount || 0
+  ].join(","));
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  downloadCsvFile(csvContent, `hisab-bazar-${selectedMonth}.csv`);
+}
+
+function exportMealToCsv() {
+  if (!adminMealAllRows || adminMealAllRows.length === 0) {
+    alert(t("no_data"));
+    return;
+  }
+  const headers = ["Date", "Member", "Username", "Morning", "Lunch", "Dinner", "Total"];
+  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
+  const rows = adminMealAllRows.map((r) => [
+    escapeCsv(r.date),
+    escapeCsv(r.userName || "Unknown"),
+    escapeCsv(r.userUsername || ""),
+    r.morning || 0,
+    r.lunch || 0,
+    r.dinner || 0,
+    r.totalMeal || 0
+  ].join(","));
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  downloadCsvFile(csvContent, `hisab-meals-${selectedMonth}.csv`);
+}
+
+function exportMilkToCsv() {
+  if (!adminMilkAllRows || adminMilkAllRows.length === 0) {
+    alert(t("no_data"));
+    return;
+  }
+  const headers = ["Date", "Member", "Username", "Had Milk"];
+  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
+  const rows = adminMilkAllRows.map((r) => [
+    escapeCsv(r.date),
+    escapeCsv(r.userName || "Unknown"),
+    escapeCsv(r.userUsername || ""),
+    r.hasMilk ? "Yes" : "No"
+  ].join(","));
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  downloadCsvFile(csvContent, `hisab-milk-${selectedMonth}.csv`);
+}
+
+function shareMemberStatementWa(uid) {
+  if (!calcData || !calcData.rows) return;
+  const row = calcData.rows.find((r) => r.uid === uid);
+  if (!row) return;
+
+  const balance = getBalanceParts(row.totalPayable);
+  const balanceText = balance.due !== null 
+    ? `বকেয়া (Due): ৳${balance.due}` 
+    : `পাওনা/অতিরিক্ত (Pay): ৳${balance.pay}`;
+
+  const message = 
+`🏠 *মেস হিসাব — ${selectedMonth}*
+👤 *সদস্য:* ${row.name} (@${row.username})
+━━━━━━━━━━━━━━━━━━━━━
+🍽️ *মিল বিবরণী:*
+• সকাল: ${row.morningMeals} | দুপুর: ${row.lunchMeals} | রাত: ${row.dinnerMeals}
+• মোট মিল: ${row.totalMeals} টি
+• মিল রেট: ৳${row.mealRate} (দুপুর: ৳${row.lunchRate}, রাত: ৳${row.dinnerRate})
+• মোট মিল খরচ: ৳${row.mealCost}
+
+🏢 *স্থির ও শেয়ার্ড খরচ:*
+• খালা বিল: ৳${row.khalaPerPerson}
+• গ্যাস বিল: ৳${row.gasPerPerson}
+• বিদ্যুৎ বিল: ৳${row.electricityPerPerson}
+• ওয়াইফাই বিল: ৳${row.wifiPerPerson}
+• ঘর ভাড়া: ৳${row.bariVara}
+
+🛒 *বাজার জমা:* ৳${row.totalBazar}
+━━━━━━━━━━━━━━━━━━━━━
+💰 *সর্বমোট ব্যালেন্স:* *${balanceText}*
+━━━━━━━━━━━━━━━━━━━━━
+📱 হিসাব অ্যাপ থেকে প্রেরিত`;
+
+  copyToClipboardAndShare(message);
+}
+
+function shareMessSummaryWa() {
+  if (!calcData || !calcData.rows || calcData.rows.length === 0) {
+    alert(t("no_data"));
+    return;
+  }
+  const s = calcData.summary;
+  const memberSummaries = calcData.rows.map((r) => {
+    const balance = getBalanceParts(r.totalPayable);
+    const balStr = balance.due !== null ? `বকেয়া ৳${balance.due}` : `পাওনা ৳${balance.pay}`;
+    return `• ${r.name}: মিল ${r.totalMeals} | বাজার ৳${r.totalBazar} ➔ ${balStr}`;
+  }).join("\n");
+
+  const message = 
+`🏠 *মেস হিসাবের সারাংশ — ${selectedMonth}*
+━━━━━━━━━━━━━━━━━━━━━
+📊 *সার্বিক অবস্থা:*
+• মোট মিল: ${s.totalMeals} (সকাল: ${s.totalMorningMeals}, দুপুর: ${s.totalLunchMeals}, রাত: ${s.totalDinnerMeals})
+• মোট বাজার: ৳${s.totalBazar}
+• বেস মিল রেট: ৳${s.mealRate}
+• মোট ঘর ভাড়া: ৳${s.totalBariVara}
+• সদস্য সংখ্যা: ${s.userCount} জন
+
+👥 *সদস্যদের হিসাব বিবরণী:*
+${memberSummaries}
+━━━━━━━━━━━━━━━━━━━━━
+📱 হিসাব অ্যাপ থেকে প্রেরিত`;
+
+  copyToClipboardAndShare(message);
+}
+
+function copyToClipboardAndShare(message) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(message).then(() => {
+      showAlert("calcAlert", t("copied_to_clipboard"), "success", true);
+    }).catch(() => {});
+  }
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, "_blank");
+}
+
+function downloadCsvFile(content, fileName) {
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ─────────────────────────────────────────────

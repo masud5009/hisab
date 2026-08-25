@@ -1,8 +1,3 @@
-// ============================================================
-// user.js
-// User Dashboard logic: add bazar, add meals, view summary
-// ============================================================
-
 import { auth, db } from "./firebase-config.js";
 import { requireAuth, logout } from "./auth.js";
 import {
@@ -13,6 +8,7 @@ import {
   calcUserTotalMeals,
   calcUserPayable
 } from "./calculation.js";
+import { t, getLanguage, toggleLanguage, applyTranslations } from "./i18n.js";
 import {
   collection,
   doc,
@@ -40,6 +36,17 @@ let milkHistoryRows = [];
 let bazarHistoryPage = 1;
 let mealHistoryPage = 1;
 let milkHistoryPage = 1;
+let lastUserSummaryData = {
+  userMeals: [],
+  userBazar: [],
+  userMilk: [],
+  monthData: {},
+  mealRates: {},
+  payableData: null,
+  totalMeals: 0,
+  totalBazar: 0,
+  due: null
+};
 const USER_SECTION_IDS = [
   "section-summary",
   "section-bazar",
@@ -71,9 +78,17 @@ function bindIfExists(id, eventName, handler) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  applyTranslations();
   initDashboardTabs(USER_SECTION_IDS);
   initMonthSelector();
 
+  bindIfExists("langToggleBtn", "click", () => {
+    toggleLanguage();
+    applyTranslations();
+    loadSummary();
+  });
+  bindIfExists("userShareWaBtn", "click", shareMyStatementWa);
+  bindIfExists("userExportCsvBtn", "click", exportMyStatementCsv);
   bindIfExists("logoutBtn", "click", handleLogout);
   bindIfExists("mobileLogoutBtn", "click", handleLogout);
   bindIfExists("mobileMoreBtn", "click", openUserMoreDrawer);
@@ -497,7 +512,22 @@ async function loadSummary() {
     };
     const totalMeals = calcUserTotalMeals(userMeals);
     const totalBazar = calcUserTotalBazar(userBazar);
-    const due = await calculateUserDue(userMeals, totalBazar, monthData, mealRates);
+    const payableBreakdown = await calculateUserPayableBreakdown(userMeals, totalBazar, monthData, mealRates);
+    const due = payableBreakdown ? payableBreakdown.totalPayable : null;
+
+    lastUserSummaryData = {
+      userMeals,
+      userBazar,
+      userMilk,
+      monthData,
+      mealRates,
+      baseRate,
+      payableBreakdown,
+      totalMeals,
+      totalBazar,
+      totalMilk,
+      due
+    };
 
     document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
     document.getElementById("summTotalMeals").textContent = round2(totalMeals);
@@ -506,6 +536,8 @@ async function loadSummary() {
     document.getElementById("summBaseRate").textContent = formatCurrencyOrDash(baseRate);
     document.getElementById("summDinnerRate").textContent = formatCurrencyOrDash(mealRates.dinner);
     document.getElementById("summLunchRate").textContent = formatCurrencyOrDash(mealRates.lunch);
+
+    updateUserAnalytics(userMeals, totalBazar, payableBreakdown);
   } catch (err) {
     console.warn("Failed to load user summary:", err);
     document.getElementById("summDue").textContent = "—";
@@ -515,7 +547,7 @@ async function loadSummary() {
   }
 }
 
-async function calculateUserDue(userMeals, totalBazar, monthData, mealRates) {
+async function calculateUserPayableBreakdown(userMeals, totalBazar, monthData, mealRates) {
   const mealBreakdown = calcMealBreakdown(userMeals);
   const hasRequiredRates =
     (mealBreakdown.morning === 0 || Number.isFinite(mealRates.morning)) &&
@@ -526,16 +558,188 @@ async function calculateUserDue(userMeals, totalBazar, monthData, mealRates) {
   const sharedCosts = await getPerPersonCostsForDue(monthData);
   const rentSplit = await getCurrentUserRentSplit();
   const userMealCost = calcMealCost(mealBreakdown, mealRates);
-  const payable = calcUserPayable({
-    userMealCost,
-    khalaPerPerson: sharedCosts.khala,
-    gasPerPerson: sharedCosts.gas,
-    electricityPerPerson: sharedCosts.electricity,
-    wifiPerPerson: sharedCosts.wifi,
+  return {
+    mealBreakdown,
+    userMealCost: round2(userMealCost),
+    sharedCosts,
     bariVara: rentSplit?.amount || 0,
-    userBazar: totalBazar
-  });
-  return payable.totalPayable;
+    ...calcUserPayable({
+      userMealCost,
+      khalaPerPerson: sharedCosts.khala,
+      gasPerPerson: sharedCosts.gas,
+      electricityPerPerson: sharedCosts.electricity,
+      wifiPerPerson: sharedCosts.wifi,
+      bariVara: rentSplit?.amount || 0,
+      userBazar: totalBazar
+    })
+  };
+}
+
+function updateUserAnalytics(userMeals, totalBazar, payableBreakdown) {
+  const mealBreakdown = calcMealBreakdown(userMeals);
+  const totalMeals = mealBreakdown.total || 0;
+
+  const totalMealsBadge = document.getElementById("userAnalyticsTotalMeals");
+  if (totalMealsBadge) totalMealsBadge.textContent = `${totalMeals} ${t("total_meals")}`;
+
+  const mPct = totalMeals > 0 ? (mealBreakdown.morning / totalMeals) * 100 : 0;
+  const lPct = totalMeals > 0 ? (mealBreakdown.lunch / totalMeals) * 100 : 0;
+  const dPct = totalMeals > 0 ? (mealBreakdown.dinner / totalMeals) * 100 : 0;
+
+  const barM = document.getElementById("userBarMorning");
+  const barL = document.getElementById("userBarLunch");
+  const barD = document.getElementById("userBarDinner");
+  if (barM) barM.style.width = `${mPct}%`;
+  if (barL) barL.style.width = `${lPct}%`;
+  if (barD) barD.style.width = `${dPct}%`;
+
+  const valM = document.getElementById("userValMorning");
+  const valL = document.getElementById("userValLunch");
+  const valD = document.getElementById("userValDinner");
+  if (valM) valM.textContent = `${mealBreakdown.morning} (${Math.round(mPct)}%)`;
+  if (valL) valL.textContent = `${mealBreakdown.lunch} (${Math.round(lPct)}%)`;
+  if (valD) valD.textContent = `${mealBreakdown.dinner} (${Math.round(dPct)}%)`;
+
+  const statusBadge = document.getElementById("userAnalyticsStatusBadge");
+  const barBazar = document.getElementById("userBarBazar");
+  const barDue = document.getElementById("userBarDue");
+  const valBazar = document.getElementById("userValBazar");
+  const valDue = document.getElementById("userValDue");
+
+  if (!payableBreakdown) {
+    if (statusBadge) statusBadge.textContent = "Calculating...";
+    return;
+  }
+
+  const totalExpense = (payableBreakdown.mealCost || 0) +
+    (payableBreakdown.khalaPerPerson || 0) +
+    (payableBreakdown.gasPerPerson || 0) +
+    (payableBreakdown.electricityPerPerson || 0) +
+    (payableBreakdown.wifiPerPerson || 0) +
+    (payableBreakdown.bariVara || 0);
+
+  const due = payableBreakdown.totalPayable;
+
+  if (valBazar) valBazar.textContent = `৳${round2(totalBazar)}`;
+  if (valDue) valDue.textContent = `৳${round2(totalExpense)}`;
+
+  if (totalExpense > 0) {
+    const bazarPct = Math.min(100, Math.round((totalBazar / totalExpense) * 100));
+    const remainingPct = Math.max(0, 100 - bazarPct);
+    if (barBazar) barBazar.style.width = `${bazarPct}%`;
+    if (barDue) barDue.style.width = `${remainingPct}%`;
+  } else {
+    if (barBazar) barBazar.style.width = totalBazar > 0 ? "100%" : "0%";
+    if (barDue) barDue.style.width = "0%";
+  }
+
+  if (statusBadge) {
+    if (due > 0) {
+      statusBadge.className = "badge bg-warning text-dark border";
+      statusBadge.textContent = `বকেয়া: ৳${due}`;
+    } else if (due < 0) {
+      statusBadge.className = "badge bg-success text-white border";
+      statusBadge.textContent = `পাওনা/অগ্রিম: ৳${Math.abs(due)}`;
+    } else {
+      statusBadge.className = "badge bg-info text-dark border";
+      statusBadge.textContent = "পরিশোধিত (Clear)";
+    }
+  }
+}
+
+function shareMyStatementWa() {
+  const p = lastUserSummaryData.payableBreakdown;
+  const totalMeals = lastUserSummaryData.totalMeals || 0;
+  const totalBazar = lastUserSummaryData.totalBazar || 0;
+  const mb = p?.mealBreakdown || { morning: 0, lunch: 0, dinner: 0 };
+  const rates = lastUserSummaryData.mealRates || {};
+
+  const dueText = p 
+    ? (p.totalPayable >= 0 ? `বকেয়া (Due): ৳${p.totalPayable}` : `পাওনা/অগ্রিম: ৳${Math.abs(p.totalPayable)}`)
+    : "হিসাব প্রক্রিয়াধীন";
+
+  const message = 
+`🏠 *আমার মেস হিসাব — ${selectedMonth}*
+👤 *সদস্য:* ${currentUser.name} (@${currentUser.username})
+━━━━━━━━━━━━━━━━━━━━━
+🍽️ *মিল বিবরণ:*
+• সকাল: ${mb.morning} | দুপুর: ${mb.lunch} | রাত: ${mb.dinner}
+• মোট মিল: ${totalMeals} টি
+• মিল রেট: ৳${lastUserSummaryData.baseRate || "—"} (দুপুর: ৳${rates.lunch || "—"}, রাত: ৳${rates.dinner || "—"})
+• মিল খরচ: ৳${p?.mealCost ?? "—"}
+
+🏢 *অন্যান্য ও ঘর ভাড়া:*
+• খালা বিল: ৳${p?.khalaPerPerson ?? 0}
+• গ্যাস বিল: ৳${p?.gasPerPerson ?? 0}
+• বিদ্যুৎ বিল: ৳${p?.electricityPerPerson ?? 0}
+• ওয়াইফাই বিল: ৳${p?.wifiPerPerson ?? 0}
+• ঘর ভাড়া: ৳${p?.bariVara ?? 0}
+
+🛒 *আমার বাজার জমা:* ৳${totalBazar}
+━━━━━━━━━━━━━━━━━━━━━
+💰 *সর্বমোট ব্যালেন্স:* *${dueText}*
+━━━━━━━━━━━━━━━━━━━━━
+📱 হিসাব অ্যাপ থেকে প্রেরিত`;
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(message).catch(() => {});
+  }
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, "_blank");
+}
+
+function exportMyStatementCsv() {
+  const p = lastUserSummaryData.payableBreakdown;
+  const totalMeals = lastUserSummaryData.totalMeals || 0;
+  const totalBazar = lastUserSummaryData.totalBazar || 0;
+  const mb = p?.mealBreakdown || { morning: 0, lunch: 0, dinner: 0 };
+
+  const summaryHeaders = ["Field", "Value"];
+  const summaryRows = [
+    ["Member Name", `"${currentUser.name}"`],
+    ["Username", `"${currentUser.username}"`],
+    ["Month", `"${selectedMonth}"`],
+    ["Morning Meals", mb.morning],
+    ["Lunch Meals", mb.lunch],
+    ["Dinner Meals", mb.dinner],
+    ["Total Meals", totalMeals],
+    ["Base Meal Rate", lastUserSummaryData.baseRate || 0],
+    ["Meal Cost (TK)", p?.mealCost ?? 0],
+    ["Khala Bill (TK)", p?.khalaPerPerson ?? 0],
+    ["Gas Bill (TK)", p?.gasPerPerson ?? 0],
+    ["Electricity Bill (TK)", p?.electricityPerPerson ?? 0],
+    ["WiFi Bill (TK)", p?.wifiPerPerson ?? 0],
+    ["Room Rent (TK)", p?.bariVara ?? 0],
+    ["My Total Bazar (TK)", totalBazar],
+    ["Net Due / Payable (TK)", p?.totalPayable ?? 0]
+  ].map(r => r.join(","));
+
+  const bazarHeaders = ["Date", "Description", "Amount (TK)"];
+  const bazarRows = (lastUserSummaryData.userBazar || []).map(b => [
+    `"${b.date || ""}"`,
+    `"${(b.description || "").replaceAll('"', '""')}"`,
+    b.amount || 0
+  ].join(","));
+
+  const csvContent = "\uFEFF" + [
+    "=== MONTHLY SUMMARY ===",
+    summaryHeaders.join(","),
+    ...summaryRows,
+    "",
+    "=== MY BAZAR LOGS ===",
+    bazarHeaders.join(","),
+    ...bazarRows
+  ].join("\r\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `my-statement-${selectedMonth}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function getPerPersonCostsForDue(monthData) {

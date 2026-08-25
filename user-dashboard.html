@@ -954,35 +954,31 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-name cursor-pointer" onclick="window.location.href='user-dashboard.html'">
+      <div class="brand-name cursor-pointer" onclick="window.location.href='user-dashboard.html'" data-i18n="brand_name">
         হিসাব
       </div>
-      <div class="brand-sub">Member Panel</div>
+      <div class="brand-sub" data-i18n="member_panel">Member Panel</div>
     </div>
     <nav>
       <div class="nav-item">
-        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> <span class="nav-text"><span
-              class="d-none d-md-inline">My </span>Dashboard</span></a>
+        <a href="#section-summary" class="active"><i class="bi bi-pie-chart"></i> <span class="nav-text" data-i18n="nav_my_dashboard">My Dashboard</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-bazar"><i class="bi bi-basket"></i> <span class="nav-text"><span
-              class="d-none d-md-inline">Add </span>Bazar</span></a>
+        <a href="#section-bazar"><i class="bi bi-basket"></i> <span class="nav-text" data-i18n="nav_bazar">Add Bazar</span></a>
       </div>
       <div class="nav-item">
-        <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text"><span
-              class="d-none d-md-inline">Add </span>Meals</span></a>
+        <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text" data-i18n="nav_meals">Add Meals</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
-        <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text"><span
-              class="d-none d-md-inline">Add </span>Milk</span></a>
+        <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text" data-i18n="nav_milk">Add Milk</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
-        <a href="#section-history"><i class="bi bi-clock-history"></i> <span class="nav-text">History</span></a>
+        <a href="#section-history"><i class="bi bi-clock-history"></i> <span class="nav-text" data-i18n="nav_history">History</span></a>
       </div>
       <div class="nav-item d-md-none">
         <button type="button" id="mobileMoreBtn" class="mobile-more-link" aria-label="Open more menu">
           <i class="bi bi-grid-3x3-gap-fill"></i>
-          <span>More</span>
+          <span data-i18n="more_menu">More</span>
         </button>
       </div>
     </nav>
@@ -991,7 +987,7 @@
         <strong id="userName"><span class="skeleton skeleton-user-name"></span></strong>
         <span id="userUsername" style="font-size:0.75rem; display:block;"><span class="skeleton skeleton-user-sub"></span></span>
       </div>
-      <button class="btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-left me-1"></i> Logout</button>
+      <button class="btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-left me-1"></i> <span data-i18n="nav_logout">Logout</span></button>
     </div>
   </aside>
 
@@ -1068,8 +1064,11 @@
 
     <!-- Topbar -->
     <div class="topbar">
-      <h2 id="topbarHeading"><i class="bi bi-pie-chart me-2" style="color:var(--clr-user)"></i>Dashboard</h2>
+      <h2 id="topbarHeading"><i class="bi bi-pie-chart me-2" style="color:var(--clr-user)"></i><span data-i18n="nav_my_dashboard">Dashboard</span></h2>
       <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" id="langToggleBtn" title="Switch Language" style="border-radius: 8px; padding: 0.4rem 0.75rem; font-weight:600;">
+          <i class="bi bi-translate"></i> <span id="currentLangLabel">ENG</span>
+        </button>
         <select class="month-selector" id="monthSelector"></select>
         <button class="btn btn-sm btn-outline-danger d-md-none" id="mobileLogoutBtn" title="Logout" aria-label="Logout">
           <i class="bi bi-box-arrow-left"></i>
@@ -1081,32 +1080,86 @@
     <div id="section-summary" class="dashboard-tab-panel" role="tabpanel">
       <div class="summary-grid">
         <div class="summ-card bazar">
-          <div class="summ-label">My Bazar</div>
+          <div class="summ-label" data-i18n="my_bazar">My Bazar</div>
           <div class="summ-value" id="summTotalBazar"><span class="skeleton skeleton-value" style="width: 70px;"></span></div>
         </div>
         <div class="summ-card meal">
-          <div class="summ-label">Total Meal</div>
+          <div class="summ-label" data-i18n="my_meals">Total Meal</div>
           <div class="summ-value" id="summTotalMeals"><span class="skeleton skeleton-value" style="width: 50px;"></span></div>
         </div>
         <div class="summ-card highlight">
-          <div class="summ-label">Total Milk</div>
+          <div class="summ-label" data-i18n="my_milk">Total Milk</div>
           <div class="summ-value" id="summTotalMilk"><span class="skeleton skeleton-value" style="width: 40px;"></span></div>
         </div>
         <div class="summ-card payable">
-          <div class="summ-label">Due</div>
+          <div class="summ-label" data-i18n="due">Due</div>
           <div class="summ-value" id="summDue"><span class="skeleton skeleton-value" style="width: 75px;"></span></div>
         </div>
         <div class="summ-card rate">
-          <div class="summ-label">Base Rate</div>
+          <div class="summ-label" data-i18n="base_rate">Base Rate</div>
           <div class="summ-value" id="summBaseRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
         </div>
         <div class="summ-card rate">
-          <div class="summ-label">Dinner Rate</div>
+          <div class="summ-label" data-i18n="dinner_rate">Dinner Rate</div>
           <div class="summ-value" id="summDinnerRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
         </div>
         <div class="summ-card rate">
-          <div class="summ-label">Lunch Rate</div>
+          <div class="summ-label" data-i18n="lunch_rate">Lunch Rate</div>
           <div class="summ-value" id="summLunchRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons for Sharing & Export -->
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <button type="button" class="btn btn-outline-success d-flex align-items-center gap-1" id="userShareWaBtn" style="border-radius: 8px;">
+          <i class="bi bi-whatsapp"></i> <span data-i18n="btn_share_statement">Share Statement</span>
+        </button>
+        <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-1" id="userExportCsvBtn" style="border-radius: 8px;">
+          <i class="bi bi-file-earmark-spreadsheet"></i> <span data-i18n="btn_export_csv">Export CSV</span>
+        </button>
+      </div>
+
+      <!-- Personal Visual Analytics -->
+      <div class="card mb-4">
+        <div class="card-header-custom">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-graph-up text-primary"></i>
+            <span data-i18n="analytics_overview">Personal Analytics</span>
+          </div>
+        </div>
+        <div class="card-body-custom">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong class="small" data-i18n="meal_distribution">My Meal Ratio</strong>
+                <span class="badge bg-light text-dark border" id="userAnalyticsTotalMeals">0 Meals</span>
+              </div>
+              <div class="progress" style="height: 14px; border-radius: 7px;">
+                <div class="progress-bar bg-warning" role="progressbar" id="userBarMorning" style="width: 0%" title="Morning"></div>
+                <div class="progress-bar bg-info" role="progressbar" id="userBarLunch" style="width: 0%" title="Lunch"></div>
+                <div class="progress-bar bg-primary" role="progressbar" id="userBarDinner" style="width: 0%" title="Dinner"></div>
+              </div>
+              <div class="d-flex justify-content-between mt-2 small text-muted">
+                <span><i class="bi bi-circle-fill text-warning me-1" style="font-size:0.6rem"></i><span data-i18n="morning">Morning</span>: <strong id="userValMorning">0</strong></span>
+                <span><i class="bi bi-circle-fill text-info me-1" style="font-size:0.6rem"></i><span data-i18n="lunch">Lunch</span>: <strong id="userValLunch">0</strong></span>
+                <span><i class="bi bi-circle-fill text-primary me-1" style="font-size:0.6rem"></i><span data-i18n="dinner">Dinner</span>: <strong id="userValDinner">0</strong></span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong class="small" data-i18n="personal_breakdown">Bazar Deposit vs Total Expense</strong>
+                <span class="badge bg-light text-dark border" id="userAnalyticsStatusBadge">—</span>
+              </div>
+              <div class="progress" style="height: 14px; border-radius: 7px;">
+                <div class="progress-bar bg-success" role="progressbar" id="userBarBazar" style="width: 0%" title="Bazar Deposit"></div>
+                <div class="progress-bar bg-danger" role="progressbar" id="userBarDue" style="width: 0%" title="Remaining Due"></div>
+              </div>
+              <div class="d-flex justify-content-between mt-2 small text-muted">
+                <span><i class="bi bi-circle-fill text-success me-1" style="font-size:0.6rem"></i><span data-i18n="my_bazar">My Bazar</span>: <strong id="userValBazar">৳0</strong></span>
+                <span><i class="bi bi-circle-fill text-danger me-1" style="font-size:0.6rem"></i><span data-i18n="due">Due / Total</span>: <strong id="userValDue">৳0</strong></span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
