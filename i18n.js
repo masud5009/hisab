@@ -106,6 +106,20 @@ export const translations = {
     // Messages
     copied_to_clipboard: "Copied to clipboard!",
     no_data: "No data found for this month.",
+    bazar_history: "Bazar History",
+    meal_history: "Meal History",
+    recent_bazar_entries: "Recent Bazar Entries",
+    recent_meal_entries: "Recent Meal Entries",
+    view_all: "View All",
+    btn_add_bazar: "Add Bazar Entry",
+    btn_add_meal: "Add Meal",
+    meal_helper_text: "Use 1 for full meal, 0.5 for half meal.",
+    morning_breakfast: "Morning Breakfast",
+    lunch_meal: "Lunch",
+    dinner_meal: "Dinner",
+    amount_taka: "Amount (৳)",
+    edit_bazar_title: "Edit Bazar Entry",
+    edit_meal_title: "Edit Meal Entry",
     lang_toggle_label: "বাং"
   },
   bn: {
@@ -210,6 +224,20 @@ export const translations = {
     // Messages
     copied_to_clipboard: "ক্লিপবোর্ডে কপি হয়েছে!",
     no_data: "এই মাসের কোনো তথ্য পাওয়া যায়নি।",
+    bazar_history: "বাজারের হিসাব",
+    meal_history: "মিলের হিসাব",
+    recent_bazar_entries: "সাম্প্রতিক বাজার জমা",
+    recent_meal_entries: "সাম্প্রতিক মিল এন্ট্রি",
+    view_all: "সব দেখুন",
+    btn_add_bazar: "বাজার জমা করুন",
+    btn_add_meal: "মিল এন্ট্রি দিন",
+    meal_helper_text: "সম্পূর্ণ খাবারের জন্য 1, অর্ধেক খাবারের জন্য 0.5 ব্যবহার করুন।",
+    morning_breakfast: "সকালের নাস্তা",
+    lunch_meal: "দুপুরের খাবার",
+    dinner_meal: "রাতের খাবার",
+    amount_taka: "টাকা (৳)",
+    edit_bazar_title: "বাজার এন্ট্রি এডিট",
+    edit_meal_title: "মিল এন্ট্রি এডিট",
     lang_toggle_label: "ENG"
   }
 };

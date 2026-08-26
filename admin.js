@@ -67,15 +67,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   initMonthSelector();
 
   // Event bindings
-  bindIfExists("langToggleBtn", "click", () => {
+  const handleLangToggle = () => {
     toggleLanguage();
     applyTranslations();
     if (calcData) {
       renderCalcTable(calcData, document.getElementById("calcTableWrap"));
     }
-  });
+  };
+  bindIfExists("langToggleBtn", "click", handleLangToggle);
+  bindIfExists("drawerLangToggleBtn", "click", handleLangToggle);
   bindIfExists("logoutBtn", "click", handleLogout);
-  bindIfExists("mobileLogoutBtn", "click", handleLogout);
   bindIfExists("drawerLogoutBtn", "click", handleLogout);
   bindIfExists("mobileMoreBtn", "click", openAdminMoreDrawer);
   bindIfExists("adminMoreDrawerClose", "click", closeAdminMoreDrawer);

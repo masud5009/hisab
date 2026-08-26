@@ -673,63 +673,24 @@
         </div>
       </a>
 
-      <div class="drawer-section-title mt-3">All Navigation</div>
-      <a href="#section-calc" class="drawer-nav-item">
-        <i class="bi bi-table"></i>
-        <div>
-          <strong>Dashboard</strong>
-          <small>Monthly calculation overview</small>
+      <div class="drawer-section-title mt-3">Preferences</div>
+      <button type="button" class="drawer-nav-item w-100 border-0 bg-transparent text-start cursor-pointer" id="drawerLangToggleBtn" style="cursor:pointer;">
+        <i class="bi bi-translate"></i>
+        <div class="d-flex justify-content-between align-items-center flex-grow-1">
+          <div>
+            <strong>Language / ভাষা</strong>
+            <small>Switch English / বাংলা</small>
+          </div>
+          <span class="badge bg-light text-dark border currentLangLabel" id="drawerLangBadge" style="font-size:0.8rem; font-weight:600; padding:0.35rem 0.6rem;">ENG</span>
         </div>
-      </a>
-      <a href="#section-add-user" class="drawer-nav-item">
-        <i class="bi bi-person-plus"></i>
-        <div>
-          <strong>Add Member</strong>
-          <small>Register new member account</small>
-        </div>
-      </a>
-      <a href="#section-costs" class="drawer-nav-item">
-        <i class="bi bi-cash-stack"></i>
-        <div>
-          <strong>Settings</strong>
-          <small>Rates, fixed costs & meal %</small>
-        </div>
-      </a>
-      <a href="#section-bazar-history" class="drawer-nav-item">
-        <i class="bi bi-basket"></i>
-        <div>
-          <strong>Bazar History</strong>
-          <small>All member bazar records</small>
-        </div>
-      </a>
-      <a href="#section-meal-history" class="drawer-nav-item">
-        <i class="bi bi-egg-fried"></i>
-        <div>
-          <strong>Meal History</strong>
-          <small>All member meal entries</small>
-        </div>
-      </a>
-      <a href="#section-additional-costs" class="drawer-nav-item">
-        <i class="bi bi-wallet2"></i>
-        <div>
-          <strong>Additional Costs</strong>
-          <small>Divide extra shared expenses</small>
-        </div>
-      </a>
-      <a href="#section-users" class="drawer-nav-item">
-        <i class="bi bi-people"></i>
-        <div>
-          <strong>Members</strong>
-          <small>Manage members & room rents</small>
-        </div>
-      </a>
+      </button>
     </div>
     <div class="admin-drawer-footer">
       <div class="admin-info mb-2">
         <strong id="adminNameDrawer">Admin</strong>
         <span class="text-muted small">Administrator</span>
       </div>
-      <button class="btn-logout" id="drawerLogoutBtn"><i class="bi bi-box-arrow-left me-1"></i> Logout</button>
+      <button class="btn-logout" id="drawerLogoutBtn"><i class="bi bi-box-arrow-left me-1"></i> <span data-i18n="nav_logout">Logout</span></button>
     </div>
   </aside>
 
@@ -740,13 +701,10 @@
     <div class="topbar">
       <h2 id="topbarHeading"><i class="bi bi-grid-1x2 me-2" style="color:var(--clr-primary)"></i><span data-i18n="nav_dashboard">Dashboard</span></h2>
       <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" id="langToggleBtn" title="Switch Language" style="border-radius: 8px; padding: 0.4rem 0.75rem; font-weight:600;">
-          <i class="bi bi-translate"></i> <span id="currentLangLabel">ENG</span>
+        <button class="btn btn-sm btn-outline-secondary d-none d-md-flex align-items-center gap-1" id="langToggleBtn" title="Switch Language" style="border-radius: 8px; padding: 0.4rem 0.75rem; font-weight:600;">
+          <i class="bi bi-translate"></i> <span id="currentLangLabel" class="currentLangLabel">ENG</span>
         </button>
         <select class="month-selector" id="monthSelector"></select>
-        <button class="btn btn-sm btn-outline-danger d-md-none" id="mobileLogoutBtn" title="Logout" aria-label="Logout">
-          <i class="bi bi-box-arrow-left"></i>
-        </button>
       </div>
     </div>
 

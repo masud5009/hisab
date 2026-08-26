@@ -90,10 +90,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("mealHistoryPrev", "click", () => changeMealHistoryPage(-1));
   bindIfExists("mealHistoryNext", "click", () => changeMealHistoryPage(1));
 
+  // Set default today date on date inputs
+  const todayStr = new Date().toISOString().split("T")[0];
+  const bDateInput = document.getElementById("bazarDate");
+  if (bDateInput && !bDateInput.value) bDateInput.value = todayStr;
+  const mDateInput = document.getElementById("mealDate");
+  if (mDateInput && !mDateInput.value) mDateInput.value = todayStr;
+
   // Live total meal counter
   document.getElementById("mealMorning").addEventListener("input", updateMealTotal);
   document.getElementById("mealLunch").addEventListener("input", updateMealTotal);
   document.getElementById("mealDinner").addEventListener("input", updateMealTotal);
+  updateMealTotal();
 
   // Edit modal setup
   const editModalEl = document.getElementById('editBazarModal');
@@ -309,6 +317,8 @@ async function handleAddBazar(e) {
     });
     showAlert("bazarAlert", "Bazar added!", "success");
     form.reset();
+    const bDate = document.getElementById("bazarDate");
+    if (bDate) bDate.value = new Date().toISOString().split("T")[0];
     loadSummary();
     bazarHistoryPage = 1;
     loadBazarHistory();
@@ -362,7 +372,11 @@ async function handleAddMeal(e) {
     });
     showAlert("mealAlert", "Meal added!", "success");
     form.reset();
-    document.getElementById("mealTotalPreview").textContent = "0";
+    const mDate = document.getElementById("mealDate");
+    if (mDate) mDate.value = new Date().toISOString().split("T")[0];
+    const mDinner = document.getElementById("mealDinner");
+    if (mDinner) mDinner.value = "1";
+    updateMealTotal();
     loadSummary();
     mealHistoryPage = 1;
     loadMealHistory();
@@ -592,6 +606,35 @@ function renderBazarHistoryPage() {
     tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No bazar entries</td></tr>`;
   }
   renderHistoryPagination("bazar");
+  renderRecentBazarPreview();
+}
+
+function renderRecentBazarPreview() {
+  const tbody = document.getElementById("bazarRecentPreviewBody");
+  if (!tbody) return;
+  const recent = bazarHistoryRows.slice(0, 3);
+  if (recent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">No bazar entries yet for this month</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = recent.map((b) => `
+    <tr>
+      <td data-label="Date">${b.date}</td>
+      <td data-label="Description">${b.description}</td>
+      <td data-label="Amount">৳${b.amount}</td>
+      <td data-label="Actions">
+        <button class="btn btn-sm btn-outline-primary recent-bazar-edit" data-id="${b.id}">Edit</button>
+      </td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll('.recent-bazar-edit').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const item = bazarHistoryRows.find((x) => x.id === id);
+      if (item) openEditModal(id, item);
+    });
+  });
 }
 
 // Open edit modal and prefill values
@@ -700,6 +743,37 @@ function renderMealHistoryPage(searchDate = document.getElementById("mealHistory
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">${message}</td></tr>`;
   }
   renderHistoryPagination("meal");
+  renderRecentMealPreview();
+}
+
+function renderRecentMealPreview() {
+  const tbody = document.getElementById("mealRecentPreviewBody");
+  if (!tbody) return;
+  const recent = mealHistoryRows.slice(0, 3);
+  if (recent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">No meal entries yet for this month</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = recent.map((m) => `
+    <tr>
+      <td data-label="Date">${m.date}</td>
+      <td data-label="Morning">${m.morning}</td>
+      <td data-label="Lunch">${m.lunch}</td>
+      <td data-label="Dinner">${m.dinner}</td>
+      <td data-label="Total"><strong>${m.totalMeal}</strong></td>
+      <td data-label="Actions">
+        <button class="btn btn-sm btn-outline-primary recent-meal-edit" data-id="${m.id}">Edit</button>
+      </td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll('.recent-meal-edit').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const item = mealHistoryRows.find((x) => x.id === id);
+      if (item) openEditMealModal(id, item);
+    });
+  });
 }
 
 function changeBazarHistoryPage(delta) {
