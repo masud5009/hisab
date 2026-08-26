@@ -15,7 +15,7 @@ export const translations = {
     
     // Navigation
     nav_dashboard: "Dashboard",
-    nav_my_dashboard: "My Dashboard",
+    nav_my_dashboard: "Dashboard",
     nav_bazar: "Add Bazar",
     nav_meals: "Add Meals",
     nav_history: "History",
@@ -119,7 +119,7 @@ export const translations = {
     
     // Navigation
     nav_dashboard: "ড্যাশবোর্ড",
-    nav_my_dashboard: "আমার ড্যাশবোর্ড",
+    nav_my_dashboard: "ড্যাশবোর্ড",
     nav_bazar: "বাজার এন্ট্রি",
     nav_meals: "মিল এন্ট্রি",
     nav_history: "হিস্ট্রি ও লগ",
@@ -258,8 +258,7 @@ export function applyTranslations(root = document) {
   });
 
   // Update language toggle button indicator if exists
-  const langBtnLabel = root.getElementById("currentLangLabel");
-  if (langBtnLabel) {
-    langBtnLabel.textContent = dict.lang_toggle_label;
-  }
+  root.querySelectorAll("#currentLangLabel, .currentLangLabel").forEach((el) => {
+    el.textContent = dict.lang_toggle_label;
+  });
 }

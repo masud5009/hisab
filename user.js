@@ -68,13 +68,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   initDashboardTabs(USER_SECTION_IDS);
   initMonthSelector();
 
-  bindIfExists("langToggleBtn", "click", () => {
+  const handleLangToggle = () => {
     toggleLanguage();
     applyTranslations();
     loadSummary();
-  });
+  };
+  bindIfExists("langToggleBtn", "click", handleLangToggle);
+  bindIfExists("drawerLangToggleBtn", "click", handleLangToggle);
   bindIfExists("logoutBtn", "click", handleLogout);
-  bindIfExists("mobileLogoutBtn", "click", handleLogout);
+  bindIfExists("drawerLogoutBtn", "click", handleLogout);
   bindIfExists("mobileMoreBtn", "click", openUserMoreDrawer);
   bindIfExists("userMoreDrawerClose", "click", closeUserMoreDrawer);
   bindIfExists("userMoreDrawerBackdrop", "click", closeUserMoreDrawer);
@@ -118,8 +120,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   currentUser = await requireAuth("user", "user-login.html");
-  document.getElementById("userName").textContent = currentUser.name;
-  document.getElementById("userUsername").textContent = "@" + currentUser.username;
+  const userNameEl = document.getElementById("userName");
+  if (userNameEl) userNameEl.textContent = currentUser.name;
+  const userUsernameEl = document.getElementById("userUsername");
+  if (userUsernameEl) userUsernameEl.textContent = "@" + currentUser.username;
+  const userNameDrawerEl = document.getElementById("userNameDrawer");
+  if (userNameDrawerEl) userNameDrawerEl.textContent = currentUser.name;
+  const userUsernameDrawerEl = document.getElementById("userUsernameDrawer");
+  if (userUsernameDrawerEl) userUsernameDrawerEl.textContent = "@" + currentUser.username;
 
   loadSummary();
   loadBazarHistory();
