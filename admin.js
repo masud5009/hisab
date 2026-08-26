@@ -85,11 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
   document.getElementById("saveRoomRentsBtn").addEventListener("click", handleSaveRoomRents);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
-  document.getElementById("exportPdfBtn").addEventListener("click", exportToPdf);
-  bindIfExists("exportCsvBtn", "click", exportCalcToCsv);
   bindIfExists("shareMessSummaryBtn", "click", shareMessSummaryWa);
-  bindIfExists("exportBazarCsvBtn", "click", exportBazarToCsv);
-  bindIfExists("exportMealCsvBtn", "click", exportMealToCsv);
   bindIfExists("editBazarForm", "submit", handleEditBazar);
   bindIfExists("refreshBazarHistoryBtn", "click", loadAdminBazarHistory);
   bindIfExists("bulkDeleteBazarBtn", "click", handleBulkDeleteBazar);
@@ -1296,125 +1292,14 @@ function updateAdminAnalytics(summary) {
   if (valU) valU.textContent = `৳${round2(totalUtilities)} (${Math.round(uPct)}%)`;
 }
 
-function exportCalcToCsv() {
-  if (!calcData || !calcData.rows || calcData.rows.length === 0) {
-    alert(t("no_data"));
-    return;
-  }
-  const headers = [
-    "Name",
-    "Username",
-    "Morning Meals",
-    "Lunch Meals",
-    "Dinner Meals",
-    "Total Meals",
-    "Bazar (TK)",
-    "Base Rate",
-    "Dinner Rate",
-    "Lunch Rate",
-    "Meal Cost (TK)",
-    "Khala (TK)",
-    "Gas (TK)",
-    "Electricity (TK)",
-    "WiFi (TK)",
-    "Room Rent (TK)",
-    "Additional (TK)",
-    "Due (TK)",
-    "Payable (TK)"
-  ];
 
-  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
-
-  const rows = calcData.rows.map((r) => {
-    const balance = getBalanceParts(r.totalPayable);
-    return [
-      escapeCsv(r.name),
-      escapeCsv(r.username),
-      r.morningMeals,
-      r.lunchMeals,
-      r.dinnerMeals,
-      r.totalMeals,
-      r.totalBazar,
-      r.mealRate,
-      r.dinnerRate,
-      r.lunchRate,
-      r.mealCost,
-      r.khalaPerPerson,
-      r.gasPerPerson,
-      r.electricityPerPerson,
-      r.wifiPerPerson,
-      r.bariVara,
-      r.additionalCost || 0,
-      balance.due !== null ? balance.due : 0,
-      balance.pay !== null ? balance.pay : 0
-    ].join(",");
-  });
-
-  // Summary Row
-  const summaryRow = [
-    escapeCsv("TOTAL / SUMMARY"),
-    escapeCsv(`Month: ${selectedMonth}`),
-    calcData.summary.totalMorningMeals,
-    calcData.summary.totalLunchMeals,
-    calcData.summary.totalDinnerMeals,
-    calcData.summary.totalMeals,
-    calcData.summary.totalBazar,
-    calcData.summary.mealRate,
-    calcData.summary.mealRates?.dinner,
-    calcData.summary.mealRates?.lunch,
-    "",
-    calcData.summary.perPersonCosts?.khala,
-    calcData.summary.perPersonCosts?.gas,
-    calcData.summary.perPersonCosts?.electricity,
-    calcData.summary.perPersonCosts?.wifi,
-    calcData.summary.totalBariVara,
-    calcData.summary.totalAdditionalCosts || 0,
-    "",
-    ""
-  ].join(",");
-
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows, "", summaryRow].join("\r\n");
-  downloadCsvFile(csvContent, `hisab-calculation-${selectedMonth}.csv`);
+function formatMonthYear(monthStr) {
+  if (!monthStr) return "";
+  const [year, month] = monthStr.split("-").map(Number);
+  if (!year || !month) return monthStr;
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleString("en-US", { month: "long", year: "numeric" });
 }
-
-function exportBazarToCsv() {
-  if (!adminBazarAllRows || adminBazarAllRows.length === 0) {
-    alert(t("no_data"));
-    return;
-  }
-  const headers = ["Date", "Member", "Username", "Description", "Amount (TK)"];
-  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
-  const rows = adminBazarAllRows.map((r) => [
-    escapeCsv(r.date),
-    escapeCsv(r.userName || "Unknown"),
-    escapeCsv(r.userUsername || ""),
-    escapeCsv(r.description),
-    r.amount || 0
-  ].join(","));
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
-  downloadCsvFile(csvContent, `hisab-bazar-${selectedMonth}.csv`);
-}
-
-function exportMealToCsv() {
-  if (!adminMealAllRows || adminMealAllRows.length === 0) {
-    alert(t("no_data"));
-    return;
-  }
-  const headers = ["Date", "Member", "Username", "Morning", "Lunch", "Dinner", "Total"];
-  const escapeCsv = (str) => `"${String(str ?? "").replaceAll('"', '""')}"`;
-  const rows = adminMealAllRows.map((r) => [
-    escapeCsv(r.date),
-    escapeCsv(r.userName || "Unknown"),
-    escapeCsv(r.userUsername || ""),
-    r.morning || 0,
-    r.lunch || 0,
-    r.dinner || 0,
-    r.totalMeal || 0
-  ].join(","));
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
-  downloadCsvFile(csvContent, `hisab-meals-${selectedMonth}.csv`);
-}
-
 
 function shareMemberStatementWa(uid) {
   if (!calcData || !calcData.rows) return;
@@ -1427,8 +1312,8 @@ function shareMemberStatementWa(uid) {
     : `পাওনা/অতিরিক্ত (Pay): ৳${balance.pay}`;
 
   const message = 
-`🏠 *মেস হিসাব — ${selectedMonth}*
-👤 *সদস্য:* ${row.name} (@${row.username})
+`🏠 *মেস হিসাব — ${formatMonthYear(selectedMonth)}*
+👤 *সদস্য:* ${row.name}
 ━━━━━━━━━━━━━━━━━━━━━
 🍽️ *মিল বিবরণী:*
 • সকাল: ${row.morningMeals} | দুপুর: ${row.lunchMeals} | রাত: ${row.dinnerMeals}
@@ -1465,7 +1350,7 @@ function shareMessSummaryWa() {
   }).join("\n");
 
   const message = 
-`🏠 *মেস হিসাবের সারাংশ — ${selectedMonth}*
+`🏠 *মেস হিসাবের সারাংশ — ${formatMonthYear(selectedMonth)}*
 ━━━━━━━━━━━━━━━━━━━━━
 📊 *সার্বিক অবস্থা:*
 • মোট মিল: ${s.totalMeals} (সকাল: ${s.totalMorningMeals}, দুপুর: ${s.totalLunchMeals}, রাত: ${s.totalDinnerMeals})
@@ -1490,18 +1375,6 @@ function copyToClipboardAndShare(message) {
   }
   const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   window.open(waUrl, "_blank");
-}
-
-function downloadCsvFile(content, fileName) {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 // ─────────────────────────────────────────────
@@ -1827,38 +1700,6 @@ function handleRemoveFromCalc(uid, name) {
   if (!confirm(`Remove ${name} from this month's calculation?`)) return;
   const row = document.getElementById(`row-${uid}`);
   if (row) row.remove();
-}
-
-// ─────────────────────────────────────────────
-// PDF Export using jsPDF + autoTable
-// ─────────────────────────────────────────────
-function exportToPdf() {
-  if (!calcData || calcData.rows.length === 0) {
-    alert("No data to export.");
-    return;
-  }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape" });
-
-  doc.setFontSize(16);
-  doc.text(`Meal & Expense Report — ${selectedMonth}`, 14, 15);
-  doc.setFontSize(10);
-  doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals} | Total Unit: ${calcData.summary.totalMealUnits}`, 14, 23);
-  doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcData.summary.mealRates.morning}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcData.summary.mealRates.lunch}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcData.summary.mealRates.dinner})`, 14, 29);
-  doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}${calcData.summary.totalAdditionalCosts > 0 ? ` | Additional: ৳${calcData.summary.totalAdditionalCosts}` : ""}`, 14, 35);
-
-  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Bazar", "Base Rate", "Dinner Rate", "Lunch Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Additional", "Due", "Pay"]];
-  const body = calcData.rows.map((r) => {
-    const balance = getBalanceParts(r.totalPayable);
-    return [
-      r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.dinnerRate}`, `৳${r.lunchRate}`, `৳${r.mealCost}`,
-      `৳${r.khalaPerPerson}`, `৳${r.gasPerPerson}`, `৳${r.electricityPerPerson}`,
-      `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, `৳${r.additionalCost || 0}`, formatBalanceAmount(balance.due), formatBalanceAmount(balance.pay)
-    ];
-  });
-
-  doc.autoTable({ head, body, startY: 40, theme: "grid" });
-  doc.save(`hisab-${selectedMonth}.pdf`);
 }
 
 // ─────────────────────────────────────────────

@@ -16,10 +16,6 @@
   <meta name="apple-mobile-web-app-title" content="Hisab"/>
   <link rel="apple-touch-icon" href="./pwa-icon-192.png"/>
 
-  <!-- jsPDF + autoTable for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
   <style>
     :root {
       --clr-bg: #f6f8fb;
@@ -810,11 +806,9 @@
         <div class="card-header-custom">
           <div><i class="bi bi-table me-1"></i> <span data-i18n="nav_dashboard">Monthly Calculation</span></div>
           <div class="ms-auto d-flex flex-wrap gap-2">
-            <button class="btn-outline-custom" id="saveRoomRentsBtn"><i class="bi bi-house-check me-1"></i><span data-i18n="btn_save_rents">Save Room Rents</span></button>
+            <button class="btn-outline-custom" id="saveRoomRentsBtn"><i class="bi bi-house-check me-1"></i><span data-i18n="btn_save_rents">Bulk Save Rents</span></button>
             <button class="btn-outline-custom" id="recalculateBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_recalculate">Recalculate</span></button>
-            <button class="btn-outline-custom" id="shareMessSummaryBtn"><i class="bi bi-whatsapp text-success me-1"></i><span data-i18n="btn_share_mess_wa">Share Summary</span></button>
-            <button class="btn-outline-custom" id="exportCsvBtn"><i class="bi bi-file-earmark-spreadsheet me-1"></i><span data-i18n="btn_export_csv">Export CSV</span></button>
-            <button class="btn-primary-custom" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf me-1"></i><span data-i18n="btn_export_pdf">Export PDF</span></button>
+            <button class="btn-primary-custom" id="shareMessSummaryBtn"><i class="bi bi-whatsapp me-1"></i><span data-i18n="btn_share_mess_wa">Share Summary</span></button>
           </div>
         </div>
         <div class="card-body-custom">
@@ -886,7 +880,6 @@
       <div class="card-header-custom">
         <div><i class="bi bi-basket me-1"></i> <span data-i18n="bazar_history">All Bazar History</span></div>
         <div class="ms-auto d-flex flex-wrap gap-2">
-          <button type="button" class="btn-outline-custom" id="exportBazarCsvBtn"><i class="bi bi-download me-1"></i><span data-i18n="btn_export_csv">Export CSV</span></button>
           <button type="button" class="btn-outline-custom" id="refreshBazarHistoryBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_refresh">Refresh</span></button>
           <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteBazarBtn" disabled><i class="bi bi-trash me-1"></i><span data-i18n="btn_bulk_delete">Delete Selected</span></button>
         </div>
@@ -938,7 +931,6 @@
       <div class="card-header-custom">
         <div><i class="bi bi-egg-fried me-1"></i> <span data-i18n="meal_history">All Meal History</span></div>
         <div class="ms-auto d-flex flex-wrap gap-2">
-          <button type="button" class="btn-outline-custom" id="exportMealCsvBtn"><i class="bi bi-download me-1"></i><span data-i18n="btn_export_csv">Export CSV</span></button>
           <button type="button" class="btn-outline-custom" id="refreshMealHistoryBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_refresh">Refresh</span></button>
           <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteMealBtn" disabled><i class="bi bi-trash me-1"></i><span data-i18n="btn_bulk_delete">Delete Selected</span></button>
         </div>

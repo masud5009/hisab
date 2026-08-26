@@ -45,10 +45,8 @@ export const translations = {
     pay: "Payable / Balance",
     
     // Actions & Buttons
-    btn_save_rents: "Save Room Rents",
+    btn_save_rents: "Bulk Save Rents",
     btn_recalculate: "Recalculate",
-    btn_export_pdf: "Export PDF",
-    btn_export_csv: "Export CSV",
     btn_share_mess_wa: "Share Summary",
     btn_share_statement: "Share Statement",
     btn_add: "Add",
@@ -145,10 +143,8 @@ export const translations = {
     pay: "পাওনা (Pay)",
     
     // Actions & Buttons
-    btn_save_rents: "ঘর ভাড়া সংরক্ষণ",
+    btn_save_rents: "একসাথে সবার ভাড়া সেভ",
     btn_recalculate: "পুনঃগণনা",
-    btn_export_pdf: "পিডিএফ ডাউনলোড",
-    btn_export_csv: "সিএসভি / এক্সেল",
     btn_share_mess_wa: "মেস সামারি শেয়ার",
     btn_share_statement: "হিসাব স্লিপ শেয়ার",
     btn_add: "যুক্ত করুন",

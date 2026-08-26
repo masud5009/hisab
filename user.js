@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadSummary();
   });
   bindIfExists("userShareWaBtn", "click", shareMyStatementWa);
-  bindIfExists("userExportCsvBtn", "click", exportMyStatementCsv);
   bindIfExists("logoutBtn", "click", handleLogout);
   bindIfExists("mobileLogoutBtn", "click", handleLogout);
   bindIfExists("mobileMoreBtn", "click", openUserMoreDrawer);
@@ -577,6 +576,14 @@ function updateUserAnalytics(userMeals, totalBazar, payableBreakdown) {
   }
 }
 
+function formatMonthYear(monthStr) {
+  if (!monthStr) return "";
+  const [year, month] = monthStr.split("-").map(Number);
+  if (!year || !month) return monthStr;
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleString("en-US", { month: "long", year: "numeric" });
+}
+
 function shareMyStatementWa() {
   const p = lastUserSummaryData.payableBreakdown;
   const totalMeals = lastUserSummaryData.totalMeals || 0;
@@ -589,8 +596,8 @@ function shareMyStatementWa() {
     : "হিসাব প্রক্রিয়াধীন";
 
   const message = 
-`🏠 *আমার মেস হিসাব — ${selectedMonth}*
-👤 *সদস্য:* ${currentUser.name} (@${currentUser.username})
+`🏠 *আমার মেস হিসাব — ${formatMonthYear(selectedMonth)}*
+👤 *সদস্য:* ${currentUser.name}
 ━━━━━━━━━━━━━━━━━━━━━
 🍽️ *মিল বিবরণ:*
 • সকাল: ${mb.morning} | দুপুর: ${mb.lunch} | রাত: ${mb.dinner}
@@ -618,60 +625,7 @@ function shareMyStatementWa() {
   window.open(waUrl, "_blank");
 }
 
-function exportMyStatementCsv() {
-  const p = lastUserSummaryData.payableBreakdown;
-  const totalMeals = lastUserSummaryData.totalMeals || 0;
-  const totalBazar = lastUserSummaryData.totalBazar || 0;
-  const mb = p?.mealBreakdown || { morning: 0, lunch: 0, dinner: 0 };
 
-  const summaryHeaders = ["Field", "Value"];
-  const summaryRows = [
-    ["Member Name", `"${currentUser.name}"`],
-    ["Username", `"${currentUser.username}"`],
-    ["Month", `"${selectedMonth}"`],
-    ["Morning Meals", mb.morning],
-    ["Lunch Meals", mb.lunch],
-    ["Dinner Meals", mb.dinner],
-    ["Total Meals", totalMeals],
-    ["Base Meal Rate", lastUserSummaryData.baseRate || 0],
-    ["Meal Cost (TK)", p?.mealCost ?? 0],
-    ["Khala Bill (TK)", p?.khalaPerPerson ?? 0],
-    ["Gas Bill (TK)", p?.gasPerPerson ?? 0],
-    ["Electricity Bill (TK)", p?.electricityPerPerson ?? 0],
-    ["WiFi Bill (TK)", p?.wifiPerPerson ?? 0],
-    ["Room Rent (TK)", p?.bariVara ?? 0],
-    ["Additional Cost (TK)", p?.additionalCost ?? 0],
-    ["My Total Bazar (TK)", totalBazar],
-    ["Net Due / Payable (TK)", p?.totalPayable ?? 0]
-  ].map(r => r.join(","));
-
-  const bazarHeaders = ["Date", "Description", "Amount (TK)"];
-  const bazarRows = (lastUserSummaryData.userBazar || []).map(b => [
-    `"${b.date || ""}"`,
-    `"${(b.description || "").replaceAll('"', '""')}"`,
-    b.amount || 0
-  ].join(","));
-
-  const csvContent = "\uFEFF" + [
-    "=== MONTHLY SUMMARY ===",
-    summaryHeaders.join(","),
-    ...summaryRows,
-    "",
-    "=== MY BAZAR LOGS ===",
-    bazarHeaders.join(","),
-    ...bazarRows
-  ].join("\r\n");
-
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `my-statement-${selectedMonth}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
 async function getPerPersonCostsForDue(monthData) {
   const cachedCosts = monthData.calculationSummary?.perPersonCosts;
