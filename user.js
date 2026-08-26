@@ -428,6 +428,7 @@ async function loadSummary() {
       .map((d) => d.data())
       .filter((c) => Array.isArray(c.userIds) && c.userIds.includes(currentUser.uid));
     const userAdditionalCost = userAddCosts.reduce((sum, c) => sum + (c.perPersonAmount || 0), 0);
+    const userAddCostNotes = userAddCosts.map((c) => c.note).filter(Boolean).join(", ");
 
     const monthData = monthSnap.exists() ? monthSnap.data() : {};
     const calculationSummary = monthData.calculationSummary || {};
@@ -447,6 +448,7 @@ async function loadSummary() {
       userMeals,
       userBazar,
       userAdditionalCost,
+      userAddCostNotes,
       monthData,
       mealRates,
       baseRate,
@@ -595,6 +597,11 @@ function shareMyStatementWa() {
     ? (p.totalPayable >= 0 ? `বকেয়া (Due): ৳${p.totalPayable}` : `পাওনা/অগ্রিম: ৳${Math.abs(p.totalPayable)}`)
     : "হিসাব প্রক্রিয়াধীন";
 
+  const addCostNotes = lastUserSummaryData.userAddCostNotes || "";
+  const addCostLine = p?.additionalCost > 0
+    ? `\n• অতিরিক্ত খরচ: ৳${p.additionalCost}${addCostNotes ? ` (${addCostNotes})` : ""}`
+    : "";
+
   const message = 
 `🏠 *আমার মেস হিসাব — ${formatMonthYear(selectedMonth)}*
 👤 *সদস্য:* ${currentUser.name}
@@ -610,10 +617,9 @@ function shareMyStatementWa() {
 • গ্যাস বিল: ৳${p?.gasPerPerson ?? 0}
 • বিদ্যুৎ বিল: ৳${p?.electricityPerPerson ?? 0}
 • ওয়াইফাই বিল: ৳${p?.wifiPerPerson ?? 0}
-• ঘর ভাড়া: ৳${p?.bariVara ?? 0}${p?.additionalCost > 0 ? `\n• অতিরিক্ত খরচ: ৳${p.additionalCost}` : ""}
-
-🛒 *আমার বাজার জমা:* ৳${totalBazar}
+• ঘর ভাড়া: ৳${p?.bariVara ?? 0}${addCostLine}
 ━━━━━━━━━━━━━━━━━━━━━
+🛒 *আমার বাজার জমা:* ৳${totalBazar}
 💰 *সর্বমোট ব্যালেন্স:* *${dueText}*
 ━━━━━━━━━━━━━━━━━━━━━
 📱 হিসাব অ্যাপ থেকে প্রেরিত`;

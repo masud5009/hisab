@@ -1311,6 +1311,12 @@ function shareMemberStatementWa(uid) {
     ? `বকেয়া (Due): ৳${balance.due}` 
     : `পাওনা/অতিরিক্ত (Pay): ৳${balance.pay}`;
 
+  const userAddCosts = (adminAdditionalCosts || []).filter((c) => Array.isArray(c.userIds) && c.userIds.includes(uid));
+  const addCostNotes = userAddCosts.map((c) => c.note).filter(Boolean).join(", ");
+  const addCostLine = row.additionalCost > 0
+    ? `\n• অতিরিক্ত খরচ: ৳${row.additionalCost}${addCostNotes ? ` (${addCostNotes})` : ""}`
+    : "";
+
   const message = 
 `🏠 *মেস হিসাব — ${formatMonthYear(selectedMonth)}*
 👤 *সদস্য:* ${row.name}
@@ -1326,10 +1332,9 @@ function shareMemberStatementWa(uid) {
 • গ্যাস বিল: ৳${row.gasPerPerson}
 • বিদ্যুৎ বিল: ৳${row.electricityPerPerson}
 • ওয়াইফাই বিল: ৳${row.wifiPerPerson}
-• ঘর ভাড়া: ৳${row.bariVara}${row.additionalCost > 0 ? `\n• অতিরিক্ত খরচ: ৳${row.additionalCost}` : ""}
-
-🛒 *বাজার জমা:* ৳${row.totalBazar}
+• ঘর ভাড়া: ৳${row.bariVara}${addCostLine}
 ━━━━━━━━━━━━━━━━━━━━━
+🛒 *বাজার জমা:* ৳${row.totalBazar}
 💰 *সর্বমোট ব্যালেন্স:* *${balanceText}*
 ━━━━━━━━━━━━━━━━━━━━━
 📱 হিসাব অ্যাপ থেকে প্রেরিত`;
