@@ -1087,57 +1087,6 @@
           <div class="summ-value" id="summLunchRate"><span class="skeleton skeleton-value" style="width: 60px;"></span></div>
         </div>
       </div>
-
-      <!-- Quick Action Buttons for Sharing -->
-      <div class="d-flex flex-wrap gap-2 mb-4">
-        <button type="button" class="btn btn-outline-success d-flex align-items-center gap-1" id="userShareWaBtn" style="border-radius: 8px;">
-          <i class="bi bi-whatsapp"></i> <span data-i18n="btn_share_statement">Share Statement</span>
-        </button>
-      </div>
-
-      <!-- Personal Visual Analytics -->
-      <div class="card mb-4">
-        <div class="card-header-custom">
-          <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-graph-up text-primary"></i>
-            <span data-i18n="analytics_overview">Personal Analytics</span>
-          </div>
-        </div>
-        <div class="card-body-custom">
-          <div class="row g-4">
-            <div class="col-md-6">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="small" data-i18n="meal_distribution">My Meal Ratio</strong>
-                <span class="badge bg-light text-dark border" id="userAnalyticsTotalMeals">0 Meals</span>
-              </div>
-              <div class="progress" style="height: 14px; border-radius: 7px;">
-                <div class="progress-bar bg-warning" role="progressbar" id="userBarMorning" style="width: 0%" title="Morning"></div>
-                <div class="progress-bar bg-info" role="progressbar" id="userBarLunch" style="width: 0%" title="Lunch"></div>
-                <div class="progress-bar bg-primary" role="progressbar" id="userBarDinner" style="width: 0%" title="Dinner"></div>
-              </div>
-              <div class="d-flex justify-content-between mt-2 small text-muted">
-                <span><i class="bi bi-circle-fill text-warning me-1" style="font-size:0.6rem"></i><span data-i18n="morning">Morning</span>: <strong id="userValMorning">0</strong></span>
-                <span><i class="bi bi-circle-fill text-info me-1" style="font-size:0.6rem"></i><span data-i18n="lunch">Lunch</span>: <strong id="userValLunch">0</strong></span>
-                <span><i class="bi bi-circle-fill text-primary me-1" style="font-size:0.6rem"></i><span data-i18n="dinner">Dinner</span>: <strong id="userValDinner">0</strong></span>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="small" data-i18n="personal_breakdown">Bazar Deposit vs Total Expense</strong>
-                <span class="badge bg-light text-dark border" id="userAnalyticsStatusBadge">—</span>
-              </div>
-              <div class="progress" style="height: 14px; border-radius: 7px;">
-                <div class="progress-bar bg-success" role="progressbar" id="userBarBazar" style="width: 0%" title="Bazar Deposit"></div>
-                <div class="progress-bar bg-danger" role="progressbar" id="userBarDue" style="width: 0%" title="Remaining Due"></div>
-              </div>
-              <div class="d-flex justify-content-between mt-2 small text-muted">
-                <span><i class="bi bi-circle-fill text-success me-1" style="font-size:0.6rem"></i><span data-i18n="my_bazar">My Bazar</span>: <strong id="userValBazar">৳0</strong></span>
-                <span><i class="bi bi-circle-fill text-danger me-1" style="font-size:0.6rem"></i><span data-i18n="due">Due / Total</span>: <strong id="userValDue">৳0</strong></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- ── Add Bazar ── -->
