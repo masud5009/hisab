@@ -49,16 +49,6 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ─── milk collection ───────────────────────────────────
-    match /milk/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin() ||
-        (request.auth != null &&
-          resource.data.userId == request.auth.uid &&
-          request.resource.data.userId == resource.data.userId);
-      allow delete: if isAdmin();
-    }
 
     // ─── months collection ─────────────────────────────────
     match /months/{monthId} {

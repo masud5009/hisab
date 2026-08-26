@@ -970,9 +970,6 @@
         <a href="#section-meals"><i class="bi bi-egg-fried"></i> <span class="nav-text" data-i18n="nav_meals">Add Meals</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
-        <a href="#section-milk"><i class="bi bi-cup-straw"></i> <span class="nav-text" data-i18n="nav_milk">Add Milk</span></a>
-      </div>
-      <div class="nav-item d-none d-md-block">
         <a href="#section-history"><i class="bi bi-clock-history"></i> <span class="nav-text" data-i18n="nav_history">History</span></a>
       </div>
       <div class="nav-item d-md-none">
@@ -1005,18 +1002,11 @@
     </div>
     <div class="user-drawer-body">
       <div class="drawer-section-title">Quick Actions & History</div>
-      <a href="#section-milk" class="drawer-nav-item">
-        <i class="bi bi-cup-straw"></i>
-        <div>
-          <strong>Add Milk</strong>
-          <small>Daily milk purchase & count</small>
-        </div>
-      </a>
       <a href="#section-history" class="drawer-nav-item">
         <i class="bi bi-clock-history"></i>
         <div>
           <strong>History</strong>
-          <small>Bazar, meal & milk history logs</small>
+          <small>Bazar & meal history logs</small>
         </div>
       </a>
 
@@ -1042,18 +1032,11 @@
           <small>Log daily meals</small>
         </div>
       </a>
-      <a href="#section-milk" class="drawer-nav-item">
-        <i class="bi bi-cup-straw"></i>
-        <div>
-          <strong>Add Milk</strong>
-          <small>Daily milk purchase & count</small>
-        </div>
-      </a>
       <a href="#section-history" class="drawer-nav-item">
         <i class="bi bi-clock-history"></i>
         <div>
           <strong>History</strong>
-          <small>Bazar, meal & milk history logs</small>
+          <small>Bazar & meal history logs</small>
         </div>
       </a>
     </div>
@@ -1086,10 +1069,6 @@
         <div class="summ-card meal">
           <div class="summ-label" data-i18n="my_meals">Total Meal</div>
           <div class="summ-value" id="summTotalMeals"><span class="skeleton skeleton-value" style="width: 50px;"></span></div>
-        </div>
-        <div class="summ-card highlight">
-          <div class="summ-label" data-i18n="my_milk">Total Milk</div>
-          <div class="summ-value" id="summTotalMilk"><span class="skeleton skeleton-value" style="width: 40px;"></span></div>
         </div>
         <div class="summ-card payable">
           <div class="summ-label" data-i18n="due">Due</div>
@@ -1246,37 +1225,6 @@
       </div>
     </div>
 
-    <!-- ── Add Milk ── -->
-    <div class="card meal-card dashboard-tab-panel" id="section-milk" role="tabpanel" hidden>
-      <div class="card-header-custom">
-        <i class="bi bi-cup-straw"></i> Add Milk Entry
-      </div>
-      <div class="card-body-custom">
-        <div id="milkAlert" class="alert d-none"></div>
-        <form id="milkForm" novalidate>
-          <div class="row g-3 align-items-end">
-            <div class="col-md-3 col-6">
-              <label class="form-label">তারিখ <strong class="text-danger">**</strong></label>
-              <input type="date" id="milkDate" class="form-control" required />
-            </div>
-            <div class="col-md-3 col-6 d-flex align-items-center" style="padding-top: 32px;">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="milkCheck" style="width: 20px; height: 20px;">
-                <label class="form-check-label ms-2" for="milkCheck" style="font-size: 1rem;">মilk খেয়েছেন?</label>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <button type="submit" id="milkAddBtn" class="btn-add w-100">
-                <i class="bi bi-plus-circle me-1"></i> Add
-                <span id="milkAddSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
-                  aria-hidden="true"></span>
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <!-- ── History ── -->
     <div id="section-history" class="dashboard-tab-panel" role="tabpanel" hidden>
       <div class="row g-3">
@@ -1399,65 +1347,6 @@
           </div>
         </div>
       </div>
-
-      <!-- ── Milk History ── -->
-      <div class="row g-3 mt-1">
-        <div class="col-12">
-          <div class="card meal-card">
-            <div class="card-header-custom">
-              <span class="card-header-title">
-                <i class="bi bi-cup-straw"></i> Milk History
-              </span>
-              <div class="history-filter">
-                <input type="date" id="milkHistoryDateSearch" class="form-control"
-                  aria-label="Search milk history by date" />
-                <button type="button" id="milkHistoryClearSearch"
-                  class="btn btn-sm btn-outline-secondary">Clear</button>
-              </div>
-            </div>
-            <div class="card-body-custom p-0">
-              <div class="table-responsive">
-                <table class="table meal-table mb-0">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Milk</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="milkHistoryBody">
-                    <tr class="skeleton-row">
-                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
-                      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
-                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
-                    </tr>
-                    <tr class="skeleton-row">
-                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
-                      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
-                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
-                    </tr>
-                    <tr class="skeleton-row">
-                      <td data-label="Date"><span class="skeleton skeleton-text" style="width: 85px;"></span></td>
-                      <td data-label="Milk"><span class="skeleton skeleton-text" style="width: 75px;"></span></td>
-                      <td data-label="Actions"><span class="skeleton skeleton-btn"></span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="history-pagination">
-                <span id="milkHistoryPageInfo">Showing 0 entries</span>
-                <div class="history-page-controls">
-                  <button type="button" id="milkHistoryPrev" class="btn btn-sm btn-outline-warning"><i
-                      class="bi bi-chevron-left"></i></button>
-                  <span id="milkHistoryPageLabel">Page 1 of 1</span>
-                  <button type="button" id="milkHistoryNext" class="btn btn-sm btn-outline-warning"><i
-                      class="bi bi-chevron-right"></i></button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
   </main>
@@ -1535,40 +1424,6 @@
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" id="editMealSaveBtn" class="btn btn-primary">Save changes
               <span id="editMealSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
-                aria-hidden="true"></span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Edit Milk Modal -->
-  <div class="modal fade" id="editMilkModal" tabindex="-1" aria-labelledby="editMilkLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <form id="editMilkForm">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editMilkLabel">Edit Milk Entry</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <input type="hidden" id="editMilkId" />
-            <div class="mb-3">
-              <label class="form-label">Date *</label>
-              <input type="date" id="editMilkDate" class="form-control" required />
-            </div>
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="editMilkCheck" style="width: 20px; height: 20px;">
-                <label class="form-check-label ms-2" for="editMilkCheck" style="font-size: 1rem;">মilk খেয়েছেন?</label>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" id="editMilkSaveBtn" class="btn btn-primary">Save changes
-              <span id="editMilkSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
                 aria-hidden="true"></span>
             </button>
           </div>

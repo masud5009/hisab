@@ -613,9 +613,6 @@
         <a href="#section-meal-history"><i class="bi bi-egg-fried"></i> <span class="nav-text" data-i18n="meal_history">Meal History</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
-        <a href="#section-milk-history"><i class="bi bi-cup-straw"></i> <span class="nav-text" data-i18n="milk_history">Milk History</span></a>
-      </div>
-      <div class="nav-item d-none d-md-block">
         <a href="#section-users"><i class="bi bi-people"></i> <span class="nav-text" data-i18n="nav_users">Members</span></a>
       </div>
       <div class="nav-item d-md-none">
@@ -662,13 +659,6 @@
           <small>All member meal entries</small>
         </div>
       </a>
-      <a href="#section-milk-history" class="drawer-nav-item">
-        <i class="bi bi-cup-straw"></i>
-        <div>
-          <strong>Milk History</strong>
-          <small>All member milk entries</small>
-        </div>
-      </a>
       <a href="#section-users" class="drawer-nav-item">
         <i class="bi bi-people"></i>
         <div>
@@ -711,13 +701,6 @@
         <div>
           <strong>Meal History</strong>
           <small>All member meal entries</small>
-        </div>
-      </a>
-      <a href="#section-milk-history" class="drawer-nav-item">
-        <i class="bi bi-cup-straw"></i>
-        <div>
-          <strong>Milk History</strong>
-          <small>All member milk entries</small>
         </div>
       </a>
       <a href="#section-users" class="drawer-nav-item">
@@ -987,57 +970,6 @@
       </div>
     </div>
 
-    <!-- Milk History -->
-    <div class="card mb-4 dashboard-tab-panel" id="section-milk-history" role="tabpanel" hidden>
-      <div class="card-header-custom">
-        <div><i class="bi bi-cup-straw me-1"></i> <span data-i18n="milk_history">All Milk History</span></div>
-        <div class="ms-auto d-flex flex-wrap gap-2">
-          <button type="button" class="btn-outline-custom" id="exportMilkCsvBtn"><i class="bi bi-download me-1"></i><span data-i18n="btn_export_csv">Export CSV</span></button>
-          <button type="button" class="btn-outline-custom" id="refreshMilkHistoryBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_refresh">Refresh</span></button>
-          <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteMilkBtn" disabled><i class="bi bi-trash me-1"></i><span data-i18n="btn_bulk_delete">Delete Selected</span></button>
-        </div>
-      </div>
-      <div class="card-body-custom p-0">
-        <div id="milkHistoryAlert" class="alert d-none m-3 mb-0"></div>
-        <div class="d-flex flex-wrap align-items-center gap-2 p-3 border-bottom">
-          <span class="text-muted small" id="milkPaginationInfo">Showing 0 entries</span>
-          <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0" for="milkHistoryDateSearch">Date</label>
-            <input type="date" id="milkHistoryDateSearch" class="form-control form-control-sm" style="width:150px" aria-label="Search milk history by date"/>
-            <button type="button" id="milkHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
-          </div>
-          <div class="ms-auto d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Rows</label>
-            <select id="milkPageSize" class="form-select form-select-sm" style="width:90px">
-              <option value="10" selected>10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-            <button type="button" class="btn-outline-custom" id="milkPrevPageBtn"><i class="bi bi-chevron-left"></i></button>
-            <span class="small text-muted" id="milkPageIndicator">Page 1 of 1</span>
-            <button type="button" class="btn-outline-custom" id="milkNextPageBtn"><i class="bi bi-chevron-right"></i></button>
-          </div>
-        </div>
-        <div class="table-responsive p-3">
-          <table class="table mb-0 align-middle">
-            <thead>
-              <tr>
-                <th style="width:42px"><input type="checkbox" id="selectAllMilkRows" aria-label="Select all milk rows"/></th>
-                <th>Date</th>
-                <th>Member</th>
-                <th>Milk</th>
-                <th class="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="adminMilkHistoryBody">
-              <tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
     <!-- ── Members List ── -->
     <div class="card mb-4 dashboard-tab-panel" id="section-users" role="tabpanel" hidden>
       <div class="card-header-custom">
@@ -1216,39 +1148,6 @@
           <div class="app-modal-footer">
             <button type="button" class="btn-outline-custom" data-close-modal="editMealModal">Cancel</button>
             <button type="submit" class="btn-primary-custom"><i class="bi bi-floppy me-1"></i>Save Meal</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="app-modal" id="editMilkModal" aria-hidden="true">
-    <div class="app-modal-panel">
-      <div class="app-modal-header">
-        <span><i class="bi bi-cup-straw me-1" style="color:var(--clr-primary)"></i>Edit Milk Entry</span>
-        <button type="button" class="btn-icon" data-close-modal="editMilkModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <form id="editMilkForm">
-        <div class="app-modal-body">
-          <div id="editMilkAlert" class="alert d-none"></div>
-          <input type="hidden" name="id"/>
-          <div class="mb-3">
-            <label class="form-label">Member</label>
-            <input type="text" name="member" class="form-control" readonly/>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Date *</label>
-            <input type="date" name="date" class="form-control" required/>
-          </div>
-          <div class="mb-0">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="hasMilk" id="editMilkHasMilk" style="width: 20px; height: 20px;">
-              <label class="form-check-label ms-2" for="editMilkHasMilk" style="font-size: 1rem;">Has Milk?</label>
-            </div>
-          </div>
-          <div class="app-modal-footer">
-            <button type="button" class="btn-outline-custom" data-close-modal="editMilkModal">Cancel</button>
-            <button type="submit" class="btn-primary-custom"><i class="bi bi-floppy me-1"></i>Save Milk</button>
           </div>
         </div>
       </form>
