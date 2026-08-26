@@ -806,6 +806,7 @@
         <div class="card-header-custom">
           <div><i class="bi bi-table me-1"></i> <span data-i18n="nav_dashboard">Monthly Calculation</span></div>
           <div class="ms-auto d-flex flex-wrap gap-2">
+            <button class="btn-outline-custom" id="mealReminderBtn"><i class="bi bi-bell me-1 text-warning"></i><span data-i18n="btn_remind_meals">Meal Reminder</span></button>
             <button class="btn-outline-custom" id="saveRoomRentsBtn"><i class="bi bi-house-check me-1"></i><span data-i18n="btn_save_rents">Bulk Save Rents</span></button>
             <button class="btn-outline-custom" id="recalculateBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_recalculate">Recalculate</span></button>
             <button class="btn-primary-custom" id="shareMessSummaryBtn"><i class="bi bi-whatsapp me-1"></i><span data-i18n="btn_share_mess_wa">Share Summary</span></button>
@@ -1224,6 +1225,30 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div class="app-modal" id="mealReminderModal" aria-hidden="true">
+    <div class="app-modal-panel">
+      <div class="app-modal-header">
+        <span><i class="bi bi-bell-fill me-1 text-warning"></i><span data-i18n="modal_meal_reminder_title">Today's Missing Meal Reminders</span></span>
+        <button type="button" class="btn-icon" data-close-modal="mealReminderModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="app-modal-body">
+        <div id="mealReminderDateBadge" class="small text-muted mb-3"><i class="bi bi-calendar-event me-1"></i><span id="mealReminderDateText"></span></div>
+        <div id="mealReminderBody">
+          <div class="text-center py-4 text-muted">
+            <div class="spinner-border text-warning mb-2"></div>
+            <div>Checking today's meals...</div>
+          </div>
+        </div>
+      </div>
+      <div class="app-modal-footer d-flex justify-content-between">
+        <button type="button" class="btn-outline-custom" data-close-modal="mealReminderModal">Close</button>
+        <button type="button" class="btn-primary-custom d-none" id="shareGroupMealReminderBtn">
+          <i class="bi bi-whatsapp me-1"></i><span data-i18n="btn_share_group_reminder">Share to Mess Group</span>
+        </button>
+      </div>
     </div>
   </div>
 

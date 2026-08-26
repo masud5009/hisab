@@ -85,6 +85,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
   document.getElementById("saveRoomRentsBtn").addEventListener("click", handleSaveRoomRents);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
+  bindIfExists("mealReminderBtn", "click", openMealReminderModal);
+  bindIfExists("shareGroupMealReminderBtn", "click", shareGroupMealReminderWa);
   bindIfExists("shareMessSummaryBtn", "click", shareMessSummaryWa);
   bindIfExists("editBazarForm", "submit", handleEditBazar);
   bindIfExists("refreshBazarHistoryBtn", "click", loadAdminBazarHistory);
@@ -1393,6 +1395,124 @@ function copyToClipboardAndShare(message, phone = "") {
     ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`
     : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   window.open(waUrl, "_blank");
+}
+
+// ─────────────────────────────────────────────
+// Meal Reminder for missing today's meals
+// ─────────────────────────────────────────────
+let missingMealMembers = [];
+let todayDateStr = "";
+
+async function openMealReminderModal() {
+  showModal("mealReminderModal");
+  const container = document.getElementById("mealReminderBody");
+  const groupBtn = document.getElementById("shareGroupMealReminderBtn");
+  const dateText = document.getElementById("mealReminderDateText");
+  if (groupBtn) groupBtn.classList.add("d-none");
+
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  todayDateStr = `${yyyy}-${mm}-${dd}`;
+
+  if (dateText) dateText.textContent = `তারিখ: ${todayDateStr}`;
+
+  if (container) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-muted">
+        <div class="spinner-border text-warning mb-2"></div>
+        <div>যাচাই করা হচ্ছে...</div>
+      </div>
+    `;
+  }
+
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const allMembers = usersSnap.docs
+      .map((d) => ({ uid: d.id, ...d.data() }))
+      .filter((u) => u.role !== "admin");
+
+    const mealsSnap = await getDocs(query(
+      collection(db, "meals"),
+      where("date", "==", todayDateStr)
+    ));
+    const submittedUserIds = new Set(mealsSnap.docs.map((d) => d.data().userId));
+
+    missingMealMembers = allMembers.filter((u) => !submittedUserIds.has(u.uid));
+
+    if (missingMealMembers.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-4 text-success">
+          <i class="bi bi-check-circle-fill fs-1 d-block mb-2 text-success"></i>
+          <div class="fw-bold fs-6">${t("all_meals_added_today")}</div>
+        </div>
+      `;
+      if (groupBtn) groupBtn.classList.add("d-none");
+      return;
+    }
+
+    if (groupBtn) groupBtn.classList.remove("d-none");
+
+    container.innerHTML = `
+      <div class="alert alert-warning py-2 mb-3 small d-flex align-items-center justify-content-between">
+        <span>⚠️ <strong>${missingMealMembers.length}</strong> ${t("lbl_missing_meal_count")}</span>
+      </div>
+      <div class="list-group">
+        ${missingMealMembers.map((m) => `
+          <div class="list-group-item d-flex align-items-center justify-content-between p-2">
+            <div>
+              <div class="fw-semibold text-dark">${escapeHtml(m.name || "Unknown")}</div>
+              <div class="small text-muted">${escapeHtml(m.phone || "ফোন নম্বর নেই")}</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 send-indiv-wa-btn" data-uid="${m.uid}">
+              <i class="bi bi-whatsapp"></i> <span>${t("btn_send_wa")}</span>
+            </button>
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    container.querySelectorAll(".send-indiv-wa-btn").forEach((btn) => {
+      btn.addEventListener("click", () => sendIndividualMealReminder(btn.dataset.uid));
+    });
+
+  } catch (err) {
+    console.error(err);
+    if (container) {
+      container.innerHTML = `<div class="alert alert-danger mb-0">Error: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+function sendIndividualMealReminder(uid) {
+  const member = missingMealMembers.find((m) => m.uid === uid);
+  if (!member) return;
+
+  const message = 
+`আসসালামু আলাইকুম ${member.name},
+আজকের (${todayDateStr}) মিল হিসাব এখনও অ্যাপে যুক্ত করা হয়নি। অনুগ্রহ করে দ্রুত হিসাব অ্যাপে আপনার মিল এন্ট্রি দিন।
+
+📱 হিসাব অ্যাপ`;
+
+  copyToClipboardAndShare(message, member.phone);
+}
+
+function shareGroupMealReminderWa() {
+  if (!missingMealMembers || missingMealMembers.length === 0) return;
+
+  const memberList = missingMealMembers.map((m) => `• ${m.name}`).join("\n");
+  const message = 
+`📢 *মিল রিমাইন্ডার — ${todayDateStr}*
+━━━━━━━━━━━━━━━━━━━━━
+⚠️ আজকে যারা এখনও মিল এন্ট্রি দেননি:
+${memberList}
+
+অনুগ্রহ করে দ্রুত হিসাব অ্যাপে আজকের মিল এন্ট্রি সম্পন্ন করুন।
+━━━━━━━━━━━━━━━━━━━━━
+📱 হিসাব অ্যাপ থেকে প্রেরিত`;
+
+  copyToClipboardAndShare(message);
 }
 
 // ─────────────────────────────────────────────
