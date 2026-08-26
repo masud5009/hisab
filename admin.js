@@ -1301,6 +1301,16 @@ function formatMonthYear(monthStr) {
   return date.toLocaleString("en-US", { month: "long", year: "numeric" });
 }
 
+function cleanWhatsAppPhone(phone) {
+  if (!phone) return "";
+  let digits = String(phone).replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 11 && digits.startsWith("01")) {
+    digits = "88" + digits;
+  }
+  return digits;
+}
+
 function shareMemberStatementWa(uid) {
   if (!calcData || !calcData.rows) return;
   const row = calcData.rows.find((r) => r.uid === uid);
@@ -1339,7 +1349,7 @@ function shareMemberStatementWa(uid) {
 ━━━━━━━━━━━━━━━━━━━━━
 📱 হিসাব অ্যাপ থেকে প্রেরিত`;
 
-  copyToClipboardAndShare(message);
+  copyToClipboardAndShare(message, row.phone);
 }
 
 function shareMessSummaryWa() {
@@ -1372,13 +1382,16 @@ ${memberSummaries}
   copyToClipboardAndShare(message);
 }
 
-function copyToClipboardAndShare(message) {
+function copyToClipboardAndShare(message, phone = "") {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(message).then(() => {
       showAlert("calcAlert", t("copied_to_clipboard"), "success", true);
     }).catch(() => {});
   }
-  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+  const cleanPhone = cleanWhatsAppPhone(phone);
+  const waUrl = cleanPhone 
+    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`
+    : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   window.open(waUrl, "_blank");
 }
 

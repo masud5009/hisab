@@ -224,6 +224,7 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
       uid: user.uid,
       name: user.name,
       username: user.username,
+      phone: user.phone || "",
       totalMeals: userTotalMeals,
       morningMeals: round2(userMealBreakdown.morning),
       lunchMeals: round2(userMealBreakdown.lunch),
