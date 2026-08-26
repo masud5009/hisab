@@ -18,6 +18,7 @@ import {
 import {
   collection,
   doc,
+  addDoc,
   deleteDoc,
   setDoc,
   updateDoc,
@@ -46,11 +47,13 @@ let adminMealRows = [];
 let mealCurrentPage = 1;
 let mealPageSize = 10;
 let mealMemberMap = new Map();
+let adminAdditionalCosts = [];
 const ADMIN_SECTION_IDS = [
   "section-calc",
   "section-costs",
   "section-bazar-history",
   "section-meal-history",
+  "section-additional-costs",
   "section-users",
   "section-add-user"
 ];
@@ -106,6 +109,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("mealPrevPageBtn", "click", () => changeMealPage(-1));
   bindIfExists("mealNextPageBtn", "click", () => changeMealPage(1));
   bindMealTotalPreview();
+  bindIfExists("additionalCostForm", "submit", handleAddAdditionalCost);
+  bindIfExists("selectAllCostMembersBtn", "click", handleSelectAllCostMembers);
+  bindIfExists("clearAllCostMembersBtn", "click", handleClearAllCostMembers);
+  bindIfExists("addCostAmount", "input", updateAdditionalCostPreview);
   document.getElementById("monthSelector").addEventListener("change", onMonthChange);
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => hideModal(btn.dataset.closeModal));
@@ -128,6 +135,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadCalculation();
   loadAdminBazarHistory();
   loadAdminMealHistory();
+  loadAdminAdditionalCosts();
 });
 
 // ─────────────────────────────────────────────
@@ -159,6 +167,7 @@ function onMonthChange() {
   loadCalculation();
   loadAdminBazarHistory();
   loadAdminMealHistory();
+  loadAdminAdditionalCosts();
 }
 
 function updateHistoryDateSearchRanges() {
@@ -251,7 +260,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     link.setAttribute("aria-selected", String(isActive));
   });
 
-  const moreSubSectionIds = ["section-bazar-history", "section-meal-history", "section-users"];
+  const moreSubSectionIds = ["section-bazar-history", "section-meal-history", "section-additional-costs", "section-users"];
   const moreBtn = document.getElementById("mobileMoreBtn");
   if (moreBtn) {
     moreBtn.classList.toggle("active", moreSubSectionIds.includes(activeId));
@@ -263,6 +272,7 @@ function showDashboardTab(sectionIds, activeId, updateHash) {
     "section-costs": { label: "Settings", icon: "bi-cash-stack" },
     "section-bazar-history": { label: "Bazar History", icon: "bi-basket" },
     "section-meal-history": { label: "Meal History", icon: "bi-egg-fried" },
+    "section-additional-costs": { label: "Additional Costs", icon: "bi-wallet2" },
     "section-users": { label: "Members", icon: "bi-people" },
     "section-add-user": { label: "Add Member", icon: "bi-person-plus" },
   };
@@ -318,6 +328,7 @@ await secondaryAuth.signOut();
     loadUsersPanel();
     loadAdminBazarHistory();
     loadAdminMealHistory();
+    loadAdminAdditionalCosts();
     loadCalculation();
   } catch (err) {
     showAlert("addUserAlert", err.message, "danger");
@@ -406,6 +417,7 @@ async function handleEditMember(e) {
     loadUsersPanel();
     loadAdminBazarHistory();
     loadAdminMealHistory();
+    loadAdminAdditionalCosts();
     loadCalculation();
   } catch (err) {
     showAlert("editMemberAlert", err.message, "danger", false);
@@ -421,6 +433,7 @@ async function handleDeleteMember(uid, name) {
     loadUsersPanel();
     loadAdminBazarHistory();
     loadAdminMealHistory();
+    loadAdminAdditionalCosts();
     loadCalculation();
   } catch (err) {
     showAlert("usersPanelAlert", err.message, "danger");
@@ -1051,8 +1064,12 @@ async function loadCalculation() {
     const rentSnap = await getDocs(query(collection(db, "rentSplits"), where("month", "==", selectedMonth)));
     const rentSplits = rentSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
+    // Fetch additional costs
+    const addCostsSnap = await getDocs(query(collection(db, "additionalCosts"), where("month", "==", selectedMonth)));
+    const additionalCosts = addCostsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
     // Build table
-    const result = buildCalculationTable(users, allMeals, allBazar, monthCosts, rentSplits);
+    const result = buildCalculationTable(users, allMeals, allBazar, monthCosts, rentSplits, additionalCosts);
     calcData = result;
     renderCalcTable(result, tableWrap);
     await cacheCalculationSummary(result.summary);
@@ -1106,6 +1123,7 @@ function renderCalcTable({ rows, summary }, container) {
       { label: t("total_unit"), value: summary.totalMealUnits, icon: "bi-calculator", variant: "primary" },
       { label: t("total_bazar"), value: `৳${summary.totalBazar}`, icon: "bi-cart-check", variant: "success" },
       { label: t("room_rent"), value: `৳${summary.totalBariVara}`, icon: "bi-house", variant: "secondary" },
+      ...(summary.totalAdditionalCosts > 0 ? [{ label: t("additional_cost"), value: `৳${summary.totalAdditionalCosts}`, icon: "bi-wallet2", variant: "orange" }] : []),
       { label: t("base_rate"), value: `৳${summary.mealRate}`, icon: "bi-tag", variant: "warning" },
       { label: t("dinner_rate"), value: `৳${summary.mealRates.dinner}`, icon: "bi-moon", variant: "purple" },
       { label: t("lunch_rate"), value: `৳${summary.mealRates.lunch}`, icon: "bi-brightness-high", variant: "info" },
@@ -1143,6 +1161,7 @@ function renderCalcTable({ rows, summary }, container) {
         <th>${t("th_electricity")}</th>
         <th>${t("th_wifi")}</th>
         <th>${t("th_bari_vara")}</th>
+        <th>${t("th_additional")}</th>
         <th>${t("th_due")}</th>
         <th>${t("th_pay")}</th>
         <th>${t("th_share")}</th>
@@ -1175,6 +1194,7 @@ function renderCalcTable({ rows, summary }, container) {
               data-uid="${row.uid}" value="${row.bariVara}" min="0" step="0.01" style="width:90px">`
         }
       </td>
+      <td><strong>৳${row.additionalCost || 0}</strong></td>
       <td><strong class="text-danger due-value" data-base-payable="${basePayable(row)}">${formatBalanceAmount(balance.due)}</strong></td>
       <td><strong class="text-success pay-value">${formatBalanceAmount(balance.pay)}</strong></td>
       <td>
@@ -1298,6 +1318,7 @@ function exportCalcToCsv() {
     "Electricity (TK)",
     "WiFi (TK)",
     "Room Rent (TK)",
+    "Additional (TK)",
     "Due (TK)",
     "Payable (TK)"
   ];
@@ -1323,6 +1344,7 @@ function exportCalcToCsv() {
       r.electricityPerPerson,
       r.wifiPerPerson,
       r.bariVara,
+      r.additionalCost || 0,
       balance.due !== null ? balance.due : 0,
       balance.pay !== null ? balance.pay : 0
     ].join(",");
@@ -1346,6 +1368,7 @@ function exportCalcToCsv() {
     calcData.summary.perPersonCosts?.electricity,
     calcData.summary.perPersonCosts?.wifi,
     calcData.summary.totalBariVara,
+    calcData.summary.totalAdditionalCosts || 0,
     "",
     ""
   ].join(",");
@@ -1418,7 +1441,7 @@ function shareMemberStatementWa(uid) {
 • গ্যাস বিল: ৳${row.gasPerPerson}
 • বিদ্যুৎ বিল: ৳${row.electricityPerPerson}
 • ওয়াইফাই বিল: ৳${row.wifiPerPerson}
-• ঘর ভাড়া: ৳${row.bariVara}
+• ঘর ভাড়া: ৳${row.bariVara}${row.additionalCost > 0 ? `\n• অতিরিক্ত খরচ: ৳${row.additionalCost}` : ""}
 
 🛒 *বাজার জমা:* ৳${row.totalBazar}
 ━━━━━━━━━━━━━━━━━━━━━
@@ -1448,7 +1471,7 @@ function shareMessSummaryWa() {
 • মোট মিল: ${s.totalMeals} (সকাল: ${s.totalMorningMeals}, দুপুর: ${s.totalLunchMeals}, রাত: ${s.totalDinnerMeals})
 • মোট বাজার: ৳${s.totalBazar}
 • বেস মিল রেট: ৳${s.mealRate}
-• মোট ঘর ভাড়া: ৳${s.totalBariVara}
+• মোট ঘর ভাড়া: ৳${s.totalBariVara}${s.totalAdditionalCosts > 0 ? `\n• মোট অতিরিক্ত খরচ: ৳${s.totalAdditionalCosts}` : ""}
 • সদস্য সংখ্যা: ${s.userCount} জন
 
 👥 *সদস্যদের হিসাব বিবরণী:*
@@ -1582,7 +1605,8 @@ function basePayable(row) {
     row.khalaPerPerson +
     row.gasPerPerson +
     row.electricityPerPerson +
-    row.wifiPerPerson -
+    row.wifiPerPerson +
+    (row.additionalCost || 0) -
     row.totalBazar
   );
 }
@@ -1624,6 +1648,179 @@ function bindIfExists(id, eventName, handler) {
 }
 
 // ─────────────────────────────────────────────
+// Additional Costs (Shared Extra Expense)
+// ─────────────────────────────────────────────
+async function loadAdminAdditionalCosts() {
+  const tbody = document.getElementById("additionalCostsTableBody");
+  if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Loading additional costs...</td></tr>`;
+
+  try {
+    const [usersSnap, costsSnap] = await Promise.all([
+      getDocs(query(collection(db, "users"), where("role", "==", "user"))),
+      getDocs(query(collection(db, "additionalCosts"), where("month", "==", selectedMonth)))
+    ]);
+
+    const users = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+    renderCostMemberCheckboxes(users);
+
+    adminAdditionalCosts = costsSnap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.date || b.createdAt || "").localeCompare(String(a.date || a.createdAt || "")));
+
+    renderAdminAdditionalCostsTable(users);
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderCostMemberCheckboxes(users = []) {
+  const container = document.getElementById("costMemberCheckboxes");
+  if (!container) return;
+
+  if (users.length === 0) {
+    container.innerHTML = `<span class="text-muted small">No members available.</span>`;
+    return;
+  }
+
+  container.innerHTML = users.map((u) => `
+    <div class="form-check me-2">
+      <input class="form-check-input cost-member-check" type="checkbox" value="${u.uid}" id="costMember_${u.uid}" checked>
+      <label class="form-check-label" for="costMember_${u.uid}">
+        <strong>${escapeHtml(u.name || "")}</strong> <small class="text-muted">(@${escapeHtml(u.username || "")})</small>
+      </label>
+    </div>
+  `).join("");
+
+  container.querySelectorAll(".cost-member-check").forEach((cb) => {
+    cb.addEventListener("change", updateAdditionalCostPreview);
+  });
+  updateAdditionalCostPreview();
+}
+
+function updateAdditionalCostPreview() {
+  const preview = document.getElementById("addCostSplitPreview");
+  if (!preview) return;
+
+  const amount = parseFloat(document.getElementById("addCostAmount")?.value) || 0;
+  const selectedChecks = document.querySelectorAll(".cost-member-check:checked");
+  const count = selectedChecks.length;
+  const perPerson = count > 0 ? round2(amount / count) : 0;
+
+  preview.innerHTML = `<i class="bi bi-calculator me-1"></i> ৳${round2(amount)} ÷ ${count} members = <strong>৳${perPerson} / person</strong>`;
+}
+
+function handleSelectAllCostMembers() {
+  document.querySelectorAll(".cost-member-check").forEach((cb) => { cb.checked = true; });
+  updateAdditionalCostPreview();
+}
+
+function handleClearAllCostMembers() {
+  document.querySelectorAll(".cost-member-check").forEach((cb) => { cb.checked = false; });
+  updateAdditionalCostPreview();
+}
+
+async function handleAddAdditionalCost(e) {
+  e.preventDefault();
+  const amountInput = document.getElementById("addCostAmount");
+  const noteInput = document.getElementById("addCostNote");
+  const amount = parseFloat(amountInput.value);
+  const note = noteInput.value.trim();
+
+  const selectedChecks = Array.from(document.querySelectorAll(".cost-member-check:checked"));
+  const userIds = selectedChecks.map((cb) => cb.value);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showAlert("additionalCostAlert", "Please enter a valid positive amount.", "warning", false);
+    return;
+  }
+  if (!note) {
+    showAlert("additionalCostAlert", "Please enter a note / description.", "warning", false);
+    return;
+  }
+  if (userIds.length === 0) {
+    showAlert("additionalCostAlert", "Please select at least one member to divide this amount.", "warning", false);
+    return;
+  }
+
+  const perPersonAmount = round2(amount / userIds.length);
+  const saveBtn = document.getElementById("saveAdditionalCostBtn");
+
+  try {
+    if (saveBtn) saveBtn.disabled = true;
+    const today = new Date().toISOString().slice(0, 10);
+    await addDoc(collection(db, "additionalCosts"), {
+      month: selectedMonth,
+      date: today,
+      amount: round2(amount),
+      note,
+      userIds,
+      perPersonAmount,
+      createdAt: serverTimestamp()
+    });
+
+    showAlert("additionalCostAlert", "Additional cost added and divided successfully.", "success");
+    amountInput.value = "";
+    noteInput.value = "";
+    handleSelectAllCostMembers();
+    await loadAdminAdditionalCosts();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("additionalCostAlert", err.message, "danger", false);
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+
+function renderAdminAdditionalCostsTable(users = []) {
+  const tbody = document.getElementById("additionalCostsTableBody");
+  if (!tbody) return;
+
+  if (adminAdditionalCosts.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No additional costs for ${selectedMonth}.</td></tr>`;
+    return;
+  }
+
+  const userMap = new Map(users.map((u) => [u.uid, u.name || u.username]));
+
+  tbody.innerHTML = adminAdditionalCosts.map((item) => {
+    const memberNames = (item.userIds || [])
+      .map((uid) => userMap.get(uid) || "Member")
+      .join(", ");
+
+    return `
+      <tr>
+        <td>${escapeHtml(item.date || "")}</td>
+        <td><strong>${escapeHtml(item.note || "—")}</strong></td>
+        <td><strong class="text-primary">৳${item.amount || 0}</strong></td>
+        <td><span class="badge bg-light text-dark border" title="${escapeHtml(memberNames)}">${item.userIds?.length || 0} members</span> <small class="text-muted d-block" style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(memberNames)}</small></td>
+        <td><strong>৳${item.perPersonAmount || 0}</strong></td>
+        <td class="text-end">
+          <button type="button" class="btn-icon danger delete-cost-btn" data-id="${item.id}" title="Delete entry">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".delete-cost-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleDeleteAdditionalCost(btn.dataset.id));
+  });
+}
+
+async function handleDeleteAdditionalCost(id) {
+  if (!confirm("Delete this additional cost entry? This will recalculate member balances.")) return;
+  try {
+    await deleteDoc(doc(db, "additionalCosts", id));
+    showAlert("additionalCostAlert", "Additional cost entry removed.", "success");
+    await loadAdminAdditionalCosts();
+    await loadCalculation();
+  } catch (err) {
+    showAlert("additionalCostAlert", err.message, "danger");
+  }
+}
+
+// ─────────────────────────────────────────────
 // Remove from Calculation (visual only via flag)
 // ─────────────────────────────────────────────
 function handleRemoveFromCalc(uid, name) {
@@ -1648,15 +1845,15 @@ function exportToPdf() {
   doc.setFontSize(10);
   doc.text(`Base Rate: ৳${calcData.summary.mealRate} | Total Meals: ${calcData.summary.totalMeals} | Total Unit: ${calcData.summary.totalMealUnits}`, 14, 23);
   doc.text(`Morning: ${calcData.summary.totalMorningMeals} (${calcData.summary.mealPercentages.morning}%, ৳${calcData.summary.mealRates.morning}) | Lunch: ${calcData.summary.totalLunchMeals} (${calcData.summary.mealPercentages.lunch}%, ৳${calcData.summary.mealRates.lunch}) | Dinner: ${calcData.summary.totalDinnerMeals} (${calcData.summary.mealPercentages.dinner}%, ৳${calcData.summary.mealRates.dinner})`, 14, 29);
-  doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}`, 14, 35);
+  doc.text(`Total Bazar: ৳${calcData.summary.totalBazar} | Room Rent: ৳${calcData.summary.totalBariVara}${calcData.summary.totalAdditionalCosts > 0 ? ` | Additional: ৳${calcData.summary.totalAdditionalCosts}` : ""}`, 14, 35);
 
-  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Bazar", "Base Rate", "Dinner Rate", "Lunch Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Due", "Pay"]];
+  const head = [["Name", "Morning", "Lunch", "Dinner", "Total Meals", "Bazar", "Base Rate", "Dinner Rate", "Lunch Rate", "Meal Cost", "Khala", "Gas", "Electricity", "WiFi", "Bari Vara", "Additional", "Due", "Pay"]];
   const body = calcData.rows.map((r) => {
     const balance = getBalanceParts(r.totalPayable);
     return [
       r.name, r.morningMeals, r.lunchMeals, r.dinnerMeals, r.totalMeals, `৳${r.totalBazar}`, `৳${r.mealRate}`, `৳${r.dinnerRate}`, `৳${r.lunchRate}`, `৳${r.mealCost}`,
       `৳${r.khalaPerPerson}`, `৳${r.gasPerPerson}`, `৳${r.electricityPerPerson}`,
-      `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, formatBalanceAmount(balance.due), formatBalanceAmount(balance.pay)
+      `৳${r.wifiPerPerson}`, `৳${r.bariVara}`, `৳${r.additionalCost || 0}`, formatBalanceAmount(balance.due), formatBalanceAmount(balance.pay)
     ];
   });
 

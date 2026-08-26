@@ -405,7 +405,7 @@ function renderSummarySkeleton() {
 async function loadSummary() {
   renderSummarySkeleton();
   try {
-    const [mealsSnap, bazarSnap, monthSnap] = await Promise.all([
+    const [mealsSnap, bazarSnap, addCostsSnap, monthSnap] = await Promise.all([
       getDocs(query(
         collection(db, "meals"),
         where("userId", "==", currentUser.uid),
@@ -416,11 +416,20 @@ async function loadSummary() {
         where("userId", "==", currentUser.uid),
         where("month", "==", selectedMonth)
       )),
+      getDocs(query(
+        collection(db, "additionalCosts"),
+        where("month", "==", selectedMonth)
+      )),
       getDoc(doc(db, "months", selectedMonth))
     ]);
 
     const userMeals = mealsSnap.docs.map((d) => d.data());
     const userBazar = bazarSnap.docs.map((d) => d.data());
+    const userAddCosts = addCostsSnap.docs
+      .map((d) => d.data())
+      .filter((c) => Array.isArray(c.userIds) && c.userIds.includes(currentUser.uid));
+    const userAdditionalCost = userAddCosts.reduce((sum, c) => sum + (c.perPersonAmount || 0), 0);
+
     const monthData = monthSnap.exists() ? monthSnap.data() : {};
     const calculationSummary = monthData.calculationSummary || {};
     const rates = calculationSummary.mealRates || {};
@@ -432,12 +441,13 @@ async function loadSummary() {
     };
     const totalMeals = calcUserTotalMeals(userMeals);
     const totalBazar = calcUserTotalBazar(userBazar);
-    const payableBreakdown = await calculateUserPayableBreakdown(userMeals, totalBazar, monthData, mealRates);
+    const payableBreakdown = await calculateUserPayableBreakdown(userMeals, totalBazar, monthData, mealRates, userAdditionalCost);
     const due = payableBreakdown ? payableBreakdown.totalPayable : null;
 
     lastUserSummaryData = {
       userMeals,
       userBazar,
+      userAdditionalCost,
       monthData,
       mealRates,
       baseRate,
@@ -464,7 +474,7 @@ async function loadSummary() {
   }
 }
 
-async function calculateUserPayableBreakdown(userMeals, totalBazar, monthData, mealRates) {
+async function calculateUserPayableBreakdown(userMeals, totalBazar, monthData, mealRates, userAdditionalCost = 0) {
   const mealBreakdown = calcMealBreakdown(userMeals);
   const hasRequiredRates =
     (mealBreakdown.morning === 0 || Number.isFinite(mealRates.morning)) &&
@@ -480,6 +490,7 @@ async function calculateUserPayableBreakdown(userMeals, totalBazar, monthData, m
     userMealCost: round2(userMealCost),
     sharedCosts,
     bariVara: rentSplit?.amount || 0,
+    additionalCost: round2(userAdditionalCost),
     ...calcUserPayable({
       userMealCost,
       khalaPerPerson: sharedCosts.khala,
@@ -487,6 +498,7 @@ async function calculateUserPayableBreakdown(userMeals, totalBazar, monthData, m
       electricityPerPerson: sharedCosts.electricity,
       wifiPerPerson: sharedCosts.wifi,
       bariVara: rentSplit?.amount || 0,
+      additionalCost: userAdditionalCost,
       userBazar: totalBazar
     })
   };
@@ -533,7 +545,8 @@ function updateUserAnalytics(userMeals, totalBazar, payableBreakdown) {
     (payableBreakdown.gasPerPerson || 0) +
     (payableBreakdown.electricityPerPerson || 0) +
     (payableBreakdown.wifiPerPerson || 0) +
-    (payableBreakdown.bariVara || 0);
+    (payableBreakdown.bariVara || 0) +
+    (payableBreakdown.additionalCost || 0);
 
   const due = payableBreakdown.totalPayable;
 
@@ -590,7 +603,7 @@ function shareMyStatementWa() {
 • গ্যাস বিল: ৳${p?.gasPerPerson ?? 0}
 • বিদ্যুৎ বিল: ৳${p?.electricityPerPerson ?? 0}
 • ওয়াইফাই বিল: ৳${p?.wifiPerPerson ?? 0}
-• ঘর ভাড়া: ৳${p?.bariVara ?? 0}
+• ঘর ভাড়া: ৳${p?.bariVara ?? 0}${p?.additionalCost > 0 ? `\n• অতিরিক্ত খরচ: ৳${p.additionalCost}` : ""}
 
 🛒 *আমার বাজার জমা:* ৳${totalBazar}
 ━━━━━━━━━━━━━━━━━━━━━
@@ -627,6 +640,7 @@ function exportMyStatementCsv() {
     ["Electricity Bill (TK)", p?.electricityPerPerson ?? 0],
     ["WiFi Bill (TK)", p?.wifiPerPerson ?? 0],
     ["Room Rent (TK)", p?.bariVara ?? 0],
+    ["Additional Cost (TK)", p?.additionalCost ?? 0],
     ["My Total Bazar (TK)", totalBazar],
     ["Net Due / Payable (TK)", p?.totalPayable ?? 0]
   ].map(r => r.join(","));

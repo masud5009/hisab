@@ -613,6 +613,9 @@
         <a href="#section-meal-history"><i class="bi bi-egg-fried"></i> <span class="nav-text" data-i18n="meal_history">Meal History</span></a>
       </div>
       <div class="nav-item d-none d-md-block">
+        <a href="#section-additional-costs"><i class="bi bi-wallet2"></i> <span class="nav-text" data-i18n="nav_additional_costs">Additional Costs</span></a>
+      </div>
+      <div class="nav-item d-none d-md-block">
         <a href="#section-users"><i class="bi bi-people"></i> <span class="nav-text" data-i18n="nav_users">Members</span></a>
       </div>
       <div class="nav-item d-md-none">
@@ -659,6 +662,13 @@
           <small>All member meal entries</small>
         </div>
       </a>
+      <a href="#section-additional-costs" class="drawer-nav-item">
+        <i class="bi bi-wallet2"></i>
+        <div>
+          <strong>Additional Costs</strong>
+          <small>Divide extra shared expenses</small>
+        </div>
+      </a>
       <a href="#section-users" class="drawer-nav-item">
         <i class="bi bi-people"></i>
         <div>
@@ -701,6 +711,13 @@
         <div>
           <strong>Meal History</strong>
           <small>All member meal entries</small>
+        </div>
+      </a>
+      <a href="#section-additional-costs" class="drawer-nav-item">
+        <i class="bi bi-wallet2"></i>
+        <div>
+          <strong>Additional Costs</strong>
+          <small>Divide extra shared expenses</small>
         </div>
       </a>
       <a href="#section-users" class="drawer-nav-item">
@@ -964,6 +981,70 @@
             </thead>
             <tbody id="adminMealHistoryBody">
               <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Additional Costs ── -->
+    <div class="card mb-4 dashboard-tab-panel" id="section-additional-costs" role="tabpanel" hidden>
+      <div class="card-header-custom">
+        <i class="bi bi-wallet2"></i> <span data-i18n="nav_additional_costs">Additional Costs</span>
+      </div>
+      <div class="card-body-custom">
+        <div id="additionalCostAlert" class="alert d-none"></div>
+        <form id="additionalCostForm" novalidate>
+          <div class="row g-3">
+            <div class="col-md-4 col-12">
+              <label class="form-label">Amount (৳) *</label>
+              <input type="number" id="addCostAmount" class="form-control" placeholder="Enter total amount" min="0.01" step="0.01" required/>
+            </div>
+            <div class="col-md-8 col-12">
+              <label class="form-label">Note / Purpose *</label>
+              <input type="text" id="addCostNote" class="form-control" placeholder="e.g. Cook bonus, Dustbin fee, Special repair" required/>
+            </div>
+            <div class="col-12">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <label class="form-label mb-0 fw-semibold">Divide Among Members *</label>
+                <div class="d-flex gap-2">
+                  <button type="button" id="selectAllCostMembersBtn" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem;">Select All</button>
+                  <button type="button" id="clearAllCostMembersBtn" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem;">Clear All</button>
+                </div>
+              </div>
+              <div id="costMemberCheckboxes" class="p-3 border rounded bg-light d-flex flex-wrap gap-3" style="max-height: 180px; overflow-y: auto;">
+                <span class="text-muted small">Loading members...</span>
+              </div>
+            </div>
+            <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2">
+              <div id="addCostSplitPreview" class="badge bg-primary-subtle text-primary border border-primary-subtle p-2" style="font-size:0.9rem;">
+                <i class="bi bi-calculator me-1"></i> ৳0 ÷ 0 members = <strong>৳0 / person</strong>
+              </div>
+              <button type="submit" id="saveAdditionalCostBtn" class="btn-primary-custom">
+                <i class="bi bi-plus-circle me-1"></i> Add Additional Cost
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="border-top">
+        <div class="p-3 bg-light border-bottom fw-bold d-flex align-items-center gap-2">
+          <i class="bi bi-clock-history"></i> Month's Additional Costs List
+        </div>
+        <div class="table-responsive p-3">
+          <table class="table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Note</th>
+                <th>Total Amount</th>
+                <th>Divided Among</th>
+                <th>Per Person</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody id="additionalCostsTableBody">
+              <tr><td colspan="6" class="text-center text-muted py-4">No additional costs for this month.</td></tr>
             </tbody>
           </table>
         </div>

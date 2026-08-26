@@ -143,12 +143,14 @@ export function calcUserPayable({
   electricityPerPerson,
   wifiPerPerson,
   bariVara,
+  additionalCost = 0,
   userBazar
 }) {
   const mealCost = Number.isFinite(userMealCost) ? userMealCost : 0;
   const prepaidBazar = Number.isFinite(userBazar) ? userBazar : 0;
+  const extraCost = Number.isFinite(additionalCost) ? additionalCost : 0;
   const totalPayable =
-    mealCost + khalaPerPerson + gasPerPerson + electricityPerPerson + wifiPerPerson + bariVara - prepaidBazar;
+    mealCost + khalaPerPerson + gasPerPerson + electricityPerPerson + wifiPerPerson + bariVara + extraCost - prepaidBazar;
 
   return {
     mealCost: round2(mealCost),
@@ -157,20 +159,22 @@ export function calcUserPayable({
     electricityPerPerson: round2(electricityPerPerson),
     wifiPerPerson: round2(wifiPerPerson),
     bariVara: round2(bariVara),
+    additionalCost: round2(extraCost),
     totalPayable: round2(totalPayable)
   };
 }
 
 /**
  * Build complete calculation table for all users in a month
- * @param {Array}  users       - User profile docs (active in this month)
- * @param {Array}  allMeals    - All meal docs for the month
- * @param {Array}  allBazar    - All bazar docs for the month
- * @param {object} monthCosts  - { khalaTotal, gasTotal, electricityTotal, wifiTotal, morningMealPercent, lunchMealPercent, dinnerMealPercent }
- * @param {Array}  rentSplits  - rentSplits docs for the month (locked bari vara per user)
+ * @param {Array}  users            - User profile docs (active in this month)
+ * @param {Array}  allMeals         - All meal docs for the month
+ * @param {Array}  allBazar         - All bazar docs for the month
+ * @param {object} monthCosts       - { khalaTotal, gasTotal, electricityTotal, wifiTotal, morningMealPercent, lunchMealPercent, dinnerMealPercent }
+ * @param {Array}  rentSplits       - rentSplits docs for the month (locked bari vara per user)
+ * @param {Array}  additionalCosts  - additionalCosts docs for the month (divided extra costs)
  * @returns {Array} rows with full calculation per user
  */
-export function buildCalculationTable(users, allMeals, allBazar, monthCosts, rentSplits) {
+export function buildCalculationTable(users, allMeals, allBazar, monthCosts, rentSplits, additionalCosts = []) {
   const userCount = users.length;
   const mealPercentages = getMealPercentages(monthCosts);
 
@@ -200,6 +204,11 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
     const rentSplit = rentSplits.find((r) => r.userId === user.uid);
     const bariVara = rentSplit ? rentSplit.amount : 0;
 
+    // Additional costs assigned to this user
+    const userAdditionalCost = (additionalCosts || [])
+      .filter((c) => Array.isArray(c.userIds) && c.userIds.includes(user.uid))
+      .reduce((sum, c) => sum + (c.perPersonAmount || 0), 0);
+
     const calc = calcUserPayable({
       userMealCost,
       khalaPerPerson,
@@ -207,6 +216,7 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
       electricityPerPerson,
       wifiPerPerson,
       bariVara,
+      additionalCost: userAdditionalCost,
       userBazar: userTotalBazar
     });
 
@@ -227,6 +237,7 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
     };
   });
   const totalBariVara = rows.reduce((sum, row) => sum + (row.bariVara || 0), 0);
+  const totalAdditionalCosts = (additionalCosts || []).reduce((sum, c) => sum + (c.amount || 0), 0);
 
   return {
     rows,
@@ -249,6 +260,7 @@ export function buildCalculationTable(users, allMeals, allBazar, monthCosts, ren
       configuredMealPercentages: mealPercentages,
       totalBazar: round2(totalBazar),
       totalBariVara: round2(totalBariVara),
+      totalAdditionalCosts: round2(totalAdditionalCosts),
       perPersonCosts: {
         khala: round2(khalaPerPerson),
         gas: round2(gasPerPerson),

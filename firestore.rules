@@ -64,5 +64,13 @@ service cloud.firestore {
       allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
       allow write: if isAdmin();
     }
+
+    // ─── additionalCosts collection ────────────────────────
+    match /additionalCosts/{docId} {
+      // All authenticated members can read additional costs
+      allow read: if request.auth != null;
+      // Only admins can create, update, or delete additional costs
+      allow write: if isAdmin();
+    }
   }
 }
