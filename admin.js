@@ -1110,7 +1110,6 @@ function renderCalcTable({ rows, summary }, container) {
     return;
   }
 
-  updateAdminAnalytics(summary);
 
   // Summary widget cards (rendered outside the card)
   if (widgetContainer) {
@@ -1232,69 +1231,6 @@ function renderCalcTable({ rows, summary }, container) {
     input.addEventListener("input", () => updateRentPreview(input));
   });
 }
-
-function updateAdminAnalytics(summary) {
-  if (!summary) return;
-  const totalMeals = summary.totalMeals || 0;
-  const morning = summary.totalMorningMeals || 0;
-  const lunch = summary.totalLunchMeals || 0;
-  const dinner = summary.totalDinnerMeals || 0;
-
-  const totalMealsBadge = document.getElementById("analyticsTotalMealsBadge");
-  if (totalMealsBadge) totalMealsBadge.textContent = `${totalMeals} ${t("total_meals")}`;
-
-  const mPct = totalMeals > 0 ? (morning / totalMeals) * 100 : 0;
-  const lPct = totalMeals > 0 ? (lunch / totalMeals) * 100 : 0;
-  const dPct = totalMeals > 0 ? (dinner / totalMeals) * 100 : 0;
-
-  const barM = document.getElementById("mealBarMorning");
-  const barL = document.getElementById("mealBarLunch");
-  const barD = document.getElementById("mealBarDinner");
-  if (barM) barM.style.width = `${mPct}%`;
-  if (barL) barL.style.width = `${lPct}%`;
-  if (barD) barD.style.width = `${dPct}%`;
-
-  const valM = document.getElementById("analyticsMorningVal");
-  const valL = document.getElementById("analyticsLunchVal");
-  const valD = document.getElementById("analyticsDinnerVal");
-  if (valM) valM.textContent = `${morning} (${Math.round(mPct)}%)`;
-  if (valL) valL.textContent = `${lunch} (${Math.round(lPct)}%)`;
-  if (valD) valD.textContent = `${dinner} (${Math.round(dPct)}%)`;
-
-  const totalBazar = summary.totalBazar || 0;
-  const totalRent = summary.totalBariVara || 0;
-  const userCount = summary.userCount || 1;
-  const perPersonCosts = summary.perPersonCosts || {};
-  const totalUtilities = (
-    (perPersonCosts.khala || 0) +
-    (perPersonCosts.gas || 0) +
-    (perPersonCosts.electricity || 0) +
-    (perPersonCosts.wifi || 0)
-  ) * userCount;
-  const totalExpense = totalBazar + totalRent + totalUtilities;
-
-  const totalExpenseBadge = document.getElementById("analyticsTotalExpenseBadge");
-  if (totalExpenseBadge) totalExpenseBadge.textContent = `৳${round2(totalExpense)} Total`;
-
-  const bPct = totalExpense > 0 ? (totalBazar / totalExpense) * 100 : 0;
-  const rPct = totalExpense > 0 ? (totalRent / totalExpense) * 100 : 0;
-  const uPct = totalExpense > 0 ? (totalUtilities / totalExpense) * 100 : 0;
-
-  const barB = document.getElementById("expenseBarBazar");
-  const barR = document.getElementById("expenseBarRent");
-  const barU = document.getElementById("expenseBarUtilities");
-  if (barB) barB.style.width = `${bPct}%`;
-  if (barR) barR.style.width = `${rPct}%`;
-  if (barU) barU.style.width = `${uPct}%`;
-
-  const valB = document.getElementById("analyticsBazarVal");
-  const valR = document.getElementById("analyticsRentVal");
-  const valU = document.getElementById("analyticsUtilitiesVal");
-  if (valB) valB.textContent = `৳${totalBazar} (${Math.round(bPct)}%)`;
-  if (valR) valR.textContent = `৳${totalRent} (${Math.round(rPct)}%)`;
-  if (valU) valU.textContent = `৳${round2(totalUtilities)} (${Math.round(uPct)}%)`;
-}
-
 
 function formatMonthYear(monthStr) {
   if (!monthStr) return "";

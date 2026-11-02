@@ -713,52 +713,6 @@
       <!-- Summary Widgets -->
       <div id="calcSummaryWidgets" class="summary-widgets"></div>
 
-      <!-- Visual Analytics & Progress Meters -->
-      <div id="adminAnalyticsCard" class="card mb-4">
-        <div class="card-header-custom">
-          <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-graph-up text-primary"></i>
-            <span data-i18n="analytics_overview">Analytics & Overview</span>
-          </div>
-        </div>
-        <div class="card-body-custom">
-          <div class="row g-4">
-            <div class="col-md-6">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="small" data-i18n="meal_distribution">Meal Distribution</strong>
-                <span class="badge bg-light text-dark border" id="analyticsTotalMealsBadge">0 Meals</span>
-              </div>
-              <div class="progress" style="height: 14px; border-radius: 7px;" id="mealDistributionBar">
-                <div class="progress-bar bg-warning" role="progressbar" id="mealBarMorning" style="width: 0%" title="Morning"></div>
-                <div class="progress-bar bg-info" role="progressbar" id="mealBarLunch" style="width: 0%" title="Lunch"></div>
-                <div class="progress-bar bg-primary" role="progressbar" id="mealBarDinner" style="width: 0%" title="Dinner"></div>
-              </div>
-              <div class="d-flex justify-content-between mt-2 small text-muted">
-                <span><i class="bi bi-circle-fill text-warning me-1" style="font-size:0.6rem"></i><span data-i18n="morning">Morning</span>: <strong id="analyticsMorningVal">0</strong></span>
-                <span><i class="bi bi-circle-fill text-info me-1" style="font-size:0.6rem"></i><span data-i18n="lunch">Lunch</span>: <strong id="analyticsLunchVal">0</strong></span>
-                <span><i class="bi bi-circle-fill text-primary me-1" style="font-size:0.6rem"></i><span data-i18n="dinner">Dinner</span>: <strong id="analyticsDinnerVal">0</strong></span>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="small" data-i18n="cost_composition">Expense Breakdown</strong>
-                <span class="badge bg-light text-dark border" id="analyticsTotalExpenseBadge">৳0 Total</span>
-              </div>
-              <div class="progress" style="height: 14px; border-radius: 7px;" id="expenseDistributionBar">
-                <div class="progress-bar bg-success" role="progressbar" id="expenseBarBazar" style="width: 0%" title="Bazar"></div>
-                <div class="progress-bar bg-secondary" role="progressbar" id="expenseBarRent" style="width: 0%" title="Room Rent"></div>
-                <div class="progress-bar bg-danger" role="progressbar" id="expenseBarUtilities" style="width: 0%" title="Shared Utilities"></div>
-              </div>
-              <div class="d-flex justify-content-between mt-2 small text-muted">
-                <span><i class="bi bi-circle-fill text-success me-1" style="font-size:0.6rem"></i><span data-i18n="total_bazar">Bazar</span>: <strong id="analyticsBazarVal">৳0</strong></span>
-                <span><i class="bi bi-circle-fill text-secondary me-1" style="font-size:0.6rem"></i><span data-i18n="room_rent">Rent</span>: <strong id="analyticsRentVal">৳0</strong></span>
-                <span><i class="bi bi-circle-fill text-danger me-1" style="font-size:0.6rem"></i>Bills: <strong id="analyticsUtilitiesVal">৳0</strong></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Calculation Table -->
       <div class="card mb-4">
         <div class="card-header-custom">
