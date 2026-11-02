@@ -304,7 +304,9 @@ async function handleAddUser(e) {
   const password = form.password.value;
   const phone = form.phone.value.trim();
 
-  showAlert("addUserAlert", "Creating user...", "info");
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+  showAlert("addUserAlert", "Creating user...", "info", false);
   try {
     // Create Firebase Auth user
     const secondaryApp = initializeApp(firebaseConfig, "Secondary");
@@ -331,6 +333,8 @@ await secondaryAuth.signOut();
     loadCalculation();
   } catch (err) {
     showAlert("addUserAlert", err.message, "danger");
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
   }
 }
 
@@ -1014,6 +1018,30 @@ async function loadMonthCosts() {
   }
 }
 
+function setButtonLoading(btnId, spinnerId, isLoading, loadingText = null, defaultTextKey = null) {
+  const btn = typeof btnId === "string" ? document.getElementById(btnId) : btnId;
+  const spinner = typeof spinnerId === "string" ? document.getElementById(spinnerId) : spinnerId;
+  if (!btn) return;
+
+  btn.disabled = isLoading;
+  if (spinner) {
+    if (isLoading) {
+      spinner.classList.remove("d-none");
+    } else {
+      spinner.classList.add("d-none");
+    }
+  }
+
+  const textEl = btn.querySelector("[data-i18n]") || btn.querySelector(".btn-text");
+  if (textEl) {
+    if (isLoading && loadingText) {
+      textEl.textContent = loadingText;
+    } else if (!isLoading && defaultTextKey) {
+      textEl.textContent = t(defaultTextKey);
+    }
+  }
+}
+
 async function handleSaveMonthCosts(e) {
   e.preventDefault();
   const data = {
@@ -1027,11 +1055,16 @@ async function handleSaveMonthCosts(e) {
     updatedAt: serverTimestamp()
   };
   try {
+    setButtonLoading("saveMonthCostBtn", "saveMonthCostSpinner", true, t("btn_saving"), "btn_save");
+    showAlert("monthCostAlert", t("alert_saving_costs"), "info", false);
+
     await setDoc(doc(db, "months", selectedMonth), data, { merge: true });
     await loadCalculation();
-    showAlert("monthCostAlert", "Monthly costs and rates saved!", "success");
+    showAlert("monthCostAlert", t("alert_costs_saved"), "success");
   } catch (err) {
     showAlert("monthCostAlert", err.message, "danger");
+  } finally {
+    setButtonLoading("saveMonthCostBtn", "saveMonthCostSpinner", false, null, "btn_save");
   }
 }
 

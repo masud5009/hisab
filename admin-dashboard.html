@@ -779,8 +779,9 @@
               <small class="text-info d-block mt-2">বেইজ রেট = মোট বাজার ÷ মোট ইউনিট <br> মোট ইউনিট = (সকাল মিল × সকাল% ÷ 100) + (দুপুর মিল × দুপুর% ÷ 100) + (রাত মিল × রাত% ÷ 100)।</small>
             </div>
             <div class="col-md-3 d-flex align-items-end justify-content-end ms-auto">
-              <button type="submit" class="btn btn-success w-50">
-                <i class="bi bi-floppy me-1"></i> <span data-i18n="btn_save">Save Costs</span>
+              <button type="submit" id="saveMonthCostBtn" class="btn btn-success">
+                <i class="bi bi-floppy me-1"></i> <span data-i18n="btn_save" id="saveMonthCostText">Save Changes</span>
+                <span id="saveMonthCostSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
               </button>
             </div>
           </div>
