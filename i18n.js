@@ -123,6 +123,10 @@ export const translations = {
     amount_taka: "Amount (৳)",
     edit_bazar_title: "Edit Bazar Entry",
     edit_meal_title: "Edit Meal Entry",
+    add_meal_for_member: "Add Meal for Member",
+    msg_meal_added: "Meal added successfully!",
+    msg_meal_exists: "Meal entry for this member and date already exists.",
+    select_member: "Select Member",
     lang_toggle_label: "বাং"
   },
   bn: {
@@ -244,6 +248,10 @@ export const translations = {
     amount_taka: "টাকা (৳)",
     edit_bazar_title: "বাজার এন্ট্রি এডিট",
     edit_meal_title: "মিল এন্ট্রি এডিট",
+    add_meal_for_member: "মেম্বারের মিল যোগ করুন",
+    msg_meal_added: "মিল সফলভাবে যোগ করা হয়েছে!",
+    msg_meal_exists: "এই মেম্বারের এই তারিখে ইতিমধ্যে মিল এন্ট্রি রয়েছে।",
+    select_member: "মেম্বার নির্বাচন করুন",
     lang_toggle_label: "ENG"
   }
 };

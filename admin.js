@@ -98,6 +98,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("bazarPageSize", "change", handleBazarPageSizeChange);
   bindIfExists("bazarPrevPageBtn", "click", () => changeBazarPage(-1));
   bindIfExists("bazarNextPageBtn", "click", () => changeBazarPage(1));
+  bindIfExists("openAddMealModalBtn", "click", () => openAdminAddMealModal());
+  bindIfExists("openAddMealFromHistoryBtn", "click", () => openAdminAddMealModal());
+  bindIfExists("drawerAddMealBtn", "click", () => {
+    closeAdminMoreDrawer();
+    openAdminAddMealModal();
+  });
+  bindIfExists("adminAddMealForm", "submit", handleAddMealByAdmin);
+  bindAdminMealTotalPreview();
   bindIfExists("editMealForm", "submit", handleEditMeal);
   bindIfExists("refreshMealHistoryBtn", "click", loadAdminMealHistory);
   bindIfExists("bulkDeleteMealBtn", "click", handleBulkDeleteMeal);
@@ -810,7 +818,14 @@ function applyMealHistoryDateFilter() {
 }
 
 async function openEditMealModal(id) {
-  const meal = adminMealRows.find((row) => row.id === id);
+  let meal = adminMealRows.find((row) => row.id === id);
+  if (!meal) {
+    const mealDoc = await getDoc(doc(db, "meals", id));
+    if (mealDoc.exists()) {
+      meal = { id: mealDoc.id, ...mealDoc.data() };
+      adminMealRows.push(meal);
+    }
+  }
   if (!meal) return;
 
   const member = mealMemberMap.get(meal.userId) || (await getMemberMap()).get(meal.userId);
@@ -834,7 +849,14 @@ async function handleEditMeal(e) {
   const morning = parseFloat(form.elements.morning.value);
   const lunch = parseFloat(form.elements.lunch.value);
   const dinner = parseFloat(form.elements.dinner.value);
-  const meal = adminMealRows.find((row) => row.id === id);
+  let meal = adminMealRows.find((row) => row.id === id);
+  if (!meal) {
+    const mealDoc = await getDoc(doc(db, "meals", id));
+    if (mealDoc.exists()) {
+      meal = { id: mealDoc.id, ...mealDoc.data() };
+      adminMealRows.push(meal);
+    }
+  }
 
   if (!id || !meal || !date || !isValidMealCount(morning) || !isValidMealCount(lunch) || !isValidMealCount(dinner)) {
     showAlert("editMealAlert", "Please fill all meal fields correctly.", "danger", false);
@@ -989,6 +1011,166 @@ function updateEditMealTotalPreview() {
 
 function isValidMealCount(value) {
   return Number.isFinite(value) && value >= 0;
+}
+
+function getTodayDateString() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+async function populateMealUserSelect(selectedUid = "") {
+  const select = document.getElementById("adminMealUserId");
+  if (!select) return;
+  const memberMap = await getMemberMap();
+  const defaultText = t("select_member") || "Select Member";
+
+  select.innerHTML = `<option value="">-- ${defaultText} --</option>`;
+  memberMap.forEach((member, uid) => {
+    const opt = document.createElement("option");
+    opt.value = uid;
+    opt.textContent = `${member.name || "Unknown"} (@${member.username || ""})`;
+    if (uid === selectedUid) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function bindAdminMealTotalPreview() {
+  const form = document.getElementById("adminAddMealForm");
+  if (!form) return;
+  ["morning", "lunch", "dinner"].forEach((name) => {
+    form.elements[name]?.addEventListener("input", updateAdminMealTotalPreview);
+  });
+}
+
+function updateAdminMealTotalPreview() {
+  const form = document.getElementById("adminAddMealForm");
+  if (!form) return;
+  const morning = parseFloat(form.elements.morning.value) || 0;
+  const lunch = parseFloat(form.elements.lunch.value) || 0;
+  const dinner = parseFloat(form.elements.dinner.value) || 0;
+  form.elements.total.value = round2(morning + lunch + dinner);
+}
+
+async function openAdminAddMealModal(preselectedUid = "", preselectedDate = "") {
+  const form = document.getElementById("adminAddMealForm");
+  if (!form) return;
+  form.reset();
+  hideAlert("adminAddMealAlert");
+
+  await populateMealUserSelect(preselectedUid);
+
+  const dateInput = form.elements.date;
+  if (dateInput) {
+    if (preselectedDate) {
+      dateInput.value = preselectedDate;
+    } else {
+      const today = getTodayDateString();
+      if (today.startsWith(selectedMonth)) {
+        dateInput.value = today;
+      } else {
+        dateInput.value = `${selectedMonth}-01`;
+      }
+    }
+  }
+
+  if (form.elements.morning) form.elements.morning.value = 0;
+  if (form.elements.lunch) form.elements.lunch.value = 0;
+  if (form.elements.dinner) form.elements.dinner.value = 1;
+  updateAdminMealTotalPreview();
+
+  showModal("adminAddMealModal");
+}
+
+async function handleAddMealByAdmin(e) {
+  e.preventDefault();
+  const form = e.target;
+  const userId = form.elements.userId.value;
+  const date = form.elements.date.value;
+  const morning = parseFloat(form.elements.morning.value);
+  const lunch = parseFloat(form.elements.lunch.value);
+  const dinner = parseFloat(form.elements.dinner.value);
+
+  if (!userId) {
+    showAlert("adminAddMealAlert", t("select_member") || "Please select a member.", "danger", false);
+    return;
+  }
+  if (!date) {
+    showAlert("adminAddMealAlert", "Please select a date.", "danger", false);
+    return;
+  }
+  if (!isValidMealCount(morning) || !isValidMealCount(lunch) || !isValidMealCount(dinner)) {
+    showAlert("adminAddMealAlert", "Please enter valid meal numbers (0 or greater).", "danger", false);
+    return;
+  }
+
+  const totalMeal = round2(morning + lunch + dinner);
+
+  try {
+    setButtonLoading("adminAddMealSubmitBtn", "adminAddMealSpinner", true);
+
+    // Duplicate check for this user and date
+    const duplicate = await getDocs(query(
+      collection(db, "meals"),
+      where("userId", "==", userId),
+      where("date", "==", date)
+    ));
+
+    if (!duplicate.empty) {
+      const existingId = duplicate.docs[0].id;
+      const alertEl = document.getElementById("adminAddMealAlert");
+      if (alertEl) {
+        alertEl.className = "alert alert-warning";
+        alertEl.innerHTML = `
+          <div>${escapeHtml(t("msg_meal_exists") || "A meal entry for this member and date already exists.")}</div>
+          <button type="button" class="btn btn-sm btn-outline-warning mt-2" id="openExistingMealFromAlertBtn">
+            <i class="bi bi-pencil-square me-1"></i>${escapeHtml(t("btn_edit") || "Edit Existing Entry")}
+          </button>
+        `;
+        alertEl.classList.remove("d-none");
+        document.getElementById("openExistingMealFromAlertBtn")?.addEventListener("click", () => {
+          hideModal("adminAddMealModal");
+          openEditMealModal(existingId);
+        });
+      }
+      return;
+    }
+
+    const mealMonth = date.substring(0, 7);
+
+    await addDoc(collection(db, "meals"), {
+      userId,
+      date,
+      morning,
+      lunch,
+      dinner,
+      totalMeal,
+      month: mealMonth,
+      createdBy: "admin",
+      createdAt: serverTimestamp()
+    });
+
+    hideModal("adminAddMealModal");
+    showAlert("calcAlert", t("msg_meal_added") || "Meal entry added successfully!", "success");
+    showAlert("mealHistoryAlert", t("msg_meal_added") || "Meal entry added successfully!", "success");
+
+    if (mealMonth === selectedMonth) {
+      await loadCalculation();
+      await loadAdminMealHistory();
+    }
+
+    // Refresh meal reminder modal if currently visible
+    const reminderModal = document.getElementById("mealReminderModal");
+    if (reminderModal && reminderModal.classList.contains("show")) {
+      await openMealReminderModal();
+    }
+  } catch (err) {
+    showAlert("adminAddMealAlert", err.message, "danger", false);
+  } finally {
+    setButtonLoading("adminAddMealSubmitBtn", "adminAddMealSpinner", false);
+  }
 }
 
 
@@ -1234,10 +1416,15 @@ function renderCalcTable({ rows, summary }, container) {
         </button>
       </td>
       <td>
-        <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
-          data-uid="${row.uid}" data-locked="${row.locked}">
-          ${row.locked ? "🔒 " + t("btn_locked") : "🔓 " + t("btn_lock")}
-        </button>
+        <div class="d-flex align-items-center gap-1">
+          <button class="btn btn-sm btn-outline-primary row-add-meal-btn" data-uid="${row.uid}" title="${t("btn_add_meal") || "Add Meal"}">
+            <i class="bi bi-egg-fried"></i>
+          </button>
+          <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
+            data-uid="${row.uid}" data-locked="${row.locked}">
+            ${row.locked ? "🔒 " + t("btn_locked") : "🔓 " + t("btn_lock")}
+          </button>
+        </div>
       </td>
     </tr>`;
   }).join("");
@@ -1251,6 +1438,9 @@ function renderCalcTable({ rows, summary }, container) {
     </div>`;
 
   // Bind events
+  container.querySelectorAll(".row-add-meal-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openAdminAddMealModal(btn.dataset.uid));
+  });
   container.querySelectorAll(".lock-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleLock(btn.dataset.uid, btn.dataset.locked === "true"));
   });
@@ -1435,14 +1625,24 @@ async function openMealReminderModal() {
               <div class="fw-semibold text-dark">${escapeHtml(m.name || "Unknown")}</div>
               <div class="small text-muted">${escapeHtml(m.phone || "ফোন নম্বর নেই")}</div>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 send-indiv-wa-btn" data-uid="${m.uid}">
-              <i class="bi bi-whatsapp"></i> <span>${t("btn_send_wa")}</span>
-            </button>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 reminder-add-meal-btn" data-uid="${m.uid}" title="Add Meal for ${escapeHtml(m.name || "")}">
+                <i class="bi bi-egg-fried"></i> <span>${t("btn_add")}</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 send-indiv-wa-btn" data-uid="${m.uid}">
+                <i class="bi bi-whatsapp"></i> <span>${t("btn_send_wa")}</span>
+              </button>
+            </div>
           </div>
         `).join("")}
       </div>
     `;
 
+    container.querySelectorAll(".reminder-add-meal-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        openAdminAddMealModal(btn.dataset.uid, todayDateStr);
+      });
+    });
     container.querySelectorAll(".send-indiv-wa-btn").forEach((btn) => {
       btn.addEventListener("click", () => sendIndividualMealReminder(btn.dataset.uid));
     });

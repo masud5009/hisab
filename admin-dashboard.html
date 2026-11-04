@@ -673,6 +673,15 @@
         </div>
       </a>
 
+      <div class="drawer-section-title mt-3">Quick Actions</div>
+      <button type="button" class="drawer-nav-item w-100 border-0 bg-transparent text-start cursor-pointer" id="drawerAddMealBtn" style="cursor:pointer;">
+        <i class="bi bi-egg-fried"></i>
+        <div>
+          <strong data-i18n="btn_add_meal">Add Meal</strong>
+          <small>Add meal entry for any member</small>
+        </div>
+      </button>
+
       <div class="drawer-section-title mt-3">Preferences</div>
       <button type="button" class="drawer-nav-item w-100 border-0 bg-transparent text-start cursor-pointer" id="drawerLangToggleBtn" style="cursor:pointer;">
         <i class="bi bi-translate"></i>
@@ -718,6 +727,7 @@
         <div class="card-header-custom">
           <div><i class="bi bi-table me-1"></i> <span data-i18n="nav_dashboard">Monthly Calculation</span></div>
           <div class="ms-auto d-flex flex-wrap gap-2">
+            <button class="btn-outline-custom" id="openAddMealModalBtn"><i class="bi bi-egg-fried me-1 text-warning"></i><span data-i18n="btn_add_meal">Add Meal</span></button>
             <button class="btn-outline-custom" id="mealReminderBtn"><i class="bi bi-bell me-1 text-warning"></i><span data-i18n="btn_remind_meals">Meal Reminder</span></button>
             <button class="btn-outline-custom" id="saveRoomRentsBtn"><i class="bi bi-house-check me-1"></i><span data-i18n="btn_save_rents">Bulk Save Rents</span></button>
             <button class="btn-outline-custom" id="recalculateBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_recalculate">Recalculate</span></button>
@@ -845,6 +855,7 @@
       <div class="card-header-custom">
         <div><i class="bi bi-egg-fried me-1"></i> <span data-i18n="meal_history">All Meal History</span></div>
         <div class="ms-auto d-flex flex-wrap gap-2">
+          <button type="button" class="btn-primary-custom" id="openAddMealFromHistoryBtn"><i class="bi bi-plus-circle me-1"></i><span data-i18n="btn_add_meal">Add Meal</span></button>
           <button type="button" class="btn-outline-custom" id="refreshMealHistoryBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_refresh">Refresh</span></button>
           <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteMealBtn" disabled><i class="bi bi-trash me-1"></i><span data-i18n="btn_bulk_delete">Delete Selected</span></button>
         </div>
@@ -1090,6 +1101,59 @@
           <div class="app-modal-footer">
             <button type="button" class="btn-outline-custom" data-close-modal="editBazarModal">Cancel</button>
             <button type="submit" class="btn-primary-custom"><i class="bi bi-floppy me-1"></i>Save Bazar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-modal" id="adminAddMealModal" aria-hidden="true">
+    <div class="app-modal-panel">
+      <div class="app-modal-header">
+        <span><i class="bi bi-egg-fried me-1" style="color:var(--clr-primary)"></i><span data-i18n="add_meal_for_member">Add Meal for Member</span></span>
+        <button type="button" class="btn-icon" data-close-modal="adminAddMealModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="adminAddMealForm">
+        <div class="app-modal-body">
+          <div id="adminAddMealAlert" class="alert d-none"></div>
+          <div class="mb-3">
+            <label class="form-label" for="adminMealUserId"><span data-i18n="th_name">Member</span> *</label>
+            <select id="adminMealUserId" name="userId" class="form-select" required>
+              <option value="">Select Member</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="adminMealDate"><span data-i18n="th_date">Date</span> *</label>
+            <input type="date" id="adminMealDate" name="date" class="form-control" required/>
+          </div>
+          <div class="row g-3">
+            <div class="col-4">
+              <label class="form-label" for="adminMealMorning"><span data-i18n="morning">Morning</span> 🌅</label>
+              <input type="number" id="adminMealMorning" name="morning" class="form-control" min="0" step="0.5" value="0" required/>
+            </div>
+            <div class="col-4">
+              <label class="form-label" for="adminMealLunch"><span data-i18n="lunch">Lunch</span> ☀️</label>
+              <input type="number" id="adminMealLunch" name="lunch" class="form-control" min="0" step="0.5" value="0" required/>
+            </div>
+            <div class="col-4">
+              <label class="form-label" for="adminMealDinner"><span data-i18n="dinner">Dinner</span> 🌙</label>
+              <input type="number" id="adminMealDinner" name="dinner" class="form-control" min="0" step="0.5" value="1" required/>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label"><span data-i18n="th_total">Total</span></label>
+            <input type="number" id="adminMealTotal" name="total" class="form-control" value="1" readonly/>
+            <small class="text-muted d-block mt-1">
+              <i class="bi bi-info-circle me-1"></i>
+              <span data-i18n="meal_helper_text">Use 1 for full meal, 0.5 for half meal.</span>
+            </small>
+          </div>
+          <div class="app-modal-footer">
+            <button type="button" class="btn-outline-custom" data-close-modal="adminAddMealModal"><span data-i18n="btn_cancel">Cancel</span></button>
+            <button type="submit" id="adminAddMealSubmitBtn" class="btn-primary-custom">
+              <i class="bi bi-plus-circle me-1"></i><span data-i18n="btn_add_meal">Add Meal</span>
+              <span id="adminAddMealSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
           </div>
         </div>
       </form>
