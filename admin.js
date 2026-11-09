@@ -1864,15 +1864,10 @@ function renderCalcTable({ rows, summary }, container) {
         </button>
       </td>
       <td>
-        <div class="d-flex align-items-center gap-1">
-          <button class="btn btn-sm btn-outline-primary row-add-meal-btn" data-uid="${row.uid}" title="${t("btn_add_meal") || "Add Meal"}">
-            <i class="bi bi-egg-fried"></i>
-          </button>
-          <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
-            data-uid="${row.uid}" data-locked="${row.locked}">
-            ${row.locked ? "🔒 " + t("btn_locked") : "🔓 " + t("btn_lock")}
-          </button>
-        </div>
+        <button class="btn btn-sm ${row.locked ? "btn-warning" : "btn-outline-warning"} lock-btn"
+          data-uid="${row.uid}" data-locked="${row.locked}">
+          ${row.locked ? "🔒 " + t("btn_locked") : "🔓 " + t("btn_lock")}
+        </button>
       </td>
     </tr>`;
   }).join("");
@@ -1886,9 +1881,6 @@ function renderCalcTable({ rows, summary }, container) {
     </div>`;
 
   // Bind events
-  container.querySelectorAll(".row-add-meal-btn").forEach((btn) => {
-    btn.addEventListener("click", () => openAdminAddMealModal(btn.dataset.uid));
-  });
   container.querySelectorAll(".lock-btn").forEach((btn) => {
     btn.addEventListener("click", () => handleLock(btn.dataset.uid, btn.dataset.locked === "true"));
   });
