@@ -42,6 +42,7 @@ export const translations = {
     my_bazar: "My Bazar",
     my_meals: "Total Meal",
     due: "Due",
+    refund: "Refund",
     pay: "Payable / Balance",
     
     // Actions & Buttons
@@ -193,6 +194,7 @@ export const translations = {
     my_bazar: "আমার বাজার",
     my_meals: "আমার মিল",
     due: "বকেয়া (Due)",
+    refund: "পাওনা (Refund)",
     pay: "পাওনা (Pay)",
     
     // Actions & Buttons

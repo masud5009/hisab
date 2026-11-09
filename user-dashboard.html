@@ -222,6 +222,15 @@
       color: var(--clr-yellow);
     }
 
+    .summ-card.refund {
+      border-color: var(--clr-bazar-border);
+      background: var(--clr-bazar-soft);
+    }
+
+    .summ-card.refund .summ-value {
+      color: var(--clr-bazar);
+    }
+
     .summ-card.bazar {
       border-color: var(--clr-bazar-border);
       background: var(--clr-bazar-soft);
@@ -1122,8 +1131,8 @@
           <div class="summ-label" data-i18n="my_meals">Total Meal</div>
           <div class="summ-value" id="summTotalMeals"><span class="skeleton skeleton-value" style="width: 50px;"></span></div>
         </div>
-        <div class="summ-card payable">
-          <div class="summ-label" data-i18n="due">Due</div>
+        <div class="summ-card payable" id="summDueCard">
+          <div class="summ-label" id="summDueLabel" data-i18n="due">Due</div>
           <div class="summ-value" id="summDue"><span class="skeleton skeleton-value" style="width: 75px;"></span></div>
         </div>
         <div class="summ-card rate">

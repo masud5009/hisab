@@ -415,6 +415,16 @@ function renderSummarySkeleton() {
     const el = document.getElementById(id);
     if (el) el.innerHTML = `<span class="skeleton skeleton-value" style="width:${width};"></span>`;
   });
+  const dueCardEl = document.getElementById("summDueCard");
+  if (dueCardEl) {
+    dueCardEl.classList.remove("refund");
+    dueCardEl.classList.add("payable");
+  }
+  const dueLabelEl = document.getElementById("summDueLabel");
+  if (dueLabelEl) {
+    dueLabelEl.dataset.i18n = "due";
+    dueLabelEl.textContent = t("due");
+  }
 }
 
 async function loadSummary() {
@@ -462,7 +472,48 @@ async function loadSummary() {
 
     document.getElementById("summTotalBazar").textContent = `৳${round2(totalBazar)}`;
     document.getElementById("summTotalMeals").textContent = round2(totalMeals);
-    document.getElementById("summDue").textContent = formatCurrencyOrDash(due);
+
+    const dueCardEl = document.getElementById("summDueCard");
+    const dueLabelEl = document.getElementById("summDueLabel");
+    const dueValEl = document.getElementById("summDue");
+
+    if (due !== null && Number.isFinite(due)) {
+      const roundedDue = round2(due);
+      if (roundedDue < 0) {
+        // Member is owed money by mess (Refund / পাওনা)
+        if (dueCardEl) {
+          dueCardEl.classList.remove("payable");
+          dueCardEl.classList.add("refund");
+        }
+        if (dueLabelEl) {
+          dueLabelEl.dataset.i18n = "refund";
+          dueLabelEl.textContent = t("refund");
+        }
+        if (dueValEl) dueValEl.textContent = `৳${Math.abs(roundedDue)}`;
+      } else {
+        // Member owes money to mess (Due / বকেয়া)
+        if (dueCardEl) {
+          dueCardEl.classList.remove("refund");
+          dueCardEl.classList.add("payable");
+        }
+        if (dueLabelEl) {
+          dueLabelEl.dataset.i18n = "due";
+          dueLabelEl.textContent = t("due");
+        }
+        if (dueValEl) dueValEl.textContent = `৳${roundedDue}`;
+      }
+    } else {
+      if (dueCardEl) {
+        dueCardEl.classList.remove("refund");
+        dueCardEl.classList.add("payable");
+      }
+      if (dueLabelEl) {
+        dueLabelEl.dataset.i18n = "due";
+        dueLabelEl.textContent = t("due");
+      }
+      if (dueValEl) dueValEl.textContent = "—";
+    }
+
     document.getElementById("summBaseRate").textContent = formatCurrencyOrDash(baseRate);
     document.getElementById("summDinnerRate").textContent = formatCurrencyOrDash(mealRates.dinner);
     document.getElementById("summLunchRate").textContent = formatCurrencyOrDash(mealRates.lunch);
