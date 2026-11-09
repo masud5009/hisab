@@ -70,6 +70,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const handleLangToggle = () => {
     toggleLanguage();
     applyTranslations();
+    populateMealHistoryUserSearch();
+    populateBazarHistoryUserSearch();
     if (calcData) {
       renderCalcTable(calcData, document.getElementById("calcTableWrap"));
     }
@@ -93,6 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("refreshBazarHistoryBtn", "click", loadAdminBazarHistory);
   bindIfExists("bulkDeleteBazarBtn", "click", handleBulkDeleteBazar);
   bindIfExists("bazarHistoryDateSearch", "input", handleBazarDateSearch);
+  bindIfExists("bazarHistoryUserSearch", "change", handleBazarDateSearch);
   bindIfExists("bazarHistoryClearSearch", "click", clearBazarDateSearch);
   bindIfExists("selectAllBazarRows", "change", handleSelectAllBazarRows);
   bindIfExists("bazarPageSize", "change", handleBazarPageSizeChange);
@@ -110,6 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindIfExists("refreshMealHistoryBtn", "click", loadAdminMealHistory);
   bindIfExists("bulkDeleteMealBtn", "click", handleBulkDeleteMeal);
   bindIfExists("mealHistoryDateSearch", "input", handleMealDateSearch);
+  bindIfExists("mealHistoryUserSearch", "change", handleMealDateSearch);
   bindIfExists("mealHistoryClearSearch", "click", clearMealDateSearch);
   bindIfExists("selectAllMealRows", "change", handleSelectAllMealRows);
   bindIfExists("mealPageSize", "change", handleMealPageSizeChange);
@@ -465,6 +469,7 @@ async function loadAdminBazarHistory() {
 
   try {
     bazarMemberMap = await getMemberMap();
+    populateBazarHistoryUserSearch();
     const snap = await getDocs(query(collection(db, "bazar"), where("month", "==", selectedMonth)));
     adminBazarAllRows = snap.docs
       .map((d) => ({ id: d.id, ...d.data() }))
@@ -489,8 +494,20 @@ function renderAdminBazarHistory() {
 
   if (adminBazarRows.length === 0) {
     const searchDate = getHistoryDateSearchValue("bazarHistoryDateSearch");
-    const message = searchDate ? `No bazar entries found for ${searchDate}.` : "No bazar entries found for this month.";
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">${message}</td></tr>`;
+    const searchUser = document.getElementById("bazarHistoryUserSearch")?.value || "";
+    let message = "No bazar entries found for this month.";
+    if (searchDate && searchUser) {
+      const member = bazarMemberMap.get(searchUser);
+      const name = member ? member.name : "selected member";
+      message = `No bazar entries found for ${name} on ${searchDate}.`;
+    } else if (searchUser) {
+      const member = bazarMemberMap.get(searchUser);
+      const name = member ? member.name : "selected member";
+      message = `No bazar entries found for ${name}.`;
+    } else if (searchDate) {
+      message = `No bazar entries found for ${searchDate}.`;
+    }
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">${escapeHtml(message)}</td></tr>`;
     renderBazarPagination();
     updateBulkDeleteState();
     return;
@@ -543,17 +560,37 @@ function handleBazarDateSearch() {
   renderAdminBazarHistory();
 }
 
+function populateBazarHistoryUserSearch() {
+  const select = document.getElementById("bazarHistoryUserSearch");
+  if (!select) return;
+  const currentVal = select.value;
+  select.innerHTML = `<option value="">${t("all_members") || "All Members"}</option>`;
+  bazarMemberMap.forEach((member, uid) => {
+    const opt = document.createElement("option");
+    opt.value = uid;
+    opt.textContent = `${member.name || "Unknown"} (@${member.username || ""})`;
+    if (uid === currentVal) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
 function clearBazarDateSearch() {
-  const input = document.getElementById("bazarHistoryDateSearch");
-  if (input) input.value = "";
+  const dateInput = document.getElementById("bazarHistoryDateSearch");
+  if (dateInput) dateInput.value = "";
+  const userSelect = document.getElementById("bazarHistoryUserSearch");
+  if (userSelect) userSelect.value = "";
   handleBazarDateSearch();
 }
 
 function applyBazarHistoryDateFilter() {
   const searchDate = getHistoryDateSearchValue("bazarHistoryDateSearch");
-  adminBazarRows = searchDate
-    ? adminBazarAllRows.filter((row) => row.date === searchDate)
-    : [...adminBazarAllRows];
+  const searchUser = document.getElementById("bazarHistoryUserSearch")?.value || "";
+
+  adminBazarRows = adminBazarAllRows.filter((row) => {
+    if (searchDate && row.date !== searchDate) return false;
+    if (searchUser && row.userId !== searchUser) return false;
+    return true;
+  });
 }
 
 async function openEditBazarModal(id) {
@@ -725,6 +762,7 @@ async function loadAdminMealHistory() {
 
   try {
     mealMemberMap = await getMemberMap();
+    populateMealHistoryUserSearch();
     const snap = await getDocs(query(collection(db, "meals"), where("month", "==", selectedMonth)));
     adminMealAllRows = snap.docs
       .map((d) => ({ id: d.id, ...d.data() }))
@@ -743,8 +781,20 @@ function renderAdminMealHistory() {
 
   if (adminMealRows.length === 0) {
     const searchDate = getHistoryDateSearchValue("mealHistoryDateSearch");
-    const message = searchDate ? `No meal entries found for ${searchDate}.` : "No meal entries found for this month.";
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">${message}</td></tr>`;
+    const searchUser = document.getElementById("mealHistoryUserSearch")?.value || "";
+    let message = "No meal entries found for this month.";
+    if (searchDate && searchUser) {
+      const member = mealMemberMap.get(searchUser);
+      const name = member ? member.name : "selected member";
+      message = `No meal entries found for ${name} on ${searchDate}.`;
+    } else if (searchUser) {
+      const member = mealMemberMap.get(searchUser);
+      const name = member ? member.name : "selected member";
+      message = `No meal entries found for ${name}.`;
+    } else if (searchDate) {
+      message = `No meal entries found for ${searchDate}.`;
+    }
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">${escapeHtml(message)}</td></tr>`;
     renderMealPagination();
     updateBulkDeleteMealState();
     return;
@@ -804,17 +854,37 @@ function handleMealDateSearch() {
   renderAdminMealHistory();
 }
 
+function populateMealHistoryUserSearch() {
+  const select = document.getElementById("mealHistoryUserSearch");
+  if (!select) return;
+  const currentVal = select.value;
+  select.innerHTML = `<option value="">${t("all_members") || "All Members"}</option>`;
+  mealMemberMap.forEach((member, uid) => {
+    const opt = document.createElement("option");
+    opt.value = uid;
+    opt.textContent = `${member.name || "Unknown"} (@${member.username || ""})`;
+    if (uid === currentVal) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
 function clearMealDateSearch() {
-  const input = document.getElementById("mealHistoryDateSearch");
-  if (input) input.value = "";
+  const dateInput = document.getElementById("mealHistoryDateSearch");
+  if (dateInput) dateInput.value = "";
+  const userSelect = document.getElementById("mealHistoryUserSearch");
+  if (userSelect) userSelect.value = "";
   handleMealDateSearch();
 }
 
 function applyMealHistoryDateFilter() {
   const searchDate = getHistoryDateSearchValue("mealHistoryDateSearch");
-  adminMealRows = searchDate
-    ? adminMealAllRows.filter((row) => row.date === searchDate)
-    : [...adminMealAllRows];
+  const searchUser = document.getElementById("mealHistoryUserSearch")?.value || "";
+
+  adminMealRows = adminMealAllRows.filter((row) => {
+    if (searchDate && row.date !== searchDate) return false;
+    if (searchUser && row.userId !== searchUser) return false;
+    return true;
+  });
 }
 
 async function openEditMealModal(id) {

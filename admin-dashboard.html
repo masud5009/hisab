@@ -192,6 +192,10 @@
       transition: all 0.15s;
     }
     .btn-primary-custom:hover { background: #c88a00; }
+    .card-header-custom .btn-primary-custom i,
+    .btn-primary-custom i {
+      color: #ffffff !important;
+    }
     .btn-outline-custom {
       background: transparent;
       color: var(--clr-muted);
@@ -812,10 +816,14 @@
         <div id="bazarHistoryAlert" class="alert d-none m-3 mb-0"></div>
         <div class="d-flex flex-wrap align-items-center gap-2 p-3 border-bottom">
           <span class="text-muted small" id="bazarPaginationInfo">Showing 0 entries</span>
-          <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0" for="bazarHistoryDateSearch">Date</label>
-            <input type="date" id="bazarHistoryDateSearch" class="form-control form-control-sm" style="width:150px" aria-label="Search bazar history by date"/>
-            <button type="button" id="bazarHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <label class="form-label mb-0" for="bazarHistoryUserSearch"><span data-i18n="th_member">Member</span></label>
+            <select id="bazarHistoryUserSearch" class="form-select form-select-sm" style="min-width:160px; max-width:200px;" aria-label="Search bazar history by member">
+              <option value="" data-i18n="all_members">All Members</option>
+            </select>
+            <label class="form-label mb-0" for="bazarHistoryDateSearch"><span data-i18n="th_date">Date</span></label>
+            <input type="date" id="bazarHistoryDateSearch" class="form-control form-control-sm" style="width:145px" aria-label="Search bazar history by date"/>
+            <button type="button" id="bazarHistoryClearSearch" class="btn btn-sm btn-outline-secondary"><span data-i18n="btn_clear">Clear</span></button>
           </div>
           <div class="ms-auto d-flex align-items-center gap-2">
             <label class="form-label mb-0">Rows</label>
@@ -855,7 +863,7 @@
       <div class="card-header-custom">
         <div><i class="bi bi-egg-fried me-1"></i> <span data-i18n="meal_history">All Meal History</span></div>
         <div class="ms-auto d-flex flex-wrap gap-2">
-          <button type="button" class="btn-primary-custom" id="openAddMealFromHistoryBtn"><i class="bi bi-plus-circle me-1"></i><span data-i18n="btn_add_meal">Add Meal</span></button>
+          <button type="button" class="btn-primary-custom" id="openAddMealFromHistoryBtn"><i class="bi bi-plus-circle me-1 text-white" style="color:#ffffff !important;"></i><span data-i18n="btn_add_meal">Add Meal</span></button>
           <button type="button" class="btn-outline-custom" id="refreshMealHistoryBtn"><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="btn_refresh">Refresh</span></button>
           <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteMealBtn" disabled><i class="bi bi-trash me-1"></i><span data-i18n="btn_bulk_delete">Delete Selected</span></button>
         </div>
@@ -864,10 +872,14 @@
         <div id="mealHistoryAlert" class="alert d-none m-3 mb-0"></div>
         <div class="d-flex flex-wrap align-items-center gap-2 p-3 border-bottom">
           <span class="text-muted small" id="mealPaginationInfo">Showing 0 entries</span>
-          <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0" for="mealHistoryDateSearch">Date</label>
-            <input type="date" id="mealHistoryDateSearch" class="form-control form-control-sm" style="width:150px" aria-label="Search meal history by date"/>
-            <button type="button" id="mealHistoryClearSearch" class="btn btn-sm btn-outline-secondary">Clear</button>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <label class="form-label mb-0" for="mealHistoryUserSearch"><span data-i18n="th_member">Member</span></label>
+            <select id="mealHistoryUserSearch" class="form-select form-select-sm" style="min-width:160px; max-width:200px;" aria-label="Search meal history by member">
+              <option value="" data-i18n="all_members">All Members</option>
+            </select>
+            <label class="form-label mb-0" for="mealHistoryDateSearch"><span data-i18n="th_date">Date</span></label>
+            <input type="date" id="mealHistoryDateSearch" class="form-control form-control-sm" style="width:145px" aria-label="Search meal history by date"/>
+            <button type="button" id="mealHistoryClearSearch" class="btn btn-sm btn-outline-secondary"><span data-i18n="btn_clear">Clear</span></button>
           </div>
           <div class="ms-auto d-flex align-items-center gap-2">
             <label class="form-label mb-0">Rows</label>

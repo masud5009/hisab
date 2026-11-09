@@ -127,6 +127,8 @@ export const translations = {
     msg_meal_added: "Meal added successfully!",
     msg_meal_exists: "Meal entry for this member and date already exists.",
     select_member: "Select Member",
+    all_members: "All Members",
+    th_member: "Member",
     lang_toggle_label: "বাং"
   },
   bn: {
@@ -252,6 +254,8 @@ export const translations = {
     msg_meal_added: "মিল সফলভাবে যোগ করা হয়েছে!",
     msg_meal_exists: "এই মেম্বারের এই তারিখে ইতিমধ্যে মিল এন্ট্রি রয়েছে।",
     select_member: "মেম্বার নির্বাচন করুন",
+    all_members: "সকল মেম্বার",
+    th_member: "মেম্বার",
     lang_toggle_label: "ENG"
   }
 };
