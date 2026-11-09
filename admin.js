@@ -88,16 +88,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
   bindIfExists("pushSettingsForm", "submit", handleSavePushSettings);
   bindIfExists("testPushBtn", "click", handleTestPush);
-  bindIfExists("sendPushReminderMissingBtn", "click", handleSendPushToMissing);
   bindIfExists("refreshPushStatusBtn", "click", loadMemberPushStatusList);
   bindIfExists("saveGithubPatBtn", "click", saveGithubPat);
   bindIfExists("dispatchIndivPushBtn", "click", handleDispatchIndividualPush);
   bindIfExists("copyIndivPushCmdBtn", "click", copyIndivPushCmd);
   document.getElementById("saveRoomRentsBtn").addEventListener("click", handleSaveRoomRents);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
-  bindIfExists("mealReminderBtn", "click", openMealReminderModal);
-  bindIfExists("shareGroupMealReminderBtn", "click", shareGroupMealReminderWa);
-  bindIfExists("shareMessSummaryBtn", "click", shareMessSummaryWa);
   bindIfExists("editBazarForm", "submit", handleEditBazar);
   bindIfExists("refreshBazarHistoryBtn", "click", loadAdminBazarHistory);
   bindIfExists("bulkDeleteBazarBtn", "click", handleBulkDeleteBazar);
@@ -1241,12 +1237,6 @@ async function handleAddMealByAdmin(e) {
       await loadCalculation();
       await loadAdminMealHistory();
     }
-
-    // Refresh meal reminder modal if currently visible
-    const reminderModal = document.getElementById("mealReminderModal");
-    if (reminderModal && reminderModal.classList.contains("show")) {
-      await openMealReminderModal();
-    }
   } catch (err) {
     showAlert("adminAddMealAlert", err.message, "danger", false);
   } finally {
@@ -1432,19 +1422,6 @@ async function handleTestPush() {
 
   showAlert("pushSettingsAlert", "নোটিফিকেশন পারমিশন দেওয়া নেই। তবে ক্লাউড রানারের শিডিউল সেটিংস সক্রিয় রয়েছে।", "info");
   if (statusEl) statusEl.textContent = "";
-}
-
-async function handleSendPushToMissing() {
-  if (!missingMealMembers || missingMealMembers.length === 0) return;
-  try {
-    const snap = await getDocs(collection(db, "pushSubscriptions"));
-    const subUserIds = new Set(snap.docs.filter((d) => d.data().enabled !== false).map((d) => d.data().userId || d.id));
-    const missingSubscribed = missingMealMembers.filter((m) => subUserIds.has(m.uid));
-
-    alert(`আজকে মিল দেননি এমন ${missingMealMembers.length} জনের মধ্যে ${missingSubscribed.length} জন পুশ নোটিফিকেশন সাবস্ক্রাইব করে রেখেছেন। প্রতিদিন নির্ধারিত সময়ে GitHub Actions স্বয়ংক্রিয়ভাবে তাদের ফোনে পুশ পাঠাবে।`);
-  } catch (err) {
-    alert("ত্রুটি: " + err.message);
-  }
 }
 
 // ─────────────────────────────────────────────
@@ -1954,36 +1931,6 @@ function shareMemberStatementWa(uid) {
   copyToClipboardAndShare(message, row.phone);
 }
 
-function shareMessSummaryWa() {
-  if (!calcData || !calcData.rows || calcData.rows.length === 0) {
-    alert(t("no_data"));
-    return;
-  }
-  const s = calcData.summary;
-  const memberSummaries = calcData.rows.map((r) => {
-    const balance = getBalanceParts(r.totalPayable);
-    const balStr = balance.due !== null ? `বকেয়া ৳${balance.due}` : `পাওনা ৳${balance.pay}`;
-    return `• ${r.name}: মিল ${r.totalMeals} | বাজার ৳${r.totalBazar} ➔ ${balStr}`;
-  }).join("\n");
-
-  const message = 
-`🏠 *মেস হিসাবের সারাংশ — ${formatMonthYear(selectedMonth)}*
-━━━━━━━━━━━━━━━━━━━━━
-📊 *সার্বিক অবস্থা:*
-• মোট মিল: ${s.totalMeals} (সকাল: ${s.totalMorningMeals}, দুপুর: ${s.totalLunchMeals}, রাত: ${s.totalDinnerMeals})
-• মোট বাজার: ৳${s.totalBazar}
-• বেস মিল রেট: ৳${s.mealRate}
-• মোট ঘর ভাড়া: ৳${s.totalBariVara}${s.totalAdditionalCosts > 0 ? `\n• মোট অতিরিক্ত খরচ: ৳${s.totalAdditionalCosts}` : ""}
-• সদস্য সংখ্যা: ${s.userCount} জন
-
-👥 *সদস্যদের হিসাব বিবরণী:*
-${memberSummaries}
-━━━━━━━━━━━━━━━━━━━━━
-📱 হিসাব অ্যাপ থেকে প্রেরিত`;
-
-  copyToClipboardAndShare(message);
-}
-
 function copyToClipboardAndShare(message, phone = "") {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(message).then(() => {
@@ -1995,144 +1942,6 @@ function copyToClipboardAndShare(message, phone = "") {
     ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`
     : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   window.open(waUrl, "_blank");
-}
-
-// ─────────────────────────────────────────────
-// Meal Reminder for missing today's meals
-// ─────────────────────────────────────────────
-let missingMealMembers = [];
-let todayDateStr = "";
-
-async function openMealReminderModal() {
-  showModal("mealReminderModal");
-  const container = document.getElementById("mealReminderBody");
-  const groupBtn = document.getElementById("shareGroupMealReminderBtn");
-  const pushBtn = document.getElementById("sendPushReminderMissingBtn");
-  const dateText = document.getElementById("mealReminderDateText");
-  if (groupBtn) groupBtn.classList.add("d-none");
-  if (pushBtn) pushBtn.classList.add("d-none");
-
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  todayDateStr = `${yyyy}-${mm}-${dd}`;
-
-  if (dateText) dateText.textContent = `তারিখ: ${todayDateStr}`;
-
-  if (container) {
-    container.innerHTML = `
-      <div class="text-center py-4 text-muted">
-        <div class="spinner-border text-warning mb-2"></div>
-        <div>যাচাই করা হচ্ছে...</div>
-      </div>
-    `;
-  }
-
-  try {
-    const usersSnap = await getDocs(collection(db, "users"));
-    const allMembers = usersSnap.docs
-      .map((d) => ({ uid: d.id, ...d.data() }))
-      .filter((u) => u.role !== "admin");
-
-    const mealsSnap = await getDocs(query(
-      collection(db, "meals"),
-      where("date", "==", todayDateStr)
-    ));
-    const submittedUserIds = new Set(mealsSnap.docs.map((d) => d.data().userId));
-
-    missingMealMembers = allMembers.filter((u) => !submittedUserIds.has(u.uid));
-
-    if (missingMealMembers.length === 0) {
-      container.innerHTML = `
-        <div class="text-center py-4 text-success">
-          <i class="bi bi-check-circle-fill fs-1 d-block mb-2 text-success"></i>
-          <div class="fw-bold fs-6">${t("all_meals_added_today")}</div>
-        </div>
-      `;
-      if (groupBtn) groupBtn.classList.add("d-none");
-      if (pushBtn) pushBtn.classList.add("d-none");
-      return;
-    }
-
-    if (groupBtn) groupBtn.classList.remove("d-none");
-    if (pushBtn) pushBtn.classList.remove("d-none");
-
-    container.innerHTML = `
-      <div class="alert alert-warning py-2 mb-3 small d-flex align-items-center justify-content-between">
-        <span>⚠️ <strong>${missingMealMembers.length}</strong> ${t("lbl_missing_meal_count")}</span>
-      </div>
-      <div class="list-group">
-        ${missingMealMembers.map((m) => `
-          <div class="list-group-item d-flex align-items-center justify-content-between p-2">
-            <div>
-              <div class="fw-semibold text-dark">${escapeHtml(m.name || "Unknown")}</div>
-              <div class="small text-muted">${escapeHtml(m.phone || "ফোন নম্বর নেই")}</div>
-            </div>
-            <div class="d-flex align-items-center gap-1">
-              <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 reminder-add-meal-btn" data-uid="${m.uid}" title="Add Meal for ${escapeHtml(m.name || "")}">
-                <i class="bi bi-egg-fried"></i> <span>${t("btn_add")}</span>
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 send-indiv-push-btn" data-uid="${m.uid}" title="Send Push Notification to ${escapeHtml(m.name || "")}">
-                <i class="bi bi-bell-fill"></i> <span>পুশ</span>
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 send-indiv-wa-btn" data-uid="${m.uid}">
-                <i class="bi bi-whatsapp"></i> <span>${t("btn_send_wa")}</span>
-              </button>
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    `;
-
-    container.querySelectorAll(".reminder-add-meal-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        openAdminAddMealModal(btn.dataset.uid, todayDateStr);
-      });
-    });
-    container.querySelectorAll(".send-indiv-push-btn").forEach((btn) => {
-      btn.addEventListener("click", () => openIndividualPushModal(btn.dataset.uid));
-    });
-    container.querySelectorAll(".send-indiv-wa-btn").forEach((btn) => {
-      btn.addEventListener("click", () => sendIndividualMealReminder(btn.dataset.uid));
-    });
-
-  } catch (err) {
-    console.error(err);
-    if (container) {
-      container.innerHTML = `<div class="alert alert-danger mb-0">Error: ${escapeHtml(err.message)}</div>`;
-    }
-  }
-}
-
-function sendIndividualMealReminder(uid) {
-  const member = missingMealMembers.find((m) => m.uid === uid);
-  if (!member) return;
-
-  const message = 
-`আসসালামু আলাইকুম ${member.name},
-আজকের (${todayDateStr}) মিল হিসাব এখনও অ্যাপে যুক্ত করা হয়নি। অনুগ্রহ করে দ্রুত হিসাব অ্যাপে আপনার মিল এন্ট্রি দিন।
-
-📱 হিসাব অ্যাপ`;
-
-  copyToClipboardAndShare(message, member.phone);
-}
-
-function shareGroupMealReminderWa() {
-  if (!missingMealMembers || missingMealMembers.length === 0) return;
-
-  const memberList = missingMealMembers.map((m) => `• ${m.name}`).join("\n");
-  const message = 
-`📢 *মিল রিমাইন্ডার — ${todayDateStr}*
-━━━━━━━━━━━━━━━━━━━━━
-⚠️ আজকে যারা এখনও মিল এন্ট্রি দেননি:
-${memberList}
-
-অনুগ্রহ করে দ্রুত হিসাব অ্যাপে আজকের মিল এন্ট্রি সম্পন্ন করুন।
-━━━━━━━━━━━━━━━━━━━━━
-📱 হিসাব অ্যাপ থেকে প্রেরিত`;
-
-  copyToClipboardAndShare(message);
 }
 
 // ─────────────────────────────────────────────
