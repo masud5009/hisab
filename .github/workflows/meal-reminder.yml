@@ -16,6 +16,16 @@ on:
         required: false
         type: boolean
         default: true
+      subscription_json:
+        description: 'Direct push subscription JSON (avoids Firestore auth)'
+        required: false
+        type: string
+        default: ''
+      custom_body:
+        description: 'Custom message body'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   remind-meals:
@@ -39,7 +49,9 @@ jobs:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME || 'masud5009' }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           TARGET_USER: ${{ github.event.inputs.target_user || 'all' }}
-          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.force == true || inputs.force == 'true') }}
+          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' }}
+          SUBSCRIPTION_JSON: ${{ github.event.inputs.subscription_json }}
+          CUSTOM_BODY: ${{ github.event.inputs.custom_body }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY || 'AIzaSyCGX4xWYrpfYRfIce20GYISa3Pcn6It4Y0' }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID || 'hisab-9454a' }}
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY || 'BJrhVa4SoaeK3Z6VX50FsZWJNNENKRulzBxG_hpZGwQ7K5lC-Ymi6BtmMAVmZa0QsVxgcZY4r3NVIQ6Df9hKMZw' }}

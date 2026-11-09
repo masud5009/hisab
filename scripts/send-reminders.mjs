@@ -53,8 +53,9 @@ const hasArg = (name) => args.includes(`--${name}`) || args.some((a) => a.starts
 
 const targetUserArg = getArg("user") || process.env.TARGET_USER;
 const isForce = hasArg("force") || hasArg("test") || hasArg("manual") || process.env.MANUAL_RUN === "true";
-const customTitle = getArg("title");
-const customBody = getArg("body");
+const customTitle = getArg("title") || process.env.CUSTOM_TITLE;
+const customBody = getArg("body") || process.env.CUSTOM_BODY;
+const directSubArg = getArg("subscription") || process.env.SUBSCRIPTION_JSON;
 const passwordArg = getArg("password");
 if (passwordArg) process.env.ADMIN_PASSWORD = passwordArg;
 const usernameArg = getArg("admin");
@@ -102,7 +103,8 @@ async function getAdminAuthToken() {
   const password = process.env.ADMIN_PASSWORD;
 
   if (!password) {
-    console.warn("⚠️ No ADMIN_PASSWORD provided in environment variables or CLI. Attempting unauthenticated access (may fail if rules require auth).");
+    console.warn("⚠️ No ADMIN_PASSWORD provided in environment variables or GitHub Secrets.");
+    console.warn("👉 For automated daily cron reminders, please set ADMIN_PASSWORD in GitHub Settings -> Secrets -> Actions.");
     return null;
   }
 
@@ -122,7 +124,7 @@ async function getAdminAuthToken() {
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(`Firebase Auth failed: ${data.error?.message || res.statusText}`);
+    throw new Error(`Firebase Auth failed (${email}): ${data.error?.message || res.statusText}`);
   }
 
   console.log("✅ Authenticated successfully as Admin.");
@@ -156,6 +158,32 @@ async function run() {
   const currentDhakaMinute = parseInt(timeParts.find((p) => p.type === "minute")?.value || "0", 10);
 
   console.log(`🕒 Current Time (Asia/Dhaka): ${todayStr} ${String(currentDhakaHour).padStart(2, "0")}:${String(currentDhakaMinute).padStart(2, "0")}`);
+
+  // ─── Case 0: Direct Push Subscription Provided (from 1-Click Admin Dashboard) ───
+  if (directSubArg && directSubArg.trim() && directSubArg.trim() !== "null" && directSubArg.trim() !== "undefined") {
+    console.log("⚡ Direct push subscription received. Bypassing Firestore queries.");
+    try {
+      const sub = typeof directSubArg === "object" ? directSubArg : JSON.parse(directSubArg);
+      const recipientName = targetUserArg && targetUserArg !== "all" ? targetUserArg : "মেম্বার";
+      const payload = JSON.stringify({
+        title: customTitle || "হিসাব - মিল রিমাইন্ডার 🍽️",
+        body: customBody || `${recipientName}, আজকের মিল এন্ট্রি এখনো দেননি! অনুগ্রহ করে অ্যাপে গিয়ে মিল যোগ করুন।`,
+        icon: "./pwa-icon-192.png",
+        badge: "./favicon.svg",
+        tag: "meal-reminder-direct",
+        data: { url: "./user-dashboard.html#section-meals" }
+      });
+
+      console.log(`📤 Sending push notification directly to ${recipientName}'s device...`);
+      const pushRes = await webpush.sendNotification(sub, payload);
+      console.log(`🎉 SUCCESS! Push delivered directly to device! HTTP ${pushRes.statusCode}`);
+      console.log("==================================================");
+      process.exit(0);
+    } catch (directErr) {
+      console.error("❌ Direct push delivery failed:", directErr.message);
+      process.exit(1);
+    }
+  }
 
   const idToken = await getAdminAuthToken();
   const authHeaders = {

@@ -1651,7 +1651,9 @@ async function handleDispatchIndividualPush() {
           ref: "v2",
           inputs: {
             target_user: currentPushTargetMember.username || currentPushTargetMember.uid,
-            force: "true"
+            force: "true",
+            subscription_json: currentPushTargetSubscription ? JSON.stringify(currentPushTargetSubscription) : "",
+            custom_body: customBody ? customBody.trim() : ""
           }
         })
       });
