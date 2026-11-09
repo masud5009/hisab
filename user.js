@@ -9,10 +9,13 @@ import {
   calcUserPayable
 } from "./calculation.js";
 import { t, getLanguage, toggleLanguage, applyTranslations } from "./i18n.js";
+import { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } from "./push-config.js";
 import {
   collection,
   doc,
   addDoc,
+  setDoc,
+  deleteDoc,
   getDoc,
   getDocs,
   query,
@@ -141,6 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadBazarHistory();
   loadMealHistory();
   updateMealHistorySearchRange();
+  initUserPushNotifications();
 });
 
 // ─────────────────────────────────────────────
@@ -924,4 +928,235 @@ function showAlert(id, msg, type) {
   el.textContent = msg;
   el.classList.remove("d-none");
   setTimeout(() => el.classList.add("d-none"), 4000);
+}
+
+// ─────────────────────────────────────────────
+// Web Push Notifications (Member Side)
+// ─────────────────────────────────────────────
+let pushPermissionModalInstance = null;
+
+async function initUserPushNotifications() {
+  const bannerEl = document.getElementById("pushNotificationBanner");
+  const enableBtn = document.getElementById("enablePushBtn");
+  const dismissBtn = document.getElementById("dismissPushBannerBtn");
+  const desktopBtn = document.getElementById("pushNotificationBtn");
+  const drawerBtn = document.getElementById("drawerPushToggleBtn");
+  const modalEl = document.getElementById("pushPermissionModal");
+  const modalEnableBtn = document.getElementById("modalEnablePushBtn");
+
+  // Check feature support
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    console.info("Push notifications not supported on this device/browser.");
+    updatePushUI(false, "unsupported");
+    return;
+  }
+
+  // Initialize Bootstrap modal if available
+  if (modalEl && window.bootstrap) {
+    pushPermissionModalInstance = new bootstrap.Modal(modalEl);
+  }
+
+  // Bind event listeners
+  if (enableBtn) enableBtn.addEventListener("click", () => subscribeUserToPush(true));
+  if (modalEnableBtn) {
+    modalEnableBtn.addEventListener("click", async () => {
+      setButtonLoading("modalEnablePushBtn", "modalPushSpinner", true);
+      const ok = await subscribeUserToPush(true);
+      setButtonLoading("modalEnablePushBtn", "modalPushSpinner", false);
+      if (ok && pushPermissionModalInstance) {
+        pushPermissionModalInstance.hide();
+      }
+    });
+  }
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", () => {
+      if (bannerEl) {
+        bannerEl.classList.remove("d-flex");
+        bannerEl.classList.add("d-none");
+      }
+    });
+  }
+  if (desktopBtn) desktopBtn.addEventListener("click", () => toggleUserPush());
+  if (drawerBtn) drawerBtn.addEventListener("click", () => toggleUserPush());
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+
+    if (sub && Notification.permission === "granted") {
+      updatePushUI(true);
+      // Sync subscription with Firestore
+      syncPushSubscription(sub);
+    } else if (Notification.permission === "granted") {
+      // Permission granted earlier but subscription not active; re-subscribe
+      subscribeUserToPush(false);
+    } else if (Notification.permission === "denied") {
+      updatePushUI(false, "denied");
+    } else {
+      // Default: Permission not yet granted!
+      // Show top banner AND automatically pop up modal every time user opens the app
+      updatePushUI(false, "default");
+      if (bannerEl) {
+        bannerEl.classList.remove("d-none");
+        bannerEl.classList.add("d-flex");
+      }
+      if (pushPermissionModalInstance) {
+        setTimeout(() => {
+          if (Notification.permission !== "granted") {
+            pushPermissionModalInstance.show();
+          }
+        }, 600);
+      }
+    }
+  } catch (err) {
+    console.warn("Error initializing push notifications:", err);
+  }
+}
+
+function updatePushUI(isSubscribed, state = null) {
+  const bannerEl = document.getElementById("pushNotificationBanner");
+  const desktopIcon = document.getElementById("pushNotificationIcon");
+  const desktopText = document.getElementById("pushNotificationStatusText");
+  const drawerBadge = document.getElementById("drawerPushBadge");
+  const drawerText = document.getElementById("drawerPushStatusText");
+
+  if (isSubscribed) {
+    if (bannerEl) {
+      bannerEl.classList.remove("d-flex");
+      bannerEl.classList.add("d-none");
+    }
+    if (desktopIcon) {
+      desktopIcon.className = "bi bi-bell-fill text-primary";
+    }
+    if (desktopText) {
+      desktopText.textContent = t("push_reminder_enabled");
+    }
+    if (drawerBadge) {
+      drawerBadge.textContent = "ON";
+      drawerBadge.className = "badge bg-success";
+    }
+    if (drawerText) {
+      drawerText.textContent = t("push_reminder_enabled");
+    }
+  } else {
+    if (desktopIcon) {
+      desktopIcon.className = "bi bi-bell text-muted";
+    }
+    if (desktopText) {
+      desktopText.textContent = state === "denied" ? "Blocked" : t("push_reminder_enable_btn");
+    }
+    if (drawerBadge) {
+      if (state === "denied") {
+        drawerBadge.textContent = "BLOCKED";
+        drawerBadge.className = "badge bg-danger";
+      } else if (state === "unsupported") {
+        drawerBadge.textContent = "N/A";
+        drawerBadge.className = "badge bg-secondary";
+      } else {
+        drawerBadge.textContent = "OFF";
+        drawerBadge.className = "badge bg-light text-dark border";
+      }
+    }
+    if (drawerText) {
+      if (state === "denied") {
+        drawerText.textContent = t("push_reminder_permission_denied");
+      } else if (state === "unsupported") {
+        drawerText.textContent = t("push_reminder_unsupported");
+      } else {
+        drawerText.textContent = t("push_reminder_disabled");
+      }
+    }
+  }
+}
+
+async function subscribeUserToPush(isUserAction = false) {
+  if (!currentUser) return false;
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      updatePushUI(false, permission === "denied" ? "denied" : "default");
+      if (isUserAction && permission === "denied") {
+        alert(t("push_reminder_permission_denied"));
+      }
+      return false;
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    await syncPushSubscription(sub);
+    updatePushUI(true);
+    if (pushPermissionModalInstance) {
+      pushPermissionModalInstance.hide();
+    }
+
+    if (isUserAction) {
+      alert(t("push_reminder_subscribed_alert"));
+    }
+    return true;
+  } catch (err) {
+    console.error("Failed to subscribe user to push:", err);
+    if (isUserAction) {
+      alert("পুশ নোটিফিকেশন চালু করা যায়নি: " + err.message);
+    }
+    return false;
+  }
+}
+
+async function syncPushSubscription(subscription) {
+  if (!currentUser || !subscription) return;
+  try {
+    const rawSub = subscription.toJSON ? subscription.toJSON() : subscription;
+    await setDoc(doc(db, "pushSubscriptions", currentUser.uid), {
+      userId: currentUser.uid,
+      userName: currentUser.name || "",
+      userUsername: currentUser.username || "",
+      subscription: rawSub,
+      userAgent: navigator.userAgent || "",
+      enabled: true,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Could not save push subscription to Firestore:", err);
+  }
+}
+
+async function unsubscribeUserFromPush() {
+  if (!currentUser) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await sub.unsubscribe();
+    }
+    await setDoc(doc(db, "pushSubscriptions", currentUser.uid), {
+      enabled: false,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    updatePushUI(false);
+  } catch (err) {
+    console.error("Failed to unsubscribe push:", err);
+  }
+}
+
+async function toggleUserPush() {
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (sub && Notification.permission === "granted") {
+    const confirmDisable = confirm("আপনি কি দৈনিক মিল রিমাইন্ডার নোটিফিকেশন বন্ধ করতে চান?");
+    if (confirmDisable) {
+      await unsubscribeUserFromPush();
+    }
+  } else {
+    await subscribeUserToPush(true);
+  }
 }

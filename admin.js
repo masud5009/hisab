@@ -86,6 +86,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("addUserForm").addEventListener("submit", handleAddUser);
   document.getElementById("editMemberForm").addEventListener("submit", handleEditMember);
   document.getElementById("monthCostForm").addEventListener("submit", handleSaveMonthCosts);
+  bindIfExists("pushSettingsForm", "submit", handleSavePushSettings);
+  bindIfExists("testPushBtn", "click", handleTestPush);
+  bindIfExists("sendPushReminderMissingBtn", "click", handleSendPushToMissing);
+  bindIfExists("refreshPushStatusBtn", "click", loadMemberPushStatusList);
+  bindIfExists("saveGithubPatBtn", "click", saveGithubPat);
+  bindIfExists("dispatchIndivPushBtn", "click", handleDispatchIndividualPush);
+  bindIfExists("copyIndivPushCmdBtn", "click", copyIndivPushCmd);
   document.getElementById("saveRoomRentsBtn").addEventListener("click", handleSaveRoomRents);
   document.getElementById("recalculateBtn").addEventListener("click", loadCalculation);
   bindIfExists("mealReminderBtn", "click", openMealReminderModal);
@@ -143,6 +150,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateHistoryDateSearchRanges();
   loadUsersPanel();
   loadMonthCosts();
+  loadNotificationSettings();
+  loadPushSubscribersCount();
+  loadMemberPushStatusList();
+  initGithubPat();
   loadCalculation();
   loadAdminBazarHistory();
   loadAdminMealHistory();
@@ -1321,6 +1332,371 @@ async function handleSaveMonthCosts(e) {
 }
 
 // ─────────────────────────────────────────────
+// Automatic Meal Reminder Settings (Push Notifications)
+// ─────────────────────────────────────────────
+async function loadNotificationSettings() {
+  try {
+    const snap = await getDoc(doc(db, "settings", "notifications"));
+    if (snap.exists()) {
+      const d = snap.data();
+      const toggle = document.getElementById("reminderEnabledToggle");
+      const timeInput = document.getElementById("reminderTimeInput");
+      const titleInput = document.getElementById("reminderTitleInput");
+      const bodyInput = document.getElementById("reminderBodyInput");
+
+      if (toggle) toggle.checked = d.enabled !== false;
+      if (timeInput && d.time) timeInput.value = d.time;
+      if (titleInput && d.title) titleInput.value = d.title;
+      if (bodyInput && d.body) bodyInput.value = d.body;
+    }
+  } catch (err) {
+    console.warn("Could not load notification settings:", err);
+  }
+}
+
+async function handleSavePushSettings(e) {
+  e.preventDefault();
+  const toggle = document.getElementById("reminderEnabledToggle");
+  const timeInput = document.getElementById("reminderTimeInput");
+  const titleInput = document.getElementById("reminderTitleInput");
+  const bodyInput = document.getElementById("reminderBodyInput");
+
+  const data = {
+    enabled: toggle ? toggle.checked : true,
+    time: timeInput ? timeInput.value.trim() : "20:00",
+    title: titleInput ? titleInput.value.trim() : "হিসাব - মিল রিমাইন্ডার 🍽️",
+    body: bodyInput ? bodyInput.value.trim() : "আজকের মিল এন্ট্রি এখনো দেননি! অনুগ্রহ করে অ্যাপে গিয়ে আজকের মিল যোগ করুন।",
+    updatedAt: serverTimestamp()
+  };
+
+  try {
+    setButtonLoading("savePushSettingsBtn", "savePushSpinner", true, t("btn_saving"), "push_save_btn");
+    await setDoc(doc(db, "settings", "notifications"), data, { merge: true });
+    showAlert("pushSettingsAlert", t("push_settings_saved"), "success");
+  } catch (err) {
+    showAlert("pushSettingsAlert", err.message, "danger");
+  } finally {
+    setButtonLoading("savePushSettingsBtn", "savePushSpinner", false, null, "push_save_btn");
+  }
+}
+
+async function loadPushSubscribersCount() {
+  const badgeEl = document.getElementById("subscribersCountText");
+  if (!badgeEl) return;
+  try {
+    const snap = await getDocs(collection(db, "pushSubscriptions"));
+    const activeSubs = snap.docs.filter((d) => d.data().enabled !== false);
+    badgeEl.textContent = `${activeSubs.length} জন সক্রিয়`;
+  } catch (err) {
+    console.warn("Could not count push subscribers:", err);
+    badgeEl.textContent = "0 জন";
+  }
+}
+
+async function handleTestPush() {
+  const statusEl = document.getElementById("pushTestStatus");
+  const title = (document.getElementById("reminderTitleInput")?.value || "হিসাব - মিল রিমাইন্ডার 🍽️").trim();
+  const body = (document.getElementById("reminderBodyInput")?.value || "আজকের মিল এন্ট্রি এখনো দেননি!").trim();
+
+  if (statusEl) statusEl.textContent = "যাচাই করা হচ্ছে...";
+
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      try {
+        if ("serviceWorker" in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification(title, {
+            body: body,
+            icon: "./pwa-icon-192.png",
+            badge: "./favicon.svg",
+            tag: "meal-reminder-test",
+            vibrate: [200, 100, 200]
+          });
+        } else {
+          new Notification(title, { body, icon: "./pwa-icon-192.png" });
+        }
+        if (statusEl) statusEl.textContent = "✅ এই ডিভাইসে টেস্ট নোটিফিকেশন পাঠানো হয়েছে!";
+        showAlert("pushSettingsAlert", "✅ আপনার ডিভাইসে টেস্ট নোটিফিকেশন প্রদর্শিত হয়েছে। প্রতিদিন নির্ধারিত সময়ে ক্লাউড রানার সব মেম্বারকে স্বয়ংক্রিয়ভাবে পুশ করবে।", "success");
+        setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 5000);
+        return;
+      } catch (e) {
+        console.warn("Local notification preview error:", e);
+      }
+    } else {
+      const p = await Notification.requestPermission();
+      if (p === "granted") {
+        return handleTestPush();
+      }
+    }
+  }
+
+  showAlert("pushSettingsAlert", "নোটিফিকেশন পারমিশন দেওয়া নেই। তবে ক্লাউড রানারের শিডিউল সেটিংস সক্রিয় রয়েছে।", "info");
+  if (statusEl) statusEl.textContent = "";
+}
+
+async function handleSendPushToMissing() {
+  if (!missingMealMembers || missingMealMembers.length === 0) return;
+  try {
+    const snap = await getDocs(collection(db, "pushSubscriptions"));
+    const subUserIds = new Set(snap.docs.filter((d) => d.data().enabled !== false).map((d) => d.data().userId || d.id));
+    const missingSubscribed = missingMealMembers.filter((m) => subUserIds.has(m.uid));
+
+    alert(`আজকে মিল দেননি এমন ${missingMealMembers.length} জনের মধ্যে ${missingSubscribed.length} জন পুশ নোটিফিকেশন সাবস্ক্রাইব করে রেখেছেন। প্রতিদিন নির্ধারিত সময়ে GitHub Actions স্বয়ংক্রিয়ভাবে তাদের ফোনে পুশ পাঠাবে।`);
+  } catch (err) {
+    alert("ত্রুটি: " + err.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Member Push Status List & Individual Trigger
+// ─────────────────────────────────────────────
+let currentPushTargetMember = null;
+let currentPushTargetSubscription = null;
+
+async function loadMemberPushStatusList() {
+  const container = document.getElementById("memberPushStatusList");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="text-center py-3 text-muted">
+      <div class="spinner-border spinner-border-sm text-primary mb-1"></div>
+      <div>লোড হচ্ছে...</div>
+    </div>
+  `;
+
+  try {
+    const usersSnap = await getDocs(query(collection(db, "users"), where("role", "==", "user")));
+    const members = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+
+    const subsSnap = await getDocs(collection(db, "pushSubscriptions"));
+    const subsMap = new Map();
+    subsSnap.docs.forEach((d) => {
+      subsMap.set(d.id, d.data());
+    });
+
+    if (members.length === 0) {
+      container.innerHTML = `<div class="p-3 text-muted small text-center">কোনো সাধারণ মেম্বার পাওয়া যায়নি।</div>`;
+      return;
+    }
+
+    container.innerHTML = members
+      .map((m) => {
+        const subData = subsMap.get(m.uid);
+        const isSubscribed = subData && subData.enabled !== false && subData.subscription;
+        let deviceLabel = "ডিভাইস তথ্য নেই";
+        if (subData && subData.userAgent) {
+          if (subData.userAgent.includes("Android")) deviceLabel = "Android Phone";
+          else if (subData.userAgent.includes("iPhone") || subData.userAgent.includes("iPad")) deviceLabel = "iOS Device";
+          else if (subData.userAgent.includes("Windows")) deviceLabel = "Windows PC";
+          else deviceLabel = "Web Browser";
+        }
+
+        return `
+          <div class="list-group-item d-flex align-items-center justify-content-between p-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:38px; height:38px; background:var(--clr-primary);">
+                ${(m.name || "U").charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div class="fw-semibold text-dark">${escapeHtml(m.name || "")} <small class="text-muted">(@${escapeHtml(m.username || "")})</small></div>
+                <div class="small mt-1">
+                  ${
+                    isSubscribed
+                      ? `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill me-1"></i> পুশ সক্রিয় (${deviceLabel})</span>`
+                      : `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="bi bi-x-circle me-1"></i> এখনও পারমিশন দেয়নি</span>`
+                  }
+                </div>
+              </div>
+            </div>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 member-test-push-btn" data-uid="${m.uid}">
+                <i class="bi bi-bell-fill"></i> <span>পুশ পাঠান</span>
+              </button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    container.querySelectorAll(".member-test-push-btn").forEach((btn) => {
+      btn.addEventListener("click", () => openIndividualPushModal(btn.dataset.uid));
+    });
+  } catch (err) {
+    console.warn("Could not load member push status:", err);
+    container.innerHTML = `<div class="alert alert-danger py-2 small mb-0">স্ট্যাটাস লোড করা যায়নি: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function initGithubPat() {
+  const patInput = document.getElementById("githubPatInput");
+  if (!patInput) return;
+  const saved = localStorage.getItem("hisab_github_pat");
+  if (saved) patInput.value = saved;
+}
+
+function saveGithubPat() {
+  const patInput = document.getElementById("githubPatInput");
+  if (!patInput) return;
+  const val = patInput.value.trim();
+  if (val) {
+    localStorage.setItem("hisab_github_pat", val);
+    alert("GitHub Personal Access Token ব্রাউজারে সফলভাবে সংরক্ষিত হয়েছে!");
+  } else {
+    localStorage.removeItem("hisab_github_pat");
+    alert("GitHub Token মুছে ফেলা হয়েছে।");
+  }
+}
+
+async function openIndividualPushModal(uid) {
+  currentPushTargetMember = null;
+  currentPushTargetSubscription = null;
+
+  showModal("individualPushModal");
+  const nameEl = document.getElementById("indivPushMemberName");
+  const userEl = document.getElementById("indivPushMemberUser");
+  const badgeEl = document.getElementById("indivPushSubBadge");
+  const alertEl = document.getElementById("indivPushStatusAlert");
+  const cliCmdInput = document.getElementById("indivPushCliCmd");
+  const dispatchBtn = document.getElementById("dispatchIndivPushBtn");
+
+  if (alertEl) {
+    alertEl.className = "alert d-none";
+    alertEl.textContent = "";
+  }
+  if (nameEl) nameEl.textContent = "খোঁজা হচ্ছে...";
+  if (userEl) userEl.textContent = "";
+  if (badgeEl) {
+    badgeEl.className = "badge bg-secondary";
+    badgeEl.textContent = "যাচাই হচ্ছে...";
+  }
+
+  try {
+    const userSnap = await getDoc(doc(db, "users", uid));
+    if (!userSnap.exists()) {
+      if (alertEl) {
+        alertEl.className = "alert alert-danger py-2 small";
+        alertEl.textContent = "মেম্বার তথ্য পাওয়া যায়নি";
+        alertEl.classList.remove("d-none");
+      }
+      return;
+    }
+    const member = { uid: userSnap.id, ...userSnap.data() };
+    currentPushTargetMember = member;
+
+    if (nameEl) nameEl.textContent = member.name || "Unknown";
+    if (userEl) userEl.textContent = "@" + (member.username || "");
+
+    const subSnap = await getDoc(doc(db, "pushSubscriptions", uid));
+    const isSubscribed = subSnap.exists() && subSnap.data().enabled !== false && subSnap.data().subscription;
+    currentPushTargetSubscription = isSubscribed ? subSnap.data().subscription : null;
+
+    if (cliCmdInput) {
+      cliCmdInput.value = `node scripts/send-reminders.mjs --user=${member.username || uid}`;
+    }
+
+    if (isSubscribed) {
+      if (badgeEl) {
+        badgeEl.className = "badge bg-success";
+        badgeEl.textContent = "🟢 পুশ সক্রিয় (রেডি)";
+      }
+      if (dispatchBtn) dispatchBtn.disabled = false;
+    } else {
+      if (badgeEl) {
+        badgeEl.className = "badge bg-secondary";
+        badgeEl.textContent = "⚪ এখনও পারমিশন দেয়নি";
+      }
+      if (dispatchBtn) dispatchBtn.disabled = true;
+      if (alertEl) {
+        alertEl.className = "alert alert-warning py-2 small";
+        alertEl.textContent = `⚠️ ${member.name} এখনও তার ফোনে PWA অ্যাপের নোটিফিকেশন চালু করেননি। তাকে একবার অ্যাপে লগইন করে উপরে আসা "নোটিফিকেশন চালু করুন" এ ক্লিক করতে বলুন।`;
+        alertEl.classList.remove("d-none");
+      }
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.className = "alert alert-danger py-2 small";
+      alertEl.textContent = err.message;
+      alertEl.classList.remove("d-none");
+    }
+  }
+}
+
+async function handleDispatchIndividualPush() {
+  if (!currentPushTargetMember) return;
+  const alertEl = document.getElementById("indivPushStatusAlert");
+  const spinner = document.getElementById("dispatchIndivPushSpinner");
+  const btn = document.getElementById("dispatchIndivPushBtn");
+  const customBody = document.getElementById("indivPushCustomBody")?.value || "";
+
+  const githubToken = localStorage.getItem("hisab_github_pat") || document.getElementById("githubPatInput")?.value?.trim();
+
+  if (githubToken) {
+    if (btn) btn.disabled = true;
+    if (spinner) spinner.classList.remove("d-none");
+    if (alertEl) {
+      alertEl.className = "alert alert-info py-2 small";
+      alertEl.textContent = "🚀 GitHub Actions রানার শুরু করা হচ্ছে...";
+      alertEl.classList.remove("d-none");
+    }
+
+    try {
+      const res = await fetch("https://api.github.com/repos/masud5009/hisab/actions/workflows/meal-reminder.yml/dispatches", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${githubToken}`,
+          "Accept": "application/vnd.github.v3+json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ref: "v2",
+          inputs: {
+            target_user: currentPushTargetMember.username || currentPushTargetMember.uid,
+            force: "true"
+          }
+        })
+      });
+
+      if (res.status === 204 || res.ok) {
+        if (alertEl) {
+          alertEl.className = "alert alert-success py-2 small";
+          alertEl.textContent = `✅ সফল! GitHub Actions রানার চালু হয়েছে। ১০-১৫ সেকেন্ডের মধ্যে ${currentPushTargetMember.name}-এর ফোনে নোটিফিকেশন পৌঁছে যাবে!`;
+          alertEl.classList.remove("d-none");
+        }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      if (alertEl) {
+        alertEl.className = "alert alert-danger py-2 small";
+        alertEl.textContent = `GitHub ট্রিগার ব্যর্থ: ${err.message}। নিচের টার্মিনাল কমান্ড রান করুন।`;
+        alertEl.classList.remove("d-none");
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.classList.add("d-none");
+    }
+  } else {
+    // Guide user: run command in terminal or save token
+    if (alertEl) {
+      alertEl.className = "alert alert-info py-2 small";
+      alertEl.innerHTML = `
+        <div><strong>কমান্ড কপি করুন:</strong> ব্রাউজার থেকে সরাসরি পাঠাতে Settings-এ GitHub Token সেভ করুন, অথবা আপনার কম্পিউটারের টার্মিনালে নিচের কমান্ডটি রান করলেই <strong>১ সেকেন্ডে</strong> সরাসরি ${currentPushTargetMember.name}-এর ফোনে পুশ চলে যাবে!</div>
+      `;
+      alertEl.classList.remove("d-none");
+    }
+  }
+}
+
+function copyIndivPushCmd() {
+  const input = document.getElementById("indivPushCliCmd");
+  if (!input || !input.value) return;
+  navigator.clipboard.writeText(input.value).then(() => {
+    alert("কমান্ড ক্লিপবোর্ডে কপি হয়েছে!\n\nটার্মিনালে পেস্ট করে এন্টার দিন।");
+  }).catch(() => {});
+}
+
+// ─────────────────────────────────────────────
 // Calculation Table
 // ─────────────────────────────────────────────
 async function loadCalculation() {
@@ -1637,8 +2013,10 @@ async function openMealReminderModal() {
   showModal("mealReminderModal");
   const container = document.getElementById("mealReminderBody");
   const groupBtn = document.getElementById("shareGroupMealReminderBtn");
+  const pushBtn = document.getElementById("sendPushReminderMissingBtn");
   const dateText = document.getElementById("mealReminderDateText");
   if (groupBtn) groupBtn.classList.add("d-none");
+  if (pushBtn) pushBtn.classList.add("d-none");
 
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -1679,10 +2057,12 @@ async function openMealReminderModal() {
         </div>
       `;
       if (groupBtn) groupBtn.classList.add("d-none");
+      if (pushBtn) pushBtn.classList.add("d-none");
       return;
     }
 
     if (groupBtn) groupBtn.classList.remove("d-none");
+    if (pushBtn) pushBtn.classList.remove("d-none");
 
     container.innerHTML = `
       <div class="alert alert-warning py-2 mb-3 small d-flex align-items-center justify-content-between">
@@ -1699,6 +2079,9 @@ async function openMealReminderModal() {
               <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 reminder-add-meal-btn" data-uid="${m.uid}" title="Add Meal for ${escapeHtml(m.name || "")}">
                 <i class="bi bi-egg-fried"></i> <span>${t("btn_add")}</span>
               </button>
+              <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 send-indiv-push-btn" data-uid="${m.uid}" title="Send Push Notification to ${escapeHtml(m.name || "")}">
+                <i class="bi bi-bell-fill"></i> <span>পুশ</span>
+              </button>
               <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 send-indiv-wa-btn" data-uid="${m.uid}">
                 <i class="bi bi-whatsapp"></i> <span>${t("btn_send_wa")}</span>
               </button>
@@ -1712,6 +2095,9 @@ async function openMealReminderModal() {
       btn.addEventListener("click", () => {
         openAdminAddMealModal(btn.dataset.uid, todayDateStr);
       });
+    });
+    container.querySelectorAll(".send-indiv-push-btn").forEach((btn) => {
+      btn.addEventListener("click", () => openIndividualPushModal(btn.dataset.uid));
     });
     container.querySelectorAll(".send-indiv-wa-btn").forEach((btn) => {
       btn.addEventListener("click", () => sendIndividualMealReminder(btn.dataset.uid));

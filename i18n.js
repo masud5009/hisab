@@ -129,7 +129,31 @@ export const translations = {
     select_member: "Select Member",
     all_members: "All Members",
     th_member: "Member",
-    lang_toggle_label: "বাং"
+    lang_toggle_label: "বাং",
+
+    // Push Notifications
+    push_reminder_banner_title: "Stay on track!",
+    push_reminder_banner_text: "Enable daily push notifications so you never forget to add your meal.",
+    push_reminder_enable_btn: "Turn On Notifications",
+    push_reminder_enabled: "Notifications Active",
+    push_reminder_disabled: "Notifications Disabled",
+    push_reminder_unsupported: "Push notifications are not supported on this browser/device.",
+    push_reminder_permission_denied: "Notification permission is blocked in browser settings. Please enable it to receive reminders.",
+    push_reminder_subscribed_alert: "Push notifications enabled! You will receive daily meal reminders.",
+    push_settings_title: "Automatic Meal Reminder Settings",
+    push_settings_desc: "Automatically push notifications daily to all members who have not added their meals.",
+    push_enable_toggle: "Enable Daily Automatic Reminders",
+    push_time_label: "Reminder Time (Bangladesh Time - GMT+6)",
+    push_title_label: "Notification Title",
+    push_subscribers_label: "Active Push Subscribers",
+    push_test_btn: "Send Test Push",
+    push_save_btn: "Save Settings",
+    push_settings_saved: "Notification settings saved successfully!",
+    push_test_success: "Test notification sent successfully!",
+    push_test_failed: "Failed to send test push notification.",
+    push_reminder_modal_title: "Meal Reminder Notifications",
+    push_reminder_modal_desc: "Never miss adding your daily meal! Automated push reminders will be sent to your phone at scheduled times. Please enable notifications.",
+    btn_later: "Later"
   },
   bn: {
     // Brand & Roles
@@ -256,7 +280,31 @@ export const translations = {
     select_member: "মেম্বার নির্বাচন করুন",
     all_members: "সকল মেম্বার",
     th_member: "মেম্বার",
-    lang_toggle_label: "ENG"
+    lang_toggle_label: "ENG",
+
+    // Push Notifications
+    push_reminder_banner_title: "মিল এন্ট্রি রিমাইন্ডার",
+    push_reminder_banner_text: "প্রতিদিনের মিল এন্ট্রি দিতে ভুলে যান? ফোনে অটো রিমাইন্ডার নোটিফিকেশন চালু করুন।",
+    push_reminder_enable_btn: "নোটিফিকেশন চালু করুন",
+    push_reminder_enabled: "নোটিফিকেশন চালু আছে",
+    push_reminder_disabled: "নোটিফিকেশন বন্ধ",
+    push_reminder_unsupported: "আপনার ব্রাউজার বা ডিভাইসে পুশ নোটিফিকেশন সমর্থিত নয়।",
+    push_reminder_permission_denied: "ব্রাউজার সেটিংসে নোটিফিকেশন ব্লক করা আছে। দয়া করে সাইট সেটিংসে গিয়ে অনুমতি দিন।",
+    push_reminder_subscribed_alert: "পুশ নোটিফিকেশন সফলভাবে চালু করা হয়েছে! নির্দিষ্ট সময়ে রিমাইন্ডার পাবেন।",
+    push_settings_title: "অটোমেটিক মিল রিমাইন্ডার সেটিংস",
+    push_settings_desc: "প্রতিদিন নির্দিষ্ট সময়ে যারা আজকের মিল দেননি তাদের স্বয়ংক্রিয় পুশ নোটিফিকেশন পাঠানো হবে।",
+    push_enable_toggle: "প্রতিদিনের অটো রিমাইন্ডার চালু রাখুন",
+    push_time_label: "রিমাইন্ডারের সময় (বাংলাদেশ সময়)",
+    push_title_label: "নোটিফিকেশন শিরোনাম (Title)",
+    push_subscribers_label: "মেম্বারদের পুশ নোটিফিকেশন স্ট্যাটাস ও টেস্ট পুশ",
+    push_test_btn: "টেস্ট নোটিফিকেশন পাঠান",
+    push_save_btn: "সেটিংস সংরক্ষণ করুন",
+    push_settings_saved: "নোটিফিকেশন সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে!",
+    push_test_success: "টেস্ট নোটিফিকেশন পাঠানো সম্পন্ন হয়েছে!",
+    push_test_failed: "টেস্ট নোটিফিকেশন পাঠানো সম্ভব হয়নি।",
+    push_reminder_modal_title: "মিল রিমাইন্ডার নোটিফিকেশন",
+    push_reminder_modal_desc: "প্রতিদিনের মিল এন্ট্রি দিতে যাতে কখনো ভুলে না যান, নির্ধারিত সময়ে আপনার ফোনে অটো নোটিফিকেশন পাঠানো হবে। দয়া করে নোটিফিকেশনটি চালু করে রাখুন।",
+    btn_later: "পরে করব"
   }
 };
 

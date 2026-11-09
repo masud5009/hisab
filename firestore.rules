@@ -72,5 +72,21 @@ service cloud.firestore {
       // Only admins can create, update, or delete additional costs
       allow write: if isAdmin();
     }
+
+    // ─── settings collection ───────────────────────────────
+    match /settings/{docId} {
+      // All authenticated users can read settings (e.g. reminder configuration)
+      allow read: if request.auth != null;
+      // Only admins can create or update settings
+      allow write: if isAdmin();
+    }
+
+    // ─── pushSubscriptions collection ──────────────────────
+    match /pushSubscriptions/{userId} {
+      // Authenticated users and admin can read subscriptions
+      allow read: if request.auth != null;
+      // Users can manage their own subscription; admin can manage all
+      allow create, update, delete: if isOwner(userId) || isAdmin();
+    }
   }
 }

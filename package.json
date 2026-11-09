@@ -1,0 +1,14 @@
+{
+  "name": "hisab",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mess Management System with Web Push Notifications",
+  "scripts": {
+    "remind": "node scripts/send-reminders.mjs",
+    "test-push": "node scripts/send-reminders.mjs --manual"
+  },
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}
+

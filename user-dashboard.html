@@ -1047,6 +1047,16 @@
       </a>
 
       <div class="drawer-section-title mt-3">Preferences</div>
+      <button type="button" class="drawer-nav-item w-100 border-0 bg-transparent text-start cursor-pointer" id="drawerPushToggleBtn" style="cursor:pointer;">
+        <i class="bi bi-bell"></i>
+        <div class="d-flex justify-content-between align-items-center flex-grow-1">
+          <div>
+            <strong data-i18n="push_settings_title">মিল রিমাইন্ডার</strong>
+            <small id="drawerPushStatusText" data-i18n="push_reminder_disabled">নোটিফিকেশন বন্ধ</small>
+          </div>
+          <span class="badge bg-light text-dark border" id="drawerPushBadge">OFF</span>
+        </div>
+      </button>
       <button type="button" class="drawer-nav-item w-100 border-0 bg-transparent text-start cursor-pointer" id="drawerLangToggleBtn" style="cursor:pointer;">
         <i class="bi bi-translate"></i>
         <div class="d-flex justify-content-between align-items-center flex-grow-1">
@@ -1074,10 +1084,30 @@
     <div class="topbar">
       <h2 id="topbarHeading"><i class="bi bi-pie-chart me-2" style="color:var(--clr-user)"></i><span data-i18n="nav_dashboard">Dashboard</span></h2>
       <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary d-none d-md-flex align-items-center gap-1" id="pushNotificationBtn" title="Notification Settings" style="border-radius: 8px; padding: 0.4rem 0.75rem; font-weight:600;">
+          <i class="bi bi-bell" id="pushNotificationIcon"></i> <span id="pushNotificationStatusText" data-i18n="push_reminder_enable_btn">Reminders</span>
+        </button>
         <button class="btn btn-sm btn-outline-secondary d-none d-md-flex align-items-center gap-1" id="langToggleBtn" title="Switch Language" style="border-radius: 8px; padding: 0.4rem 0.75rem; font-weight:600;">
           <i class="bi bi-translate"></i> <span id="currentLangLabel" class="currentLangLabel">ENG</span>
         </button>
         <select class="month-selector" id="monthSelector"></select>
+      </div>
+    </div>
+
+    <!-- ── Push Notification Prompt Banner ── -->
+    <div id="pushNotificationBanner" class="alert d-none align-items-center justify-content-between p-3 mb-3 border-0 shadow-sm" style="border-radius: 12px; background: #eff6ff; border-left: 4px solid var(--clr-user) !important;">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-bell-fill fs-4" style="color:var(--clr-user);"></i>
+        <div>
+          <strong class="d-block text-dark" data-i18n="push_reminder_banner_title">মিল এন্ট্রি রিমাইন্ডার</strong>
+          <span class="small text-muted" data-i18n="push_reminder_banner_text">প্রতিদিনের মিল এন্ট্রি দিতে ভুলে যান? ফোনে অটো রিমাইন্ডার নোটিফিকেশন চালু করুন।</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+        <button type="button" class="btn btn-sm text-white" id="enablePushBtn" style="background:var(--clr-user); border-radius: 8px; font-weight:600; white-space:nowrap;">
+          <i class="bi bi-bell me-1"></i> <span data-i18n="push_reminder_enable_btn">চালু করুন</span>
+        </button>
+        <button type="button" class="btn-close" id="dismissPushBannerBtn" aria-label="Close"></button>
       </div>
     </div>
 
@@ -1467,6 +1497,32 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Push Permission Prompt Modal (Auto pops up every time app opens until permission is granted) -->
+  <div class="modal fade" id="pushPermissionModal" tabindex="-1" aria-labelledby="pushPermissionLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center p-3 border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-body p-4">
+          <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 72px; height: 72px; background: rgba(37, 99, 235, 0.1); color: var(--clr-user);">
+            <i class="bi bi-bell-fill fs-1"></i>
+          </div>
+          <h4 class="fw-bold text-dark mb-2" id="pushPermissionLabel" data-i18n="push_reminder_modal_title">মিল রিমাইন্ডার নোটিফিকেশন</h4>
+          <p class="text-muted small mb-4" data-i18n="push_reminder_modal_desc">
+            প্রতিদিনের মিল এন্ট্রি দিতে যাতে কখনো ভুলে না যান, নির্ধারিত সময়ে আপনার ফোনে অটো নোটিফিকেশন পাঠানো হবে। দয়া করে নোটিফিকেশনটি চালু করে রাখুন।
+          </p>
+          <div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary py-2 fw-bold" id="modalEnablePushBtn" style="border-radius: 10px; background: var(--clr-user); border:none;">
+              <i class="bi bi-bell me-1"></i> <span data-i18n="push_reminder_enable_btn">নোটিফিকেশন চালু করুন</span>
+              <span id="modalPushSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-light py-2 text-muted fw-semibold small" data-bs-dismiss="modal" style="border-radius: 10px;" data-i18n="btn_later">
+              পরে করব
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

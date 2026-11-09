@@ -1,4 +1,4 @@
-const CACHE_NAME = "hisab-pwa-v2";
+const CACHE_NAME = "hisab-pwa-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,9 @@ const APP_SHELL = [
   "./auth.js",
   "./calculation.js",
   "./firebase-config.js",
+  "./push-config.js",
+  "./i18n.js",
+  "./pwa.js",
   "./user.js",
   "./admin.js",
   "./manifest.webmanifest",
@@ -100,3 +103,59 @@ function networkFirst(request) {
     })
     .catch(() => caches.match(request));
 }
+
+// ─── Web Push Notification Handler ───
+self.addEventListener("push", (event) => {
+  let data = {
+    title: "হিসাব - মিল রিমাইন্ডার 🍽️",
+    body: "আজকের মিল এন্ট্রি এখনো দেননি! অনুগ্রহ করে অ্যাপে গিয়ে আজকের মিল যোগ করুন।",
+    icon: "./pwa-icon-192.png",
+    badge: "./favicon.svg",
+    tag: "meal-reminder",
+    data: { url: "./user-dashboard.html#section-meals" }
+  };
+
+  if (event.data) {
+    try {
+      const json = event.data.json();
+      data = { ...data, ...json };
+    } catch (e) {
+      const text = event.data.text();
+      if (text) data.body = text;
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || "./pwa-icon-192.png",
+    badge: data.badge || "./favicon.svg",
+    tag: data.tag || "meal-reminder",
+    renotify: true,
+    vibrate: [200, 100, 200],
+    data: data.data || { url: "./user-dashboard.html#section-meals" }
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+// ─── Notification Click Handler ───
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || "./user-dashboard.html#section-meals";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes("user-dashboard.html") && "focus" in client) {
+          if ("navigate" in client && targetUrl) {
+            client.navigate(targetUrl);
+          }
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});

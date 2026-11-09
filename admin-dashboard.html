@@ -750,56 +750,144 @@
       </div>
     </div>
 
-    <!-- ── Monthly Costs ── -->
-    <div class="card mb-4 dashboard-tab-panel" id="section-costs" role="tabpanel" hidden>
-      <div class="card-header-custom">
-        <i class="bi bi-cash-stack"></i> <span data-i18n="nav_settings">Settings</span>
+    <!-- ── Monthly Costs & Settings ── -->
+    <div class="dashboard-tab-panel" id="section-costs" role="tabpanel" hidden>
+      <!-- Monthly Costs Card -->
+      <div class="card mb-4">
+        <div class="card-header-custom">
+          <i class="bi bi-cash-stack"></i> <span data-i18n="nav_settings">Settings</span>
+        </div>
+        <div class="card-body-custom">
+          <div id="monthCostAlert" class="alert d-none"></div>
+          <form id="monthCostForm">
+            <div class="row g-3">
+              <div class="col-md-3 col-6">
+                <label class="form-label">খালা বিল (৳)</label>
+                <input type="number" id="khalaInput" class="form-control" min="0" step="0.01" value="0"/>
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label">গ্যাস বিল (৳)</label>
+                <input type="number" id="gasInput" class="form-control" min="0" step="0.01" value="0"/>
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label">বিদ্যুৎ বিল (৳)</label>
+                <input type="number" id="electricityInput" class="form-control" min="0" step="0.01" value="0"/>
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label">WiFi (৳)</label>
+                <input type="number" id="wifiInput" class="form-control" min="0" step="0.01" value="0"/>
+              </div>
+              <div class="col-12">
+                <div class="row g-3">
+                  <div class="col-md-3 col-6">
+                    <label class="form-label">সকালের মিল (%)</label>
+                    <input type="number" id="morningPercentInput" class="form-control" min="0" step="0.01" value="0"/>
+                  </div>
+                  <div class="col-md-3 col-6">
+                    <label class="form-label">দুপুরের মিল (%)</label>
+                    <input type="number" id="lunchPercentInput" class="form-control" min="0" step="0.01" value="100"/>
+                  </div>
+                  <div class="col-md-3 col-6">
+                    <label class="form-label">রাতের মিল (%)</label>
+                    <input type="number" id="dinnerPercentInput" class="form-control" min="0" step="0.01" value="60"/>
+                  </div>
+                </div>
+                <small class="text-info d-block mt-2">বেইজ রেট = মোট বাজার ÷ মোট ইউনিট <br> মোট ইউনিট = (সকাল মিল × সকাল% ÷ 100) + (দুপুর মিল × দুপুর% ÷ 100) + (রাত মিল × রাত% ÷ 100)।</small>
+              </div>
+              <div class="col-md-3 d-flex align-items-end justify-content-end ms-auto">
+                <button type="submit" id="saveMonthCostBtn" class="btn btn-success">
+                  <i class="bi bi-floppy me-1"></i> <span data-i18n="btn_save" id="saveMonthCostText">Save Changes</span>
+                  <span id="saveMonthCostSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="card-body-custom">
-        <div id="monthCostAlert" class="alert d-none"></div>
-        <form id="monthCostForm">
-          <div class="row g-3">
-            <div class="col-md-3 col-6">
-              <label class="form-label">খালা বিল (৳)</label>
-              <input type="number" id="khalaInput" class="form-control" min="0" step="0.01" value="0"/>
-            </div>
-            <div class="col-md-3 col-6">
-              <label class="form-label">গ্যাস বিল (৳)</label>
-              <input type="number" id="gasInput" class="form-control" min="0" step="0.01" value="0"/>
-            </div>
-            <div class="col-md-3 col-6">
-              <label class="form-label">বিদ্যুৎ বিল (৳)</label>
-              <input type="number" id="electricityInput" class="form-control" min="0" step="0.01" value="0"/>
-            </div>
-            <div class="col-md-3 col-6">
-              <label class="form-label">WiFi (৳)</label>
-              <input type="number" id="wifiInput" class="form-control" min="0" step="0.01" value="0"/>
-            </div>
-            <div class="col-12">
-              <div class="row g-3">
-                <div class="col-md-3 col-6">
-                  <label class="form-label">সকালের মিল (%)</label>
-                  <input type="number" id="morningPercentInput" class="form-control" min="0" step="0.01" value="0"/>
-                </div>
-                <div class="col-md-3 col-6">
-                  <label class="form-label">দুপুরের মিল (%)</label>
-                  <input type="number" id="lunchPercentInput" class="form-control" min="0" step="0.01" value="100"/>
-                </div>
-                <div class="col-md-3 col-6">
-                  <label class="form-label">রাতের মিল (%)</label>
-                  <input type="number" id="dinnerPercentInput" class="form-control" min="0" step="0.01" value="60"/>
+
+      <!-- Automatic Meal Reminder Settings (Push Notifications) -->
+      <div class="card mb-4">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+          <div>
+            <i class="bi bi-bell-fill text-warning me-2"></i>
+            <span data-i18n="push_settings_title">অটোমেটিক মিল রিমাইন্ডার সেটিংস</span>
+          </div>
+          <span class="badge bg-light text-dark border px-2 py-1" id="subscribersBadge">
+            <i class="bi bi-phone me-1"></i> <span id="subscribersCountText">0 Subscribed</span>
+          </span>
+        </div>
+        <div class="card-body-custom">
+          <div id="pushSettingsAlert" class="alert d-none"></div>
+
+          <form id="pushSettingsForm">
+            <div class="row g-3">
+              <div class="col-md-6 col-12">
+                <div class="form-check form-switch p-2 bg-light rounded border ps-5">
+                  <input class="form-check-input" type="checkbox" id="reminderEnabledToggle" checked style="cursor:pointer; width: 2.5em; height: 1.3em;">
+                  <label class="form-check-label fw-semibold ms-2" for="reminderEnabledToggle" data-i18n="push_enable_toggle">
+                    প্রতিদিনের অটো রিমাইন্ডার চালু রাখুন
+                  </label>
                 </div>
               </div>
-              <small class="text-info d-block mt-2">বেইজ রেট = মোট বাজার ÷ মোট ইউনিট <br> মোট ইউনিট = (সকাল মিল × সকাল% ÷ 100) + (দুপুর মিল × দুপুর% ÷ 100) + (রাত মিল × রাত% ÷ 100)।</small>
+
+              <div class="col-md-6 col-12">
+                <label class="form-label fw-semibold" for="reminderTimeInput">
+                  <i class="bi bi-clock me-1 text-primary"></i> <span data-i18n="push_time_label">রিমাইন্ডারের সময় (বাংলাদেশ সময়)</span>
+                </label>
+                <input type="time" id="reminderTimeInput" class="form-control" value="20:00" required>
+                <small class="text-muted">যেমন: 20:00 (রাত ৮টা) অথবা 21:00 (রাত ৯টা)।</small>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" data-i18n="push_title_label">নোটিফিকেশন শিরোনাম (Title)</label>
+                <input type="text" id="reminderTitleInput" class="form-control" value="হিসাব - মিল রিমাইন্ডার 🍽️">
+              </div>
+
+              <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+                <div class="d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="testPushBtn">
+                    <i class="bi bi-send me-1"></i> <span data-i18n="push_test_btn">টেস্ট নোটিফিকেশন পাঠান</span>
+                  </button>
+                  <span id="pushTestStatus" class="small text-muted"></span>
+                </div>
+                <button type="submit" id="savePushSettingsBtn" class="btn btn-success">
+                  <i class="bi bi-floppy me-1"></i> <span data-i18n="push_save_btn">সেটিংস সংরক্ষণ করুন</span>
+                  <span id="savePushSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                </button>
+              </div>
             </div>
-            <div class="col-md-3 d-flex align-items-end justify-content-end ms-auto">
-              <button type="submit" id="saveMonthCostBtn" class="btn btn-success">
-                <i class="bi bi-floppy me-1"></i> <span data-i18n="btn_save" id="saveMonthCostText">Save Changes</span>
-                <span id="saveMonthCostSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+          </form>
+
+          <!-- Member Push Notification Status & Individual Push Trigger -->
+          <div class="mt-4 pt-3 border-top">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-people me-1 text-primary"></i> <span data-i18n="push_subscribers_label">মেম্বারদের পুশ নোটিফিকেশন স্ট্যাটাস ও টেস্ট পুশ</span></h6>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshPushStatusBtn">
+                <i class="bi bi-arrow-clockwise me-1"></i> <span data-i18n="btn_refresh">রিফ্রেশ</span>
               </button>
             </div>
+            <div id="memberPushStatusList" class="list-group mb-3">
+              <div class="text-center py-3 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary mb-1"></div>
+                <div>লোড হচ্ছে...</div>
+              </div>
+            </div>
+
+            <!-- Optional GitHub Dispatch Token for Instant 1-Click Browser Dispatch -->
+            <div class="card bg-light border-0 p-3 rounded">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <strong class="d-block text-dark small"><i class="bi bi-github me-1"></i> ব্রাউজার থেকে সরাসরি ১-ক্লিক পুশ (ঐচ্ছিক)</strong>
+                  <small class="text-muted">GitHub Personal Access Token দিলে ব্রাউজার থেকেই সাথে সাথে GitHub Actions রান করে ইন্ডিভিজুয়াল পুশ পাঠানো যাবে।</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="password" id="githubPatInput" class="form-control form-control-sm" placeholder="ghp_xxxx..." style="max-width: 180px;">
+                  <button type="button" class="btn btn-sm btn-outline-dark" id="saveGithubPatBtn">সেভ</button>
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
 
@@ -1232,11 +1320,65 @@
           </div>
         </div>
       </div>
-      <div class="app-modal-footer d-flex justify-content-between">
+      <div class="app-modal-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
         <button type="button" class="btn-outline-custom" data-close-modal="mealReminderModal">Close</button>
-        <button type="button" class="btn-primary-custom d-none" id="shareGroupMealReminderBtn">
-          <i class="bi bi-whatsapp me-1"></i><span data-i18n="btn_share_group_reminder">Share to Mess Group</span>
-        </button>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary d-none" id="sendPushReminderMissingBtn">
+            <i class="bi bi-bell-fill me-1"></i> <span>Send Push</span>
+          </button>
+          <button type="button" class="btn-primary-custom d-none" id="shareGroupMealReminderBtn">
+            <i class="bi bi-whatsapp me-1"></i><span data-i18n="btn_share_group_reminder">Share to Mess Group</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Individual Push Notification Trigger Modal -->
+  <div class="app-modal" id="individualPushModal" aria-hidden="true">
+    <div class="app-modal-panel">
+      <div class="app-modal-header">
+        <span><i class="bi bi-bell-fill me-1 text-primary"></i> <span>মেম্বার পুশ নোটিফিকেশন</span></span>
+        <button type="button" class="btn-icon" data-close-modal="individualPushModal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="app-modal-body">
+        <div id="indivPushStatusAlert" class="alert d-none"></div>
+        <div class="mb-3 p-3 bg-light rounded border">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <strong class="d-block fs-6" id="indivPushMemberName">Member Name</strong>
+              <small class="text-muted" id="indivPushMemberUser">@username</small>
+            </div>
+            <span class="badge" id="indivPushSubBadge">Checking...</span>
+          </div>
+        </div>
+
+        <div id="indivPushActionsContainer">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">নোটিফিকেশনের টেক্সট (Message)</label>
+            <input type="text" id="indivPushCustomBody" class="form-control form-control-sm" value="আজকের মিল এন্ট্রি এখনো দেননি! অনুগ্রহ করে অ্যাপে গিয়ে মিল যোগ করুন।">
+          </div>
+
+          <div class="d-grid gap-2 mb-3">
+            <button type="button" class="btn btn-primary btn-sm" id="dispatchIndivPushBtn">
+              <i class="bi bi-send-fill me-1"></i> <span>সরাসরি পুশ নোটিফিকেশন পাঠান</span>
+              <span id="dispatchIndivPushSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="p-2 bg-light rounded border small">
+            <div class="fw-semibold text-muted mb-1"><i class="bi bi-terminal me-1"></i> অথবা লোকাল টার্মিনাল কমান্ড (১ সেকেন্ডে ডেলিভারি):</div>
+            <div class="input-group input-group-sm">
+              <input type="text" id="indivPushCliCmd" class="form-control font-monospace" readonly style="font-size: 0.78rem;">
+              <button class="btn btn-outline-secondary" type="button" id="copyIndivPushCmdBtn" title="Copy Command">
+                <i class="bi bi-clipboard"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="app-modal-footer d-flex justify-content-end">
+        <button type="button" class="btn-outline-custom" data-close-modal="individualPushModal">Close</button>
       </div>
     </div>
   </div>

@@ -1,0 +1,49 @@
+name: Daily Meal Reminder via Web Push
+
+on:
+  schedule:
+    # Runs at the top of every hour to check configured reminder time in Bangladesh (UTC+6)
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      target_user:
+        description: 'Target specific user (username, userId, or "all")'
+        required: false
+        type: string
+        default: 'all'
+      force:
+        description: 'Force dispatch regardless of scheduled hour'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  remind-meals:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: ''
+
+      - name: Install Dependencies
+        run: npm install web-push
+
+      - name: Run Meal Reminder Script
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME || 'masud5009' }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          TARGET_USER: ${{ github.event.inputs.target_user || 'all' }}
+          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.force == true || inputs.force == 'true') }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY || 'AIzaSyCGX4xWYrpfYRfIce20GYISa3Pcn6It4Y0' }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID || 'hisab-9454a' }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY || 'BJrhVa4SoaeK3Z6VX50FsZWJNNENKRulzBxG_hpZGwQ7K5lC-Ymi6BtmMAVmZa0QsVxgcZY4r3NVIQ6Df9hKMZw' }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY || '4WiT--uqTyv1tu6zr9d0bnPzq5oVcQYPAw6PehQf-zo' }}
+          VAPID_SUBJECT: 'mailto:admin@hisab.local'
+        run: node scripts/send-reminders.mjs
+
